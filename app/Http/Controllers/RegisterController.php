@@ -107,7 +107,7 @@ class RegisterController extends Controller
         
         $data = $register->toArray();
         // Ajuste para caminho solicitado: /uploads/registers/
-        $data['photo_url'] = $register->photo ? asset('uploads/registers/' . $register->photo) : null;
+        $data['photo_url'] = $register->photo ? asset('storage/uploads/registers/' . $register->photo) : null;
         
         $data['born_date_formatted'] = ($register->born_date && $register->born_date->format('d/m/Y') !== '01/01/0001') 
             ? $register->born_date->format('d/m/Y') . ' (' . $register->age . ' anos)' 
@@ -164,7 +164,7 @@ class RegisterController extends Controller
             'country' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:255',
             'address_number' => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:255', // Bairro
+            'home_situation' => 'nullable|string|max:255', // Bairro (mapeado corretamente)
             'cep' => 'nullable|string|max:10',
             'sexo' => 'required|integer|in:1,2',
             'civil_status' => 'nullable|integer',
@@ -217,7 +217,7 @@ class RegisterController extends Controller
             'country' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:255',
             'address_number' => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:255', // Bairro
+            'home_situation' => 'nullable|string|max:255', // Bairro (mapeado corretamente)
             'cep' => 'nullable|string|max:10',
             'sexo' => 'required|integer|in:1,2',
             'civil_status' => 'nullable|integer',
