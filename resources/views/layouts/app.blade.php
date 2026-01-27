@@ -74,17 +74,12 @@
                             }
                         @endphp
 
-                        @if(Auth::user()->avatar)
-                            <img src="https://sismatriz.online/uploads/avatars/{{ Auth::user()->avatar }}" 
+                        @if(Auth::user()->avatar && file_exists(public_path('storage/uploads/avatars/' . Auth::user()->avatar)))
+                            <img src="{{ asset('storage/uploads/avatars/' . Auth::user()->avatar) }}" 
                                  alt="{{ $userName }}" 
                                  width="40" height="40" 
                                  class="rounded-circle border shadow-sm" 
-                                 style="object-fit: cover; object-position: center;"
-                                 onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none'); this.nextElementSibling.classList.add('d-flex');">
-                            
-                            <div class="rounded-circle bg-secondary text-white justify-content-center align-items-center shadow-sm d-none" style="width: 40px; height: 40px;">
-                                {{ $initials }}
-                            </div>
+                                 style="object-fit: cover; object-position: center;">
                         @else
                             <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center shadow-sm" style="width: 40px; height: 40px;">
                                 {{ $initials }}

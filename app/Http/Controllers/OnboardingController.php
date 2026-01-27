@@ -49,9 +49,8 @@ class OnboardingController extends Controller
             $file = $request->file('avatar');
             $filename = $user->id . '.png';
 
-            // Upload to remote server via SFTP (Port 22)
-            // Ensure FILESYSTEM_DISK is set to 'sftp' in .env or use 'sftp' disk explicitly
-            Storage::disk('sftp')->putFileAs('', $file, $filename);
+            // Upload to local storage (storage/app/public/uploads/avatars)
+            Storage::disk('public')->putFileAs('uploads/avatars', $file, $filename);
 
             $user->avatar = $filename;
             $user->accepted_photo = 1;
