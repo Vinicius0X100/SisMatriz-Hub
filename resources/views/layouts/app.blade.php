@@ -22,10 +22,16 @@
             </a>
             
             <div class="d-flex align-items-center gap-3">
+                <!-- Chat Button -->
+                <a href="{{ url('/chat') }}" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;" title="Chat">
+                    <i class="bi bi-chat-dots text-dark fs-5"></i>
+                </a>
+
                 <!-- Mega Menu Button -->
                 <div class="dropdown">
-                    <button class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;" type="button" id="megaMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Todos os Módulos">
+                    <button class="btn btn-light border-0 rounded-pill d-flex align-items-center gap-2 shadow-sm px-3" style="height: 40px;" type="button" id="megaMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Todos os Módulos">
                         <i class="mdi mdi-view-grid text-dark fs-5"></i>
+                        <span class="fw-bold text-dark small">Opções</span>
                     </button>
                     <div class="dropdown-menu shadow-lg p-0 mt-2 border-0 rounded-4" aria-labelledby="megaMenuBtn" style="width: 350px; max-height: 80vh; overflow-y: auto;">
                         <div class="p-3 sticky-top bg-white border-bottom">

@@ -863,7 +863,7 @@
                                     <div class="col-12">
                                         <label class="small text-muted fw-bold text-uppercase">Endereço</label>
                                         <div class="fw-medium text-dark">
-                                            ${[data.address, data.address_number, data.city, data.state, data.cep].filter(Boolean).join(', ') || '-'}
+                                            ${[data.address, data.address_number, data.home_situation, data.city, data.state, data.cep].filter(Boolean).join(', ') || '-'}
                                         </div>
                                     </div>
                                 </div>

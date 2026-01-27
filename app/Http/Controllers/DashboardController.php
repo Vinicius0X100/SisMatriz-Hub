@@ -30,6 +30,8 @@ class DashboardController extends Controller
             $module['slug'] = Str::slug($module['name']);
             $module['is_pinned'] = in_array($module['slug'], $pinnedSlugs);
             return $module;
+        })->filter(function ($module) {
+            return $module['slug'] !== 'chat';
         });
 
         // Pinned Modules (Full objects)
@@ -80,7 +82,7 @@ class DashboardController extends Controller
         $accesses = UserAccess::with('user')
             ->orderBy('access_date', 'desc')
             ->orderBy('access_time', 'desc')
-            ->limit(50)
+            ->limit(10)
             ->get()
             ->unique('user_id')
             ->values();
@@ -94,7 +96,7 @@ class DashboardController extends Controller
             $diffInMinutes = $accessDateTime->diffInMinutes($now);
             $isOnline = $diffInMinutes < 10;
 
-            $displayName = Str::limit($user->name ?? $user->user, 12, '...');
+            $displayName = Str::limit($user->name ?? $user->user, 25, '...');
 
             if ($isOnline) {
                 $statusText = 'Online';

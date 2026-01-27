@@ -4,7 +4,55 @@
 <div class="container-fluid px-4">
     <div class="row">
         <!-- Main Content (Modules) -->
-        <div class="col-lg-9">
+        <div class="col-md-9 col-lg-10">
+            <!-- Widgets de Tempo e Clima -->
+            <div class="row mb-4 g-3">
+                <!-- Horário -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-primary text-white h-100 rounded-4">
+                        <div class="card-body d-flex align-items-center justify-content-between p-3">
+                            <div>
+                                <h6 class="text-white-50 mb-1 small text-uppercase fw-bold">Horário Atual</h6>
+                                <h2 class="fw-bold mb-0 display-6" id="clockTime">--:--</h2>
+                            </div>
+                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi bi-clock fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Data -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-success text-white h-100 rounded-4">
+                        <div class="card-body d-flex align-items-center justify-content-between p-3">
+                            <div>
+                                <h6 class="text-white-50 mb-1 small text-uppercase fw-bold">Data de Hoje</h6>
+                                <h5 class="fw-bold mb-0" id="clockDate">--/--/----</h5>
+                            </div>
+                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi bi-calendar-event fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Clima -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-info text-white h-100 rounded-4">
+                        <div class="card-body d-flex align-items-center justify-content-between p-3">
+                            <div>
+                                <h6 class="text-white-50 mb-1 small text-uppercase fw-bold" id="locationName">Localizando...</h6>
+                                <div class="d-flex align-items-center">
+                                    <h2 class="fw-bold mb-0 display-6 me-2" id="weatherTemp">--°C</h2>
+                                </div>
+                            </div>
+                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i id="weatherIcon" class="bi bi-cloud fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Barra de Pesquisa de Módulos -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -76,9 +124,9 @@
         </div>
 
         <!-- Sidebar (Online Users) -->
-        <div class="col-lg-3 border-start ps-4">
-            <h5 class="fw-bold mb-3">Online Agora</h5>
-            <div id="onlineUsersList" class="d-flex flex-column gap-3">
+        <div class="col-lg-2 border-start ps-3">
+            <h5 class="fw-bold mb-3 small text-uppercase text-muted">Online Agora</h5>
+            <div id="onlineUsersList" class="d-flex flex-column gap-2">
                 <!-- Skeleton Loading / Placeholder -->
                 <div class="text-muted small"><i class="bi bi-arrow-repeat spin"></i> Carregando...</div>
             </div>
@@ -220,8 +268,8 @@
                     const container = document.getElementById('onlineUsersList');
                     container.innerHTML = ''; // Clear current
                     
-                    // Switch to Grid Layout for "Name below Avatar"
-                    container.className = 'd-flex flex-wrap gap-2 justify-content-start';
+                    // Vertical List Layout (Compact)
+                    container.className = 'd-flex flex-column gap-2';
 
                     if (data.length === 0) {
                         container.innerHTML = '<div class="text-muted small w-100 text-center">Nenhum usuário online.</div>';
@@ -232,10 +280,10 @@
                         let avatarHtml = '';
                         
                         if (user.avatar_url) {
-                            avatarHtml = `<img src="${user.avatar_url}" class="rounded-circle border shadow-sm" width="45" height="45" style="object-fit: cover;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${user.initials}&background=random&color=fff';">`;
+                            avatarHtml = `<img src="${user.avatar_url}" class="rounded-circle border shadow-sm" width="32" height="32" style="object-fit: cover;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${user.initials}&background=random&color=fff';">`;
                         } else {
                             avatarHtml = `
-                                <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center shadow-sm" style="width: 45px; height: 45px; font-size: 1rem;">
+                                <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center shadow-sm" style="width: 32px; height: 32px; font-size: 0.8rem;">
                                     ${user.initials}
                                 </div>`;
                         }
@@ -243,30 +291,26 @@
                         let statusDotClass = user.is_online ? 'bg-success' : 'bg-secondary';
                         
                         let deviceIcon = '';
-                        if (user.device_type == 1) deviceIcon = '<i class="bi bi-globe text-primary"></i>'; // Site
-                        else if (user.device_type == 2) deviceIcon = '<i class="bi bi-android text-success"></i>'; // Android
-                        else if (user.device_type == 3) deviceIcon = '<i class="bi bi-apple text-dark"></i>'; // iOS
-                        else deviceIcon = '<i class="bi bi-question-circle text-muted"></i>';
+                        if (user.device_type == 1) deviceIcon = '<i class="bi bi-globe text-primary small" style="font-size: 0.7rem;"></i>'; // Site
+                        else if (user.device_type == 2) deviceIcon = '<i class="bi bi-android text-success small" style="font-size: 0.7rem;"></i>'; // Android
+                        else if (user.device_type == 3) deviceIcon = '<i class="bi bi-apple text-dark small" style="font-size: 0.7rem;"></i>'; // iOS
+                        else deviceIcon = '<i class="bi bi-question-circle text-muted small" style="font-size: 0.7rem;"></i>';
 
                         const html = `
-                            <div class="user-item fade-in text-center p-1" style="width: 80px;">
-                                <div class="position-relative d-inline-block">
+                            <div class="user-item fade-in d-flex align-items-center p-1 rounded hover-bg-light">
+                                <div class="position-relative flex-shrink-0">
                                     ${avatarHtml}
-                                    
-                                    <!-- Status Dot (Bottom Right) -->
-                                    <span class="position-absolute bottom-0 end-0 p-1 ${statusDotClass} border border-white rounded-circle" style="width: 12px; height: 12px; display: block;" title="${user.is_online ? 'Online' : 'Offline'}"></span>
-                                    
-                                    <!-- Device Icon (Bottom Left Overlay) -->
-                                    <span class="position-absolute bottom-0 start-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center border" style="width: 20px; height: 20px; font-size: 0.75rem; transform: translate(-15%, 15%); z-index: 5;">
-                                        ${deviceIcon}
+                                    <span class="position-absolute bottom-0 end-0 p-0 bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 10px; height: 10px;">
+                                        <span class="${statusDotClass} rounded-circle" style="width: 8px; height: 8px; display: block;" title="${user.is_online ? 'Online' : 'Offline'}"></span>
                                     </span>
                                 </div>
                                 
-                                <div class="mt-2">
-                                    <h6 class="mb-0 fw-bold text-dark text-truncate w-100" style="font-size: 0.75rem;" title="${user.name}">${user.name}</h6>
-                                    <small class="text-muted d-block" style="font-size: 0.65rem; line-height: 1.1;">
-                                        ${user.status_text}
-                                    </small>
+                                <div class="ms-2 flex-grow-1 overflow-hidden" style="line-height: 1.2;">
+                                    <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.85rem;" title="${user.name}">${user.name}</h6>
+                                    <div class="d-flex align-items-center gap-1">
+                                        ${deviceIcon}
+                                        <small class="text-muted" style="font-size: 0.7rem;">${user.status_text}</small>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -280,6 +324,78 @@
         fetchOnlineUsers();
         // Poll every 30 seconds
         setInterval(fetchOnlineUsers, 30000);
+
+        // Clock & Weather Functionality
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clockTime').textContent = `${hours}:${minutes}`;
+
+            const options = { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' };
+            document.getElementById('clockDate').textContent = now.toLocaleDateString('pt-BR', options);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Weather with Geolocation
+        function fetchWeather() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Reverse Geocoding (Nominatim OpenStreetMap - Free, No Key)
+                    // Note: Use responsibly. For high traffic, cache results or use a paid service.
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            let city = data.address.city || data.address.town || data.address.village || data.address.municipality || 'Local desconhecido';
+                            // Shorten city name if too long
+                            if (city.length > 15) city = city.substring(0, 15) + '...';
+                            document.getElementById('locationName').textContent = city;
+                        })
+                        .catch(err => {
+                            console.error('Geo error:', err);
+                            document.getElementById('locationName').textContent = 'Brasil';
+                        });
+
+                    // Weather (Open-Meteo - Free, No Key)
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const temp = Math.round(data.current.temperature_2m);
+                            document.getElementById('weatherTemp').textContent = `${temp}°C`;
+                            
+                            // Map WMO codes to Bootstrap Icons
+                            const code = data.current.weather_code;
+                            let icon = 'bi-cloud';
+                            if (code === 0) icon = 'bi-sun'; // Clear sky
+                            else if (code >= 1 && code <= 3) icon = 'bi-cloud-sun'; // Partly cloudy
+                            else if (code >= 45 && code <= 48) icon = 'bi-cloud-fog'; // Fog
+                            else if (code >= 51 && code <= 67) icon = 'bi-cloud-rain'; // Drizzle/Rain
+                            else if (code >= 71 && code <= 77) icon = 'bi-cloud-snow'; // Snow
+                            else if (code >= 80 && code <= 82) icon = 'bi-cloud-rain-heavy'; // Showers
+                            else if (code >= 95 && code <= 99) icon = 'bi-cloud-lightning-rain'; // Thunderstorm
+                            
+                            // Adjust for night time? (Simple check: 6pm to 6am)
+                            const hour = new Date().getHours();
+                            if ((hour >= 18 || hour < 6) && code === 0) icon = 'bi-moon-stars';
+                            
+                            document.getElementById('weatherIcon').className = `bi ${icon}`;
+                        })
+                        .catch(err => console.error('Weather error:', err));
+
+                }, error => {
+                    console.log('Geolocation denied or failed:', error);
+                    document.getElementById('locationName').textContent = 'Brasil';
+                    document.getElementById('weatherTemp').textContent = '--';
+                });
+            } else {
+                document.getElementById('locationName').textContent = 'Navegador incompatível';
+            }
+        }
+        fetchWeather(); // Call once on load
     });
 </script>
 @endsection
