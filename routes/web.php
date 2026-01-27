@@ -28,6 +28,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
+    // Settings
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings/privacy', [App\Http\Controllers\SettingsController::class, 'updatePrivacy'])->name('settings.update.privacy');
+    Route::put('/settings/password', [App\Http\Controllers\SettingsController::class, 'updatePassword'])->name('settings.update.password');
+
     // Módulos Internos
     // Registros Gerais
     Route::get('registers/search', [RegisterController::class, 'searchPeople'])->name('registers.search');

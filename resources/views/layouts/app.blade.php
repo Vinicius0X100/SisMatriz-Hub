@@ -94,7 +94,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser1">
                         <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Perfil</a></li>
-                        <li><a class="dropdown-item" href="#">Configurações</a></li>
+                        <li><a class="dropdown-item" href="{{ route('settings.index') }}">Configurações</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form action="{{ route('logout') }}" method="POST">

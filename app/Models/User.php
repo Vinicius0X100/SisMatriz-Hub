@@ -23,6 +23,8 @@ class User extends Authenticatable
         'password',
         'rule',
         'status',
+        'is_visible',
+        'hide_name',
         'is_pass_change',
         'login_attempts',
         'last_attempt',

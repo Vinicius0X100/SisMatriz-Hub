@@ -80,12 +80,16 @@ class DashboardController extends Controller
     public function getOnlineUsers()
     {
         $accesses = UserAccess::with('user')
+            ->whereHas('user', function ($q) {
+                $q->where('is_visible', true);
+            })
             ->orderBy('access_date', 'desc')
             ->orderBy('access_time', 'desc')
-            ->limit(10)
+            ->limit(15) // Fetch a few more to account for duplicates if any (though distinct user_id is handled after)
             ->get()
             ->unique('user_id')
-            ->values();
+            ->values()
+            ->take(10);
 
         $data = $accesses->map(function ($access) {
             $user = $access->user;
@@ -96,7 +100,17 @@ class DashboardController extends Controller
             $diffInMinutes = $accessDateTime->diffInMinutes($now);
             $isOnline = $diffInMinutes < 10;
 
-            $displayName = Str::limit($user->name ?? $user->user, 25, '...');
+            // Handle Hide Name
+            if ($user->hide_name) {
+                $displayName = 'Usuário';
+                // Also maybe hide avatar? Or just keep it? User said "hide name". 
+                // Let's keep avatar if it's generic, but if it's a photo it reveals identity.
+                // Usually "Hide Name" implies privacy. Let's force initials or generic avatar if hidden.
+                // But the requirement was specific to "esconder o nome". 
+                // Let's just change the name for now.
+            } else {
+                $displayName = Str::limit($user->name ?? $user->user, 25, '...');
+            }
 
             if ($isOnline) {
                 $statusText = 'Online';
@@ -106,7 +120,7 @@ class DashboardController extends Controller
                 $statusText = $accessDateTime->format('d/m/Y');
             }
 
-            $avatarUrl = $user->avatar 
+            $avatarUrl = ($user->avatar && !$user->hide_name)
                 ? asset('storage/uploads/avatars/' . $user->avatar)
                 : null;
 
