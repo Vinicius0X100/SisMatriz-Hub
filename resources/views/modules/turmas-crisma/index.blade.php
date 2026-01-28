@@ -88,7 +88,7 @@
 
                 <!-- Date Range Filter -->
                 <div class="col-md-3">
-                    <label class="form-label fw-bold text-muted small">Período (Início)</label>
+                    <label class="form-label fw-bold text-muted small">Período</label>
                     <div class="input-group">
                         <input type="date" id="dateFrom" class="form-control rounded-pill rounded-end-0" placeholder="De" style="height: 45px;">
                         <input type="date" id="dateTo" class="form-control rounded-pill rounded-start-0" placeholder="Até" style="height: 45px; margin-left: -1px;">

@@ -28,12 +28,12 @@ class TurmasEucaristiaController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter by Date (Inicio)
+        // Filter by Date (Inicio and Termino)
         if ($request->has('date_from') && $request->date_from != '') {
             $query->whereDate('inicio', '>=', $request->date_from);
         }
         if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('inicio', '<=', $request->date_to);
+            $query->whereDate('termino', '<=', $request->date_to);
         }
 
         if (Auth::check() && Auth::user()->paroquia_id) {
