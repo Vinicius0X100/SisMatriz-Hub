@@ -160,6 +160,27 @@
         display: block;
         line-height: 1;
     }
+    .reply-hover-indicator {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #ffffffcc;
+        border: 1px solid rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        pointer-events: none;
+        z-index: 3;
+    }
+    .message-bubble.message-received:hover .reply-hover-indicator {
+        opacity: 1;
+    }
     .replied-message {
         background-color: rgba(0,0,0,0.05);
         border-left: 4px solid #00a884;
@@ -491,7 +512,7 @@
                 }
 
                 const bubble = document.createElement('div');
-                bubble.className = `d-flex flex-column ${isSent ? 'align-items-end' : 'align-items-start'}`;
+                bubble.className = `chat-bubble-wrapper d-flex flex-column ${isSent ? 'align-items-end' : 'align-items-start'}`;
                 bubble.id = `msg-${msg.id}`; 
                 
                 const senderName = isSent ? 'Você' : (currentUserData.display_name || 'Usuário');
@@ -499,8 +520,11 @@
                 const bubbleContent = document.createElement('div');
                 bubbleContent.className = `message-bubble ${isSent ? 'message-sent' : 'message-received'}`;
                 bubbleContent.title = "Duplo clique para responder";
-                
+
+                const indicator = !isSent ? `<div class=\"reply-hover-indicator\" aria-label=\"Responder\" title=\"Duplo clique para responder\"><i class=\"bi bi-reply-fill\"></i></div>` : '';
+
                 bubbleContent.innerHTML = `
+                    ${indicator}
                     ${replyHtml}
                     ${escapeHtml(msg.message)}
                     <span class="message-time">
@@ -508,6 +532,8 @@
                         ${isSent ? (msg.is_read ? '<i class="bi bi-check2-all text-primary"></i>' : '<i class="bi bi-check2"></i>') : ''}
                     </span>
                 `;
+
+                bubble.style.position = 'relative';
                 
                 bubbleContent.addEventListener('dblclick', () => {
                    startReply(msg.id, msg.message, senderName); 
