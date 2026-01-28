@@ -26,5 +26,9 @@ return [
     ['name' => 'Excursões', 'icon' => 'bus-front'],
     ['name' => 'Registros gerais', 'icon' => 'journal-text', 'url' => '/registers'],
     ['name' => 'Protocolos', 'icon' => 'shield-check'],
+    ['name' => 'Catequese de Primeira Eucaristia', 'icon' => 'book', 'url' => '/catequese-eucaristia'],
+    ['name' => 'Catequese de Crisma', 'icon' => 'fire', 'url' => '/catequese-crisma'],
+    ['name' => 'Catequistas de Primeira Eucaristia', 'icon' => 'person-badge', 'url' => '/catequistas-eucaristia'],
+    ['name' => 'Catequistas de Crisma', 'icon' => 'person-badge-fill', 'url' => '/catequistas-crisma'],
     ['name' => 'Início', 'icon' => 'house'],
 ];

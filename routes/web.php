@@ -48,6 +48,12 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('lembretes/{id}/snooze', [App\Http\Controllers\LembreteController::class, 'snooze'])->name('lembretes.snooze');
     Route::resource('lembretes', App\Http\Controllers\LembreteController::class);
 
+    // Catequese
+    Route::resource('catequese-eucaristia', App\Http\Controllers\CatequeseEucaristiaController::class);
+    Route::resource('catequese-crisma', App\Http\Controllers\CatequeseCrismaController::class);
+    Route::resource('catequistas-eucaristia', App\Http\Controllers\CatequistasEucaristiaController::class);
+    Route::resource('catequistas-crisma', App\Http\Controllers\CatequistasCrismaController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
