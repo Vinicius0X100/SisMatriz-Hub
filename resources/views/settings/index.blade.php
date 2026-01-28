@@ -52,7 +52,7 @@
                                     <label class="form-check-label fw-bold mb-1" for="isVisible">Aparecer Online</label>
                                     <div class="text-muted small" style="line-height: 1.2;">Permitir que outros vejam quando estou usando o sistema.</div>
                                 </div>
-                                <input class="form-check-input ms-2 fs-5" type="checkbox" role="switch" id="isVisible" name="is_visible" {{ old('is_visible', $user->is_visible) ? 'checked' : '' }} style="cursor: pointer;">
+                                <input class="form-check-input ms-2 fs-5" type="checkbox" role="switch" id="isVisible" name="is_visible" value="1" {{ old('is_visible', $user->is_visible) ? 'checked' : '' }} style="cursor: pointer;">
                             </div>
 
                             <!-- Ocultar Nome -->
@@ -61,7 +61,7 @@
                                     <label class="form-check-label fw-bold mb-1" for="hideName">Ocultar meu Nome</label>
                                     <div class="text-muted small" style="line-height: 1.2;">Exibir apenas iniciais ou "Usuário" na lista de online.</div>
                                 </div>
-                                <input class="form-check-input ms-2 fs-5" type="checkbox" role="switch" id="hideName" name="hide_name" {{ old('hide_name', $user->hide_name) ? 'checked' : '' }} style="cursor: pointer;">
+                                <input class="form-check-input ms-2 fs-5" type="checkbox" role="switch" id="hideName" name="hide_name" value="1" {{ old('hide_name', $user->hide_name) ? 'checked' : '' }} style="cursor: pointer;">
                             </div>
                         </div>
 

@@ -79,17 +79,20 @@ class DashboardController extends Controller
 
     public function getOnlineUsers()
     {
+        $currentUserId = Auth::id();
+
         $accesses = UserAccess::with('user')
+            ->where('user_id', '!=', $currentUserId) // Exclude current user
             ->whereHas('user', function ($q) {
                 $q->where('is_visible', true);
             })
             ->orderBy('access_date', 'desc')
             ->orderBy('access_time', 'desc')
-            ->limit(15) // Fetch a few more to account for duplicates if any (though distinct user_id is handled after)
+            ->limit(30) // Increased limit to ensure we get enough unique users
             ->get()
             ->unique('user_id')
             ->values()
-            ->take(10);
+            ->take(20); // Show up to 20 users
 
         $data = $accesses->map(function ($access) {
             $user = $access->user;
