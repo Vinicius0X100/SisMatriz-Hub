@@ -102,6 +102,8 @@
                             Ações em Massa
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="bulkActions">
+                            <li><a class="dropdown-item" href="#" onclick="openExportModal(true)"><i class="bi bi-download me-2"></i> Exportar Selecionados</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="#" onclick="bulkDelete()"><i class="bi bi-trash me-2"></i> Excluir Selecionados</a></li>
                         </ul>
                     </div>
@@ -157,6 +159,9 @@
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <h6 class="fw-bold mb-0">Lista de Crismandos(as)</h6>
                             <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-success rounded-pill d-flex align-items-center gap-2" onclick="openExportModal()">
+                                    <i class="bi bi-file-earmark-arrow-down"></i> <span class="d-none d-sm-inline">Exportar</span>
+                                </button>
                                 <select id="filterBatizado" class="form-select form-select-sm rounded-pill" style="width: 150px;">
                                     <option value="">Todos</option>
                                     <option value="1">Batizados</option>
@@ -407,9 +412,19 @@
     let currentStudents = [];
     let manageModal;
     let transferModal;
+    let exportModalObj;
+    let currentManageId = null;
+    let isBulkExport = false;
     let currentSortModal = { column: 'name', order: 'asc' };
 
+    // Inicialização dos tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
     function openManageModal(id) {
+        currentManageId = id;
         if (!manageModal) {
             manageModal = new bootstrap.Modal(document.getElementById('manageModal'));
         }
@@ -505,6 +520,72 @@
                 icon.className = 'bi bi-arrow-down-up small text-muted ms-1';
             }
         });
+    }
+
+    function openExportModal(isBulk = false) {
+        isBulkExport = isBulk;
+        if (!exportModalObj) {
+            exportModalObj = new bootstrap.Modal(document.getElementById('exportModal'));
+        }
+        
+        // Reset radio
+        document.getElementById('exportExcel').checked = true;
+        
+        // Update title
+        const title = document.querySelector('#exportModal .modal-title');
+        if (title) {
+            title.textContent = isBulk ? 'Exportar Selecionados' : 'Exportar Lista';
+        }
+
+        exportModalObj.show();
+    }
+
+    function confirmExport() {
+        const type = document.querySelector('input[name="exportType"]:checked').value;
+        const btn = document.getElementById('btnExportConfirm');
+        const originalText = btn.innerHTML;
+
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Criando relação...';
+
+        let url;
+        if (isBulkExport) {
+             const ids = Array.from(selectedIds).join(',');
+             url = `/turmas-crisma/export-bulk?ids=${ids}&type=${type}`;
+        } else {
+             url = `/turmas-crisma/${currentManageId}/export?type=${type}`;
+        }
+
+        // Fetch to handle download and reset button
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Erro na exportação');
+                return response.blob().then(blob => ({
+                    blob,
+                    filename: response.headers.get('Content-Disposition')?.split('filename=')[1] || (isBulkExport ? 'export.zip' : `export.${type === 'excel' ? 'csv' : 'pdf'}`)
+                }));
+            })
+            .then(({ blob, filename }) => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename.replace(/['"]/g, ''); // Clean quotes
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                exportModalObj.hide();
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erro ao gerar arquivo. Tente novamente.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
     }
 
     function renderStudents(list) {
@@ -625,4 +706,41 @@
         </div>
     </div>
 </div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Exportar Lista</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4">Selecione o formato para exportar a lista de alunos desta turma.</p>
+                
+                <div class="d-flex gap-3 justify-content-center mb-4">
+                    <div class="form-check form-check-inline bg-light p-3 rounded-3 border w-100 m-0 d-flex align-items-center justify-content-center" style="cursor: pointer;" onclick="document.getElementById('exportExcel').checked = true">
+                        <input class="form-check-input" type="radio" name="exportType" id="exportExcel" value="excel" checked>
+                        <label class="form-check-label fw-bold ms-2" for="exportExcel">
+                            <i class="bi bi-file-earmark-excel text-success fs-5 me-1"></i> Excel
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline bg-light p-3 rounded-3 border w-100 m-0 d-flex align-items-center justify-content-center" style="cursor: pointer;" onclick="document.getElementById('exportPdf').checked = true">
+                        <input class="form-check-input" type="radio" name="exportType" id="exportPdf" value="pdf">
+                        <label class="form-check-label fw-bold ms-2" for="exportPdf">
+                            <i class="bi bi-file-earmark-pdf text-danger fs-5 me-1"></i> PDF
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="button" class="btn btn-primary rounded-pill py-2" id="btnExportConfirm" onclick="confirmExport()">
+                        <i class="bi bi-download me-2"></i> Gerar Arquivo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

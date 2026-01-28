@@ -8,6 +8,8 @@ use App\Models\Crismando;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+
 class TurmasCrismaController extends Controller
 {
     /**
@@ -99,15 +101,31 @@ class TurmasCrismaController extends Controller
             'status' => 'required|in:1,2,3,4',
         ]);
 
-        TurmaCrisma::create([
+        $turma = TurmaCrisma::create([
             'turma' => $request->turma,
             'tutor' => $request->tutor,
             'inicio' => $request->inicio,
             'termino' => $request->termino,
-            'alunos_qntd' => 0, // Default value as requested
+            'alunos_qntd' => 0, // Will be updated
             'status' => $request->status,
             'paroquia_id' => Auth::user()->paroquia_id,
         ]);
+
+        // Handle Students
+        if ($request->has('students') && is_array($request->students)) {
+            foreach ($request->students as $studentData) {
+                if (isset($studentData['id'])) {
+                    Crismando::create([
+                        'turma_id' => $turma->id,
+                        'register_id' => $studentData['id'],
+                        'batizado' => isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false,
+                    ]);
+                }
+            }
+            // Update count
+            $turma->alunos_qntd = $turma->crismandos()->count();
+            $turma->save();
+        }
 
         return redirect()->route('turmas-crisma.index')->with('success', 'Turma adicionada com sucesso!');
     }
@@ -117,7 +135,7 @@ class TurmasCrismaController extends Controller
      */
     public function edit(string $id)
     {
-        $turma = TurmaCrisma::findOrFail($id);
+        $turma = TurmaCrisma::with('crismandos.register')->findOrFail($id);
         
         // Ensure security check for paroquia
         if ($turma->paroquia_id != Auth::user()->paroquia_id) {
@@ -158,6 +176,43 @@ class TurmasCrismaController extends Controller
             'termino' => $request->termino,
             'status' => $request->status,
         ]);
+
+        // Sync Students
+        $submittedStudentIds = [];
+        if ($request->has('students') && is_array($request->students)) {
+            foreach ($request->students as $studentData) {
+                if (isset($studentData['id'])) {
+                    $submittedStudentIds[] = $studentData['id'];
+                    $crismando = Crismando::where('turma_id', $turma->id)
+                                          ->where('register_id', $studentData['id'])
+                                          ->first();
+                    
+                    $isBatizado = isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false;
+
+                    if ($crismando) {
+                        // Update existing
+                        $crismando->batizado = $isBatizado;
+                        $crismando->save();
+                    } else {
+                        // Create new
+                        Crismando::create([
+                            'turma_id' => $turma->id,
+                            'register_id' => $studentData['id'],
+                            'batizado' => $isBatizado,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Remove students not in the submitted list
+        Crismando::where('turma_id', $turma->id)
+                 ->whereNotIn('register_id', $submittedStudentIds)
+                 ->delete();
+
+        // Update count
+        $turma->alunos_qntd = $turma->crismandos()->count();
+        $turma->save();
 
         return redirect()->route('turmas-crisma.index')->with('success', 'Turma atualizada com sucesso!');
     }
@@ -236,5 +291,119 @@ class TurmasCrismaController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Aluno transferido com sucesso!']);
+    }
+
+    public function exportStudents(Request $request, string $id)
+    {
+        $turma = TurmaCrisma::with(['crismandos.register', 'catequista'])->findOrFail($id);
+
+        if ($turma->paroquia_id != Auth::user()->paroquia_id) {
+            abort(403);
+        }
+
+        $students = $turma->crismandos->map(function($student) {
+            return [
+                'name' => $student->register->name ?? 'Sem Nome',
+                'phone' => $student->register->phone ?? 'Sem Telefone',
+                'batizado' => $student->batizado
+            ];
+        })->sortBy('name');
+
+        if ($request->type === 'pdf') {
+            $pdf = Pdf::loadView('pdf.turma-students', [
+                'turma' => $turma,
+                'students' => $students,
+                'typeLabel' => 'Crismandos(as)',
+                'paroquia' => Auth::user()->paroquia
+            ]);
+            return $pdf->download('turma_'.$id.'_crismandos.pdf');
+        }
+
+        if ($request->type === 'excel') {
+            $headers = [
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=turma_".$id."_crismandos.csv",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ];
+
+            $callback = function() use ($students) {
+                $file = fopen('php://output', 'w');
+                // UTF-8 BOM for Excel
+                fputs($file, "\xEF\xBB\xBF");
+                fputcsv($file, ['Nome', 'Telefone', 'Batizado']); // Headers
+
+                foreach ($students as $student) {
+                    fputcsv($file, [
+                        $student['name'],
+                        $student['phone'],
+                        $student['batizado'] ? 'Sim' : 'Não'
+                    ]);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        return redirect()->back()->with('error', 'Formato inválido.');
+    }
+
+    public function exportBulk(Request $request)
+    {
+        $ids = explode(',', $request->ids);
+        $type = $request->type;
+        
+        $zipFile = tempnam(sys_get_temp_dir(), 'zip');
+        $zip = new \ZipArchive();
+        if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+            return response()->json(['error' => 'Não foi possível criar o arquivo ZIP'], 500);
+        }
+
+        $turmas = TurmaCrisma::whereIn('id', $ids)
+            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->with(['crismandos.register', 'catequista'])
+            ->get();
+
+        if ($turmas->isEmpty()) {
+             return response()->json(['error' => 'Nenhuma turma encontrada'], 404);
+        }
+
+        foreach ($turmas as $turma) {
+            $students = $turma->crismandos->map(function($student) {
+                return [
+                    'name' => $student->register->name ?? 'Sem Nome',
+                    'phone' => $student->register->phone ?? 'Sem Telefone',
+                    'batizado' => $student->batizado
+                ];
+            })->sortBy('name');
+
+            $filename = 'turma_' . $turma->id . '_' . \Illuminate\Support\Str::slug($turma->turma) . '.' . ($type === 'excel' ? 'csv' : 'pdf');
+
+            if ($type === 'pdf') {
+                $pdf = Pdf::loadView('pdf.turma-students', [
+                    'turma' => $turma,
+                    'students' => $students,
+                    'typeLabel' => 'Crismandos(as)',
+                    'paroquia' => Auth::user()->paroquia
+                ]);
+                $zip->addFromString($filename, $pdf->output());
+            } else {
+                // Excel/CSV
+                $csv = "\xEF\xBB\xBF"; // BOM
+                $csv .= "Nome,Telefone,Batizado\n";
+                foreach ($students as $student) {
+                    $csv .= '"' . str_replace('"', '""', $student['name']) . '",';
+                    $csv .= '"' . str_replace('"', '""', $student['phone']) . '",';
+                    $csv .= '"' . ($student['batizado'] ? 'Sim' : 'Não') . '"' . "\n";
+                }
+                $zip->addFromString($filename, $csv);
+            }
+        }
+
+        $zip->close();
+
+        return response()->download($zipFile, 'turmas_export_'.date('Y-m-d_H-i').'.zip')->deleteFileAfterSend(true);
     }
 }

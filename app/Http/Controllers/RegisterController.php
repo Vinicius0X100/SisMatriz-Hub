@@ -283,7 +283,8 @@ class RegisterController extends Controller
             });
         }
 
-        $results = $query->limit(10)->get(['id', 'name', 'cpf']);
+        // Order by most recent (assuming higher ID is more recent or created_at)
+        $results = $query->orderBy('id', 'desc')->limit(10)->get(['id', 'name', 'cpf']);
         return response()->json($results);
     }
 
