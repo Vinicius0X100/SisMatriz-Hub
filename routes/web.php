@@ -53,6 +53,16 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('catequese-crisma', App\Http\Controllers\CatequeseCrismaController::class);
     Route::resource('catequistas-eucaristia', App\Http\Controllers\CatequistasEucaristiaController::class);
     Route::resource('catequistas-crisma', App\Http\Controllers\CatequistasCrismaController::class);
+    
+    // Turmas Eucaristia
+    Route::get('turmas-eucaristia/{id}/students', [App\Http\Controllers\TurmasEucaristiaController::class, 'getStudents'])->name('turmas-eucaristia.students');
+    Route::post('turmas-eucaristia/transfer', [App\Http\Controllers\TurmasEucaristiaController::class, 'transferStudent'])->name('turmas-eucaristia.transfer');
+    Route::resource('turmas-eucaristia', App\Http\Controllers\TurmasEucaristiaController::class);
+    
+    // Turmas Crisma
+    Route::get('turmas-crisma/{id}/students', [App\Http\Controllers\TurmasCrismaController::class, 'getStudents'])->name('turmas-crisma.students');
+    Route::post('turmas-crisma/transfer', [App\Http\Controllers\TurmasCrismaController::class, 'transferStudent'])->name('turmas-crisma.transfer');
+    Route::resource('turmas-crisma', App\Http\Controllers\TurmasCrismaController::class);
 
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
