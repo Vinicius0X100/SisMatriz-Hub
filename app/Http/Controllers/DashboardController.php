@@ -19,23 +19,37 @@ class DashboardController extends Controller
         // Fetch modules from config
         $modules = config('modules');
 
-        // Fetch pinned modules slugs
-        $pinnedSlugs = PinnedModule::where('user_id', $user->id)
+        // Fetch pinned modules (records)
+        $pinnedRecords = PinnedModule::where('user_id', $user->id)
             ->where('paroquia_id', $paroquiaId)
-            ->pluck('module_slug')
-            ->toArray();
+            ->orderBy('order', 'asc')
+            ->get()
+            ->keyBy('module_slug');
+
+        $pinnedSlugs = $pinnedRecords->keys()->toArray();
 
         // Process modules
-        $allModules = collect($modules)->map(function ($module) use ($pinnedSlugs) {
+        $allModules = collect($modules)->map(function ($module) use ($pinnedRecords, $pinnedSlugs) {
             $module['slug'] = Str::slug($module['name']);
             $module['is_pinned'] = in_array($module['slug'], $pinnedSlugs);
+            
+            if ($module['is_pinned']) {
+                $record = $pinnedRecords[$module['slug']];
+                $module['bg_color'] = $record->bg_color;
+                $module['text_color'] = $record->text_color;
+                $module['order'] = $record->order;
+            }
+
             return $module;
         })->filter(function ($module) {
             return $module['slug'] !== 'chat';
         });
 
-        // Pinned Modules (Full objects)
-        $pinnedModules = $allModules->where('is_pinned', true)->values();
+        // Pinned Modules (Sorted by order)
+        $pinnedModules = $allModules->where('is_pinned', true)
+            ->sortBy('order')
+            ->values();
+
 
         // Grouped Modules (A-Z)
         // Sort by name
@@ -148,5 +162,53 @@ class DashboardController extends Controller
         })->filter()->values();
 
         return response()->json($data);
+    }
+
+    public function reorderPins(Request $request)
+    {
+        $request->validate([
+            'order' => 'required|array',
+            'order.*.slug' => 'required|string',
+            'order.*.index' => 'required|integer',
+        ]);
+
+        $user = Auth::user();
+        $paroquiaId = $user->paroquia_id;
+
+        foreach ($request->order as $item) {
+            PinnedModule::where('user_id', $user->id)
+                ->where('paroquia_id', $paroquiaId)
+                ->where('module_slug', $item['slug'])
+                ->update(['order' => $item['index']]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updatePinStyle(Request $request)
+    {
+        $request->validate([
+            'module_slug' => 'required|string',
+            'bg_color' => 'nullable|string',
+            'text_color' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+        $paroquiaId = $user->paroquia_id;
+
+        $updateData = [];
+        if ($request->has('bg_color')) $updateData['bg_color'] = $request->bg_color;
+        if ($request->has('text_color')) $updateData['text_color'] = $request->text_color;
+
+        if (empty($updateData)) {
+            return response()->json(['success' => true]);
+        }
+
+        PinnedModule::where('user_id', $user->id)
+            ->where('paroquia_id', $paroquiaId)
+            ->where('module_slug', $request->module_slug)
+            ->update($updateData);
+
+        return response()->json(['success' => true]);
     }
 }

@@ -13,6 +13,9 @@ class PinnedModule extends Model
         'user_id',
         'paroquia_id',
         'module_slug',
+        'order',
+        'bg_color',
+        'text_color',
     ];
 
     public function user()

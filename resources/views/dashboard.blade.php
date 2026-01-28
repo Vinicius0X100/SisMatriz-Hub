@@ -69,18 +69,53 @@
                 <h5 class="fw-bold text-dark mb-3 ps-2 border-start border-4 border-primary">Meus Fixados</h5>
                 <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-3">
                     @foreach($pinnedModules as $module)
-                    <div class="col module-item">
-                        <div class="card h-100 border-0 shadow-sm card-module text-center p-2 position-relative">
-                            <!-- Pin Button -->
-                            <button class="btn position-absolute top-0 end-0 p-1 pin-btn" data-slug="{{ $module['slug'] }}" title="Desafixar">
-                                <i class="mdi mdi-pin text-primary"></i>
-                            </button>
+                    <div class="col module-item" data-slug="{{ $module['slug'] }}">
+                        <div class="card h-100 border-0 shadow-sm card-module text-center p-2 position-relative" style="background-color: {{ $module['bg_color'] ?? '#fff' }};">
+                            
+                            <!-- Options Dropdown -->
+                            <div class="dropdown position-absolute top-0 end-0 p-1" style="z-index: 20;">
+                                <button class="btn btn-sm btn-link text-muted p-0 opacity-50 hover-opacity-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-3" style="min-width: 200px;">
+                                    <li><h6 class="dropdown-header px-0 text-uppercase small fw-bold">Cor de Fundo</h6></li>
+                                    <li class="mb-3">
+                                        <div class="d-flex gap-1 flex-wrap justify-content-center">
+                                            @foreach(['#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6', '#cfe2ff', '#e0cffc', '#f1aeb5', '#ffe69c', '#d1e7dd', '#cff4fc'] as $color)
+                                                <button class="btn btn-sm border rounded-circle color-btn shadow-sm" 
+                                                        style="width: 24px; height: 24px; background-color: {{ $color }};" 
+                                                        data-color="{{ $color }}" 
+                                                        data-slug="{{ $module['slug'] }}"
+                                                        title="Fundo"></button>
+                                            @endforeach
+                                        </div>
+                                    </li>
+                                    <li><h6 class="dropdown-header px-0 text-uppercase small fw-bold">Cor do Texto</h6></li>
+                                    <li class="mb-3">
+                                        <div class="d-flex gap-1 flex-wrap justify-content-center">
+                                            @foreach(['#212529', '#6c757d', '#0d6efd', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#ffffff'] as $color)
+                                                <button class="btn btn-sm border rounded-circle text-color-btn shadow-sm" 
+                                                        style="width: 24px; height: 24px; background-color: {{ $color }};" 
+                                                        data-color="{{ $color }}" 
+                                                        data-slug="{{ $module['slug'] }}"
+                                                        title="Texto"></button>
+                                            @endforeach
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger small rounded pin-action-btn" href="#" data-slug="{{ $module['slug'] }}">
+                                            <i class="bi bi-pin-angle-fill me-2"></i> Desafixar
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
 
-                            <a href="{{ $module['url'] ?? '#' }}" class="text-decoration-none text-dark d-block h-100">
-                                <div class="card-body d-flex flex-column align-items-center justify-content-center p-2">
+                            <a href="{{ $module['url'] ?? '#' }}" class="text-decoration-none d-block h-100" style="color: {{ $module['text_color'] ?? '#212529' }};">
+                                <div class="card-body d-flex flex-column align-items-center justify-content-center p-2 pt-4">
                                     <h6 class="card-title fw-bold mb-2 text-truncate w-100" style="font-size: 0.8rem;">{{ $module['name'] }}</h6>
-                                    <div class="icon-container mb-0">
-                                        <i class="bi bi-{{ $module['icon'] }} text-primary" style="font-size: 1.8rem;"></i>
+                                    <div class="icon-container mb-0" style="background-color: rgba(0,0,0,0.03);">
+                                        <i class="bi bi-{{ $module['icon'] }}" style="font-size: 1.8rem; color: inherit;"></i>
                                     </div>
                                 </div>
                             </a>
@@ -102,7 +137,7 @@
                         <div class="col module-item">
                             <div class="card h-100 border-0 shadow-sm card-module text-center p-2 position-relative">
                                 <!-- Pin Button -->
-                                <button class="btn position-absolute top-0 end-0 p-1 pin-btn" data-slug="{{ $module['slug'] }}" title="{{ $module['is_pinned'] ? 'Desafixar' : 'Fixar' }}">
+                                <button class="btn position-absolute top-0 end-0 p-1 pin-btn pin-action-btn" data-slug="{{ $module['slug'] }}" title="{{ $module['is_pinned'] ? 'Desafixar' : 'Fixar' }}">
                                     <i class="mdi {{ $module['is_pinned'] ? 'mdi-pin text-primary' : 'mdi-pin-outline' }}"></i>
                                 </button>
 
@@ -187,8 +222,71 @@
     }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Drag and Drop (Sortable)
+        const pinnedContainer = document.querySelector('#pinnedSection .row');
+        if (pinnedContainer) {
+            Sortable.create(pinnedContainer, {
+                animation: 150,
+                ghostClass: 'bg-light',
+                onEnd: function (evt) {
+                    var order = [];
+                    document.querySelectorAll('#pinnedSection .module-item').forEach((item, index) => {
+                        order.push({
+                            slug: item.getAttribute('data-slug'),
+                            index: index
+                        });
+                    });
+
+                    fetch('{{ route("dashboard.reorder-pins") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ order: order })
+                    });
+                }
+            });
+        }
+
+        // Color Customization
+        document.querySelectorAll('.color-btn, .text-color-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const slug = this.getAttribute('data-slug');
+                const color = this.getAttribute('data-color');
+                const isText = this.classList.contains('text-color-btn');
+                const card = this.closest('.card-module');
+                const link = card.querySelector('a');
+                
+                // Optimistic UI
+                if (isText) {
+                    link.style.color = color;
+                    // Also update icon color if needed? The icon uses "inherit" now in my update.
+                } else {
+                    card.style.backgroundColor = color;
+                }
+
+                const data = { module_slug: slug };
+                if (isText) data.text_color = color;
+                else data.bg_color = color;
+
+                fetch('{{ route("dashboard.update-pin-style") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+            });
+        });
+
         // Search Functionality
         const searchInput = document.getElementById('moduleSearch');
         const moduleGroups = document.querySelectorAll('.module-group');
@@ -231,13 +329,12 @@
         });
 
         // Pin Functionality
-        const pinButtons = document.querySelectorAll('.pin-btn');
+        const pinButtons = document.querySelectorAll('.pin-action-btn');
         
         pinButtons.forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const slug = this.getAttribute('data-slug');
-                const icon = this.querySelector('i');
                 
                 // Optimistic UI Update (optional, but better to wait for server or reload)
                 // For simplicity and correctness with sorting, we'll reload or fetch updated partial.

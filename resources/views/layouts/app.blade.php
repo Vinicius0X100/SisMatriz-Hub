@@ -22,6 +22,57 @@
             </a>
             
             <div class="d-flex align-items-center gap-3">
+                <!-- Notifications Button -->
+                <div class="dropdown">
+                    <button class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm position-relative" style="width: 40px; height: 40px;" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notificações">
+                        <i class="bi bi-bell text-dark fs-5"></i>
+                        @php
+                            $pendingRemindersCount = \App\Models\Lembrete::where('usuario_id', Auth::id())
+                                ->where('status', 'ativo')
+                                ->where('data_hora', '<=', now())
+                                ->count();
+                        @endphp
+                        @if($pendingRemindersCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        @endif
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white sticky-top">
+                            <h6 class="mb-0 fw-bold">Notificações</h6>
+                            <a href="{{ route('lembretes.index') }}" class="small text-decoration-none">Ver tudo</a>
+                        </div>
+                        <div class="list-group list-group-flush" id="notificationList">
+                            @php
+                                $recentReminders = \App\Models\Lembrete::where('usuario_id', Auth::id())
+                                    ->where('status', 'ativo')
+                                    ->where('data_hora', '<=', now())
+                                    ->orderBy('data_hora', 'desc')
+                                    ->take(5)
+                                    ->get();
+                            @endphp
+                            
+                            @forelse($recentReminders as $reminder)
+                                <a href="{{ route('lembretes.index') }}" class="list-group-item list-group-item-action border-0 px-3 py-3">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i class="bi bi-calendar-event text-primary mt-1"></i>
+                                        <div>
+                                            <div class="fw-medium text-dark small">{{ $reminder->descricao }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ $reminder->data_hora->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @empty
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
+                                    Nenhuma notificação nova
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Chat Button -->
                 <a href="{{ url('/chat') }}" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;" title="Chat">
                     <i class="bi bi-chat-dots text-dark fs-5"></i>
@@ -125,6 +176,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Sound Notification Check
+            setInterval(checkReminders, 30000); // Check every 30 seconds
+
+            function checkReminders() {
+                fetch('{{ route("lembretes.check") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.due) {
+                            // Play sound
+                            const audio = new Audio('{{ asset("sounds/notification.wav") }}');
+                            audio.play().catch(error => console.log('Audio play failed (user interaction needed):', error));
+                            
+                            // Optional: Refresh notification dropdown or show toast
+                            // ...
+                        }
+                    })
+                    .catch(error => console.error('Error checking reminders:', error));
+            }
+
             // Mega Menu Search
             const megaSearch = document.getElementById('megaMenuSearch');
             if (megaSearch) {

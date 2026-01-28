@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'brevo' => [
+        'key' => env('BREVO_KEY'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

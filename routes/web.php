@@ -22,6 +22,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/toggle-pin', [DashboardController::class, 'togglePin'])->name('dashboard.toggle-pin');
+    Route::post('/dashboard/reorder-pins', [DashboardController::class, 'reorderPins'])->name('dashboard.reorder-pins');
+    Route::post('/dashboard/update-pin-style', [DashboardController::class, 'updatePinStyle'])->name('dashboard.update-pin-style');
     Route::get('/dashboard/online-users', [DashboardController::class, 'getOnlineUsers'])->name('dashboard.online-users');
 
     // Profile
@@ -40,6 +42,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('registers/check-phone', [RegisterController::class, 'checkPhone'])->name('registers.check-phone');
     Route::delete('registers/attachments/{id}', [RegisterController::class, 'destroyAttachment'])->name('registers.attachments.destroy');
     Route::resource('registers', RegisterController::class);
+
+    // Lembretes
+    Route::get('lembretes/check', [App\Http\Controllers\LembreteController::class, 'checkDue'])->name('lembretes.check');
+    Route::post('lembretes/{id}/snooze', [App\Http\Controllers\LembreteController::class, 'snooze'])->name('lembretes.snooze');
+    Route::resource('lembretes', App\Http\Controllers\LembreteController::class);
 
     // Onboarding / Setup Routes
     Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
