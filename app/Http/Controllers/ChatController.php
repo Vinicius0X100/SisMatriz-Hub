@@ -7,8 +7,10 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\UserPin;
 use App\Models\BlockedUser;
+use App\Models\UserAccess;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ChatController extends Controller
 {
@@ -55,8 +57,16 @@ class ChatController extends Controller
             return $msg->sender_id == $currentUser->id ? $msg->receiver_id : $msg->sender_id;
         });
 
-        // Attach unread count, last message and pin status
-        $users->map(function ($user) use ($conversations, $currentUser, $pinnedUserIds, $blockedUserIds) {
+        // Get latest access per user
+        $latestAccesses = UserAccess::whereIn('user_id', $users->pluck('id'))
+            ->orderBy('access_date', 'desc')
+            ->orderBy('access_time', 'desc')
+            ->get()
+            ->unique('user_id')
+            ->keyBy('user_id');
+
+        // Attach unread count, last message, pin status and online info
+        $users->map(function ($user) use ($conversations, $currentUser, $pinnedUserIds, $blockedUserIds, $latestAccesses) {
             $userMessages = $conversations->get($user->id, collect());
             
             $lastMessage = $userMessages->first(); // Since it's ordered by desc, first is latest
@@ -76,6 +86,25 @@ class ChatController extends Controller
                 $user->display_name = 'Usuário';
             } else {
                 $user->display_name = $user->name ?? $user->user;
+            }
+            
+            // Online status based on latest access within 10 minutes
+            $user->is_online = false;
+            $user->status_text = 'Offline';
+            $user->last_access_at = null;
+            if ($latestAccesses->has($user->id)) {
+                $acc = $latestAccesses->get($user->id);
+                $dt = Carbon::parse(($acc->access_date ?? '') . ' ' . ($acc->access_time ?? ''));
+                $user->last_access_at = $dt ? $dt->toIso8601String() : null;
+                if ($dt) {
+                    $diffMinutes = $dt->diffInMinutes(Carbon::now());
+                    $user->is_online = $diffMinutes < 10;
+                    if ($user->is_online) {
+                        $user->status_text = 'Online';
+                    } else {
+                        $user->status_text = 'Visto há ' . ($diffMinutes < 60 ? $diffMinutes . ' min' : $dt->format('d/m H:i'));
+                    }
+                }
             }
             
             return $user;

@@ -275,6 +275,14 @@
                     userListLoading.style.display = 'none';
                     allUsers = users;
                     filterAndRenderUsers();
+                    // Update header status for selected user if present
+                    if (currentUserId) {
+                        const selected = allUsers.find(u => u.id == currentUserId);
+                        if (selected) {
+                            const detailsEl = document.getElementById('chatHeaderDetails');
+                            detailsEl.textContent = selected.is_online ? 'Online' : (selected.status_text || 'Offline');
+                        }
+                    }
                     
                     // Auto-select user if passed via URL
                     const targetUserId = "{{ $targetUserId ?? '' }}";
@@ -408,6 +416,7 @@
             
             document.getElementById('chatHeaderName').textContent = user.display_name;
             document.getElementById('chatHeaderAvatar').src = avatarUrl;
+            document.getElementById('chatHeaderDetails').textContent = user.is_online ? 'Online' : (user.status_text || 'Offline');
             
             fetchMessages();
             
