@@ -37,6 +37,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Registros Gerais
     Route::get('registers/search', [RegisterController::class, 'searchPeople'])->name('registers.search');
     Route::post('registers/pdf', [RegisterController::class, 'generatePdf'])->name('registers.pdf');
+    Route::get('registers/check-phone', [RegisterController::class, 'checkPhone'])->name('registers.check-phone');
     Route::resource('registers', RegisterController::class);
 
     // Onboarding / Setup Routes

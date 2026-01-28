@@ -297,4 +297,22 @@ class RegisterController extends Controller
         $pdf = PDF::loadView('modules.registers.pdf', compact('registers', 'columns', 'paroquia'));
         return $pdf->download('relatorio_registros.pdf');
     }
+
+    public function checkPhone(Request $request)
+    {
+        $phone = $request->get('phone');
+        $excludeId = $request->get('exclude_id');
+        $paroquiaId = Auth::user()->paroquia_id;
+
+        $query = Register::where('paroquia_id', $paroquiaId)
+                         ->where('phone', $phone);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json(['exists' => $exists]);
+    }
 }

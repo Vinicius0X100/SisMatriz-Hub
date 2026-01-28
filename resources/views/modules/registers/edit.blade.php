@@ -232,6 +232,27 @@
     </div>
 </div>
 
+<!-- Modal Confirmacao Telefone Duplicado -->
+<div class="modal fade" id="duplicatePhoneModal" tabindex="-1" aria-labelledby="duplicatePhoneModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger" id="duplicatePhoneModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Atenção: Telefone já cadastrado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-4">
+        <p class="text-muted mb-0">Já existe uma pessoa cadastrada com este número de telefone.</p>
+        <p class="text-muted small mt-2">Como não utilizamos CPF, o telefone é o principal identificador único. No entanto, sabemos que algumas pessoas podem compartilhar o mesmo número (ex: casais, idosos).</p>
+        <p class="fw-bold text-dark mt-3 mb-0">Deseja realmente prosseguir com a atualização?</p>
+      </div>
+      <div class="modal-footer border-top-0 pt-0">
+        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="confirmDuplicateBtn">Sim, Atualizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
     .file-drop-area {
         transition: all 0.2s ease;
@@ -264,6 +285,72 @@ document.addEventListener('DOMContentLoaded', function() {
     if (phoneInput) {
         phoneInput.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '').substring(0, 11);
+        });
+    }
+
+    // Duplicate Phone Check
+    const form = document.getElementById('editRegisterForm');
+    let phoneChecked = false;
+    const registerId = "{{ $register->id }}";
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (phoneChecked) return; // If already checked and confirmed, let it submit
+
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Simple validation before ajax
+            if (!phone) {
+                 phoneChecked = true;
+                 form.submit();
+                 return;
+            }
+
+            // Show loading state on button
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verificando...';
+            submitBtn.disabled = true;
+
+            // Check phone via AJAX
+            fetch(`{{ route('registers.check-phone') }}?phone=${phone}&exclude_id=${registerId}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+
+                if (data.exists) {
+                    // Show Modal
+                    const modalEl = document.getElementById('duplicatePhoneModal');
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                    
+                    // Handle Confirm Button
+                    document.getElementById('confirmDuplicateBtn').onclick = function() {
+                        phoneChecked = true;
+                        modal.hide();
+                        form.submit();
+                    };
+                } else {
+                    // No duplicate, proceed
+                    phoneChecked = true;
+                    form.submit();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking phone:', error);
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                phoneChecked = true;
+                form.submit();
+            });
         });
     }
 
@@ -481,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 5. Form Validation
-    const form = document.getElementById('editRegisterForm');
+    // form variable already declared above
     if (form) {
         form.addEventListener('submit', function(event) {
             let isValid = true;
