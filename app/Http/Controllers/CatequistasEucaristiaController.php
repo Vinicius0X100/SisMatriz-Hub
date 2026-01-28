@@ -44,9 +44,10 @@ class CatequistasEucaristiaController extends Controller
      */
     public function create()
     {
-        $entidades = Entidade::orderBy('ent_name')->get();
+        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)
+                             ->orderBy('ent_name')
+                             ->get();
         $registers = Register::where('paroquia_id', Auth::user()->paroquia_id)
-                             ->where('status', 1)
                              ->orderBy('name')
                              ->select('id', 'name')
                              ->get();
@@ -93,7 +94,9 @@ class CatequistasEucaristiaController extends Controller
     public function edit(string $id)
     {
         $catequista = CatequistaEucaristia::findOrFail($id);
-        $entidades = Entidade::orderBy('ent_name')->get();
+        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)
+                             ->orderBy('ent_name')
+                             ->get();
         $registers = Register::where('paroquia_id', Auth::user()->paroquia_id)
                              ->orderBy('name')
                              ->select('id', 'name')

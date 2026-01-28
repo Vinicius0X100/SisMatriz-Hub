@@ -45,11 +45,12 @@ class CatequistasCrismaController extends Controller
      */
     public function create()
     {
-        $entidades = Entidade::orderBy('ent_name')->get();
+        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)
+                             ->orderBy('ent_name')
+                             ->get();
         // Fetch all registers for the search/select
         // Optimized: select only needed columns
         $registers = Register::where('paroquia_id', Auth::user()->paroquia_id)
-                             ->where('status', 1) // Assuming only active registers?
                              ->orderBy('name')
                              ->select('id', 'name')
                              ->get();
@@ -96,7 +97,9 @@ class CatequistasCrismaController extends Controller
     public function edit(string $id)
     {
         $catequista = CatequistaCrisma::findOrFail($id);
-        $entidades = Entidade::orderBy('ent_name')->get();
+        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)
+                             ->orderBy('ent_name')
+                             ->get();
         // Registers list might not be needed if we don't allow changing the person, 
         // but typically edit allows changing fields. 
         // However, changing the person implies changing the name too.
