@@ -22,7 +22,7 @@ return [
     ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus'],
     ['name' => 'Avisos paroquiais', 'icon' => 'megaphone'],
     ['name' => 'Comunicação em massa', 'icon' => 'broadcast'],
-    ['name' => 'Chat', 'icon' => 'chat-dots'],
+    ['name' => 'Chat', 'icon' => 'chat-dots', 'url' => '/chat'],
     ['name' => 'Excursões', 'icon' => 'bus-front'],
     ['name' => 'Registros gerais', 'icon' => 'journal-text', 'url' => '/registers'],
     ['name' => 'Protocolos', 'icon' => 'shield-check'],

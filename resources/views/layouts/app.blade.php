@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
 </head>
-<body class="d-flex flex-column min-vh-100 bg-light">
+<body class="d-flex flex-column min-vh-100 bg-light" data-auth-id="{{ Auth::id() }}">
     
     @auth
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm fixed-top">
@@ -27,12 +27,22 @@
                     <button class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm position-relative" style="width: 40px; height: 40px;" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notificações">
                         <i class="bi bi-bell text-dark fs-5"></i>
                         @php
-                            $pendingRemindersCount = \App\Models\Lembrete::where('usuario_id', Auth::id())
+                            $reminders = \App\Models\Lembrete::where('usuario_id', Auth::id())
                                 ->where('status', 'ativo')
                                 ->where('data_hora', '<=', now())
-                                ->count();
+                                ->orderBy('data_hora', 'desc')
+                                ->get();
+
+                            $messages = \App\Models\Message::where('receiver_id', Auth::id())
+                                ->where('is_read', false)
+                                ->whereHas('sender')
+                                ->with('sender')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+                                
+                            $totalNotifications = $reminders->count() + $messages->count();
                         @endphp
-                        @if($pendingRemindersCount > 0)
+                        @if($totalNotifications > 0)
                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
                                 <span class="visually-hidden">New alerts</span>
                             </span>
@@ -41,19 +51,51 @@
                     <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
                         <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white sticky-top">
                             <h6 class="mb-0 fw-bold">Notificações</h6>
-                            <a href="{{ route('lembretes.index') }}" class="small text-decoration-none">Ver tudo</a>
+                            @if($totalNotifications > 0)
+                                <span class="badge bg-primary rounded-pill">{{ $totalNotifications }}</span>
+                            @endif
                         </div>
                         <div class="list-group list-group-flush" id="notificationList">
+                            <!-- Messages -->
                             @php
-                                $recentReminders = \App\Models\Lembrete::where('usuario_id', Auth::id())
-                                    ->where('status', 'ativo')
-                                    ->where('data_hora', '<=', now())
-                                    ->orderBy('data_hora', 'desc')
-                                    ->take(5)
-                                    ->get();
+                                $groupedMessages = $messages->groupBy('sender_id');
                             @endphp
-                            
-                            @forelse($recentReminders as $reminder)
+                            @foreach($groupedMessages as $senderId => $senderMessages)
+                                @php
+                                    $sender = $senderMessages->first()->sender;
+                                    $senderName = $sender ? ($sender->hide_name ? 'Usuário' : ($sender->name ?? $sender->user)) : 'Usuário Desconhecido';
+                                @endphp
+                                
+                                @if($senderMessages->count() > 2)
+                                    <a href="{{ route('chat.index', ['user_id' => $senderId]) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <div class="position-relative">
+                                                <i class="bi bi-chat-dots-fill text-success mt-1 fs-5"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark small">{{ $senderName }}</div>
+                                                <div class="text-muted small">{{ $senderMessages->count() }} novas mensagens</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @else
+                                    @foreach($senderMessages as $msg)
+                                        <a href="{{ route('chat.index', ['user_id' => $senderId]) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <i class="bi bi-chat-left-text text-success mt-1"></i>
+                                                <div>
+                                                    <div class="fw-bold text-dark small">{{ $senderName }}</div>
+                                                    <div class="text-muted text-truncate" style="max-width: 200px; font-size: 0.8rem;">{{ $msg->message }}</div>
+                                                    <div class="text-muted" style="font-size: 0.65rem;">{{ $msg->created_at->diffForHumans() }}</div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                @endif
+                            @endforeach
+
+                            <!-- Reminders -->
+                            @foreach($reminders as $reminder)
                                 <a href="{{ route('lembretes.index') }}" class="list-group-item list-group-item-action border-0 px-3 py-3">
                                     <div class="d-flex align-items-start gap-2">
                                         <i class="bi bi-calendar-event text-primary mt-1"></i>
@@ -63,12 +105,14 @@
                                         </div>
                                     </div>
                                 </a>
-                            @empty
+                            @endforeach
+                            
+                            @if($totalNotifications == 0)
                                 <div class="text-center py-4 text-muted small">
                                     <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
                                     Nenhuma notificação nova
                                 </div>
-                            @endforelse
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -180,7 +224,7 @@
             setInterval(checkReminders, 30000); // Check every 30 seconds
 
             function checkReminders() {
-                fetch('{{ route("lembretes.check") }}')
+                fetch('/lembretes/check', { credentials: 'same-origin' })
                     .then(response => response.json())
                     .then(data => {
                         if (data.due) {

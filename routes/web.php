@@ -48,6 +48,14 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('lembretes/{id}/snooze', [App\Http\Controllers\LembreteController::class, 'snooze'])->name('lembretes.snooze');
     Route::resource('lembretes', App\Http\Controllers\LembreteController::class);
 
+    // Chat
+    Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
+    Route::get('/chat/messages/{userId}', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::get('/chat/unread', [App\Http\Controllers\ChatController::class, 'getUnreadCount'])->name('chat.unread');
+
+
     // Onboarding / Setup Routes
     Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
     Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
