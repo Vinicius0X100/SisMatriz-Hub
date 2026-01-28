@@ -78,55 +78,84 @@
 
                 <hr class="my-5">
 
-                <div class="mb-4">
-                    <h4 class="fw-bold text-dark mb-3">Gerenciar Alunos</h4>
-                    <p class="text-muted small">Pesquise e adicione alunos à turma. Marque se já são batizados.</p>
-                    
-                    <div class="position-relative mb-3">
-                        <input type="text" class="form-control" id="studentSearch" placeholder="Digite o nome do aluno para pesquisar..." autocomplete="off">
-                        <div id="searchResults" class="list-group position-absolute w-100 shadow-sm d-none" style="z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                <div class="row">
+                    <!-- Left Card: Available Students -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="card-title mb-0 fw-bold text-dark">Alunos Disponíveis</h5>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="studentSearch" placeholder="Pesquisar por nome..." autocomplete="off">
+                                </div>
+                                <div id="availableStudentsList" class="list-group list-group-flush overflow-auto" style="max-height: 400px;">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="bi bi-search fs-1"></i>
+                                        <p class="mt-2">Digite para pesquisar alunos</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle border">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Nome</th>
-                                    <th class="text-center" style="width: 150px;">Batizado</th>
-                                    <th class="text-end" style="width: 100px;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="studentsTableBody">
-                                @forelse($turma->catecandos as $catecando)
-                                    <tr id="student-row-{{ $catecando->register_id }}">
-                                        <td>
-                                            <span class="fw-medium">{{ $catecando->register->name }}</span>
-                                            <input type="hidden" name="students[{{ $catecando->register_id }}][id]" value="{{ $catecando->register_id }}">
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="form-check d-inline-block">
-                                                <input class="form-check-input" type="checkbox" name="students[{{ $catecando->register_id }}][batizado]" value="1" id="batizado-{{ $catecando->register_id }}" {{ $catecando->batizado ? 'checked' : '' }}>
-                                                <label class="form-check-label small" for="batizado-{{ $catecando->register_id }}">Sim</label>
-                                            </div>
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent({{ $catecando->register_id }})">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr id="emptyRow">
-                                        <td colspan="3" class="text-center text-muted py-4">Nenhum aluno adicionado</td>
-                                    </tr>
-                                @endforelse
-                                @if($turma->catecandos->isNotEmpty())
-                                     <tr id="emptyRow" style="display: none;">
-                                        <td colspan="3" class="text-center text-muted py-4">Nenhum aluno adicionado</td>
-                                    </tr>
-                                @endif
-                            </tbody>
-                        </table>
+                    <!-- Right Card: Selected Students -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm">
+                            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0 fw-bold text-dark">Adicionados a esta turma</h5>
+                                <span class="badge bg-primary rounded-pill" id="selectedCount">{{ $turma->catecandos->count() }}</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light sticky-top">
+                                            <tr>
+                                                <th class="ps-3">Nome</th>
+                                                <th class="text-center">Batizado?</th>
+                                                <th class="text-end pe-3">Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="selectedStudentsTable">
+                                            @forelse($turma->catecandos as $catecando)
+                                                <tr id="selected-row-{{ $catecando->register_id }}">
+                                                    <td class="ps-3">
+                                                        <span class="fw-medium">{{ $catecando->register->name }}</span>
+                                                        <input type="hidden" name="students[{{ $catecando->register_id }}][id]" value="{{ $catecando->register_id }}">
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="form-check d-inline-block">
+                                                            <input class="form-check-input" type="checkbox" name="students[{{ $catecando->register_id }}][batizado]" value="1" id="batizado-{{ $catecando->register_id }}" {{ $catecando->batizado ? 'checked' : '' }}>
+                                                            <label class="form-check-label small" for="batizado-{{ $catecando->register_id }}">Sim</label>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end pe-3">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent({{ $catecando->register_id }})">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr id="emptySelectionRow">
+                                                    <td colspan="3" class="text-center text-muted py-5">
+                                                        <i class="bi bi-people fs-1"></i>
+                                                        <p class="mt-2">Nenhum aluno selecionado</p>
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                            @if($turma->catecandos->isNotEmpty())
+                                                 <tr id="emptySelectionRow" style="display: none;">
+                                                    <td colspan="3" class="text-center text-muted py-5">
+                                                        <i class="bi bi-people fs-1"></i>
+                                                        <p class="mt-2">Nenhum aluno selecionado</p>
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -145,10 +174,13 @@
 @section('scripts')
 <script>
     const searchInput = document.getElementById('studentSearch');
-    const resultsContainer = document.getElementById('searchResults');
-    const tableBody = document.getElementById('studentsTableBody');
-    const emptyRow = document.getElementById('emptyRow');
+    const availableList = document.getElementById('availableStudentsList');
+    const selectedTable = document.getElementById('selectedStudentsTable');
+    const emptySelectionRow = document.getElementById('emptySelectionRow');
+    const selectedCountBadge = document.getElementById('selectedCount');
+    
     let addedStudents = @json($turma->catecandos->pluck('register_id'));
+    let loadedStudentsMap = new Map();
 
     function debounce(func, wait) {
         let timeout;
@@ -158,18 +190,27 @@
         };
     }
 
-    // Prevent Enter key from submitting form
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
+    // Prevent Enter key from submitting form globally
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            // Allow Enter on textareas or submit buttons if needed, but generally prevent form submit
+            if (event.target.type !== 'textarea' && event.target.tagName !== 'BUTTON') {
+                event.preventDefault();
+                return false;
+            }
         }
     });
 
-    // Fetch recent students on focus if empty
+    // Initial fetch on focus if empty
     searchInput.addEventListener('focus', () => {
         if (searchInput.value.trim() === '') {
             fetchStudents('');
         }
+    });
+
+    // Load students on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchStudents('');
     });
 
     searchInput.addEventListener('input', debounce((e) => {
@@ -178,86 +219,120 @@
 
     async function fetchStudents(query) {
         try {
-            const response = await fetch(`{{ route('registers.search') }}?q=${query}`);
+            availableList.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>';
+            
+            const response = await fetch(`{{ route('registers.search') }}?q=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             
-            resultsContainer.innerHTML = '';
+            availableList.innerHTML = '';
+            loadedStudentsMap.clear();
             
             if (data.length > 0) {
-                let hasResults = false;
                 data.forEach(student => {
-                    if (addedStudents.includes(student.id)) return;
-
-                    hasResults = true;
-                    const item = document.createElement('a');
-                    item.href = '#';
-                    item.className = 'list-group-item list-group-item-action';
-                    item.innerHTML = `<strong>${student.name}</strong> <small class="text-muted ms-2">CPF: ${student.cpf || 'N/A'}</small>`;
-                    item.onclick = (e) => {
-                        e.preventDefault();
-                        addStudent(student);
-                        searchInput.value = '';
-                        resultsContainer.classList.add('d-none');
-                    };
-                    resultsContainer.appendChild(item);
+                    loadedStudentsMap.set(student.id, student);
+                    renderAvailableItem(student);
                 });
-                
-                if (hasResults) {
-                    resultsContainer.classList.remove('d-none');
-                } else {
-                    resultsContainer.classList.add('d-none');
-                }
             } else {
-                resultsContainer.classList.add('d-none');
+                availableList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <p class="mb-0">Nenhum registro encontrado</p>
+                    </div>
+                `;
             }
         } catch (error) {
             console.error('Error searching:', error);
+            availableList.innerHTML = '<div class="text-center text-danger py-3">Erro ao buscar alunos</div>';
         }
     }
 
-    document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
-            resultsContainer.classList.add('d-none');
-        }
-    });
+    function renderAvailableItem(student) {
+        const isAdded = addedStudents.includes(student.id);
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex justify-content-between align-items-center p-3';
+        item.id = `available-item-${student.id}`;
+        
+        item.innerHTML = `
+            <div>
+                <div class="fw-bold text-dark">${student.name}</div>
+                <div class="text-muted small">CPF: ${student.cpf || 'Não informado'}</div>
+            </div>
+            <button type="button" 
+                class="btn btn-sm ${isAdded ? 'btn-secondary' : 'btn-outline-primary'} rounded-pill px-3"
+                onclick="addStudent(${student.id})"
+                ${isAdded ? 'disabled' : ''}>
+                ${isAdded ? 'Adicionado' : 'Adicionar'}
+            </button>
+        `;
+        availableList.appendChild(item);
+    }
 
-    function addStudent(student) {
-        if (addedStudents.includes(student.id)) return;
+    window.addStudent = function(id) {
+        if (addedStudents.includes(id)) return;
+        
+        const student = loadedStudentsMap.get(id);
+        if (!student) return;
 
-        if (emptyRow) emptyRow.style.display = 'none';
+        // Hide empty row
+        if (emptySelectionRow) emptySelectionRow.style.display = 'none';
 
         const row = document.createElement('tr');
-        row.id = `student-row-${student.id}`;
+        row.id = `selected-row-${id}`;
         row.innerHTML = `
-            <td>
+            <td class="ps-3">
                 <span class="fw-medium">${student.name}</span>
-                <input type="hidden" name="students[${student.id}][id]" value="${student.id}">
+                <input type="hidden" name="students[${id}][id]" value="${id}">
             </td>
             <td class="text-center">
                 <div class="form-check d-inline-block">
-                    <input class="form-check-input" type="checkbox" name="students[${student.id}][batizado]" value="1" id="batizado-${student.id}">
-                    <label class="form-check-label small" for="batizado-${student.id}">Sim</label>
+                    <input class="form-check-input" type="checkbox" name="students[${id}][batizado]" value="1" id="batizado-${id}">
+                    <label class="form-check-label small" for="batizado-${id}">Sim</label>
                 </div>
             </td>
-            <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent(${student.id})">
+            <td class="text-end pe-3">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent(${id})">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
         `;
-        tableBody.appendChild(row);
-        addedStudents.push(student.id);
-    }
+        selectedTable.appendChild(row);
+        addedStudents.push(id);
+        updateCount();
+
+        // Update button in available list if visible
+        const btn = document.querySelector(`#available-item-${id} button`);
+        if (btn) {
+            btn.className = 'btn btn-sm btn-secondary rounded-pill px-3';
+            btn.textContent = 'Adicionado';
+            btn.disabled = true;
+        }
+    };
 
     window.removeStudent = function(id) {
-        const row = document.getElementById(`student-row-${id}`);
+        const row = document.getElementById(`selected-row-${id}`);
         if (row) row.remove();
         
         addedStudents = addedStudents.filter(sId => sId !== id);
+        updateCount();
 
-        if (addedStudents.length === 0 && emptyRow) {
-            emptyRow.style.display = 'table-row';
+        if (addedStudents.length === 0 && emptySelectionRow) {
+            emptySelectionRow.style.display = 'table-row';
+        }
+
+        // Update button in available list if visible
+        const btn = document.querySelector(`#available-item-${id} button`);
+        if (btn) {
+            btn.className = 'btn btn-sm btn-outline-primary rounded-pill px-3';
+            btn.textContent = 'Adicionar';
+            btn.disabled = false;
         }
     };
+
+    function updateCount() {
+        selectedCountBadge.textContent = addedStudents.length;
+    }
+    
+    // Initial fetch to populate list
+    fetchStudents('');
 </script>
 @endsection

@@ -127,7 +127,7 @@ class TurmasCrismaController extends Controller
             $turma->save();
         }
 
-        return redirect()->route('turmas-crisma.index')->with('success', 'Turma adicionada com sucesso!');
+        return redirect()->route('catequese-crisma.index')->with('success', 'Turma adicionada com sucesso!');
     }
 
     /**

@@ -281,10 +281,12 @@ class RegisterController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('cpf', 'like', "%{$search}%");
             });
+            $query->orderBy('name', 'asc');
+        } else {
+            $query->orderBy('id', 'desc');
         }
 
-        // Order by most recent (assuming higher ID is more recent or created_at)
-        $results = $query->orderBy('id', 'desc')->limit(10)->get(['id', 'name', 'cpf']);
+        $results = $query->limit(100)->get(['id', 'name', 'cpf']);
         return response()->json($results);
     }
 

@@ -125,7 +125,7 @@ class TurmasEucaristiaController extends Controller
             }
         }
 
-        return redirect()->route('turmas-eucaristia.index')->with('success', 'Turma adicionada com sucesso!');
+        return redirect()->route('catequese-eucaristia.index')->with('success', 'Turma adicionada com sucesso!');
     }
 
     /**
