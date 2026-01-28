@@ -137,11 +137,11 @@
     // Event Listeners
     searchInput.addEventListener('input', () => {
         clearTimeout(typingTimer);
-        typingTimer = setTimeout(fetchData, doneTypingInterval);
+        typingTimer = setTimeout(() => fetchData(), doneTypingInterval);
     });
-    statusFilter.addEventListener('change', fetchData);
-    dateFrom.addEventListener('change', fetchData);
-    dateTo.addEventListener('change', fetchData);
+    statusFilter.addEventListener('change', () => fetchData());
+    dateFrom.addEventListener('change', () => fetchData());
+    dateTo.addEventListener('change', () => fetchData());
 
     // Initial Load Setup
     document.addEventListener('DOMContentLoaded', () => {
@@ -149,6 +149,10 @@
     });
 
     function fetchData(pageUrl = null) {
+        // If pageUrl is an Event object (from event listeners), treat it as null
+        if (pageUrl && typeof pageUrl !== 'string') {
+            pageUrl = null;
+        }
         const params = new URLSearchParams();
         params.append('search', searchInput.value);
         params.append('status', statusFilter.value);
