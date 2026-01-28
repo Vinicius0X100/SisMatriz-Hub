@@ -10,6 +10,7 @@ use App\Models\BlockedUser;
 use App\Models\UserAccess;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ChatController extends Controller
@@ -173,41 +174,46 @@ class ChatController extends Controller
 
     public function sendMessage(Request $request)
     {
-        $request->validate([
-            'receiver_id' => 'required|exists:users,id',
-            'message' => 'required|string',
-            'reply_to_id' => 'nullable|exists:messages,id',
-        ]);
+        try {
+            $request->validate([
+                'receiver_id' => 'required|exists:users,id',
+                'message' => 'required|string',
+                'reply_to_id' => 'nullable|exists:messages,id',
+            ]);
 
-        $currentUser = Auth::user();
-        
-        // Check if blocked
-        $isBlocked = BlockedUser::where(function($q) use ($currentUser, $request) {
-            $q->where('user_id', $currentUser->id)->where('blocked_user_id', $request->receiver_id);
-        })->orWhere(function($q) use ($currentUser, $request) {
-            $q->where('user_id', $request->receiver_id)->where('blocked_user_id', $currentUser->id);
-        })->exists();
+            $currentUser = Auth::user();
+            
+            // Check if blocked
+            $isBlocked = BlockedUser::where(function($q) use ($currentUser, $request) {
+                $q->where('user_id', $currentUser->id)->where('blocked_user_id', $request->receiver_id);
+            })->orWhere(function($q) use ($currentUser, $request) {
+                $q->where('user_id', $request->receiver_id)->where('blocked_user_id', $currentUser->id);
+            })->exists();
 
-        if ($isBlocked) {
-            return response()->json(['error' => 'Não é possível enviar mensagem para este usuário.'], 403);
+            if ($isBlocked) {
+                return response()->json(['error' => 'Não é possível enviar mensagem para este usuário.'], 403);
+            }
+
+            $message = Message::create([
+                'sender_id' => $currentUser->id,
+                'receiver_id' => $request->receiver_id,
+                'message' => $request->message,
+                'is_read' => false,
+                'toast_notify' => false,
+                'reply_to_id' => $request->reply_to_id,
+                'created_at' => now(),
+            ]);
+            
+            // Reload to get relationships if needed, or just return basic
+            if ($message->reply_to_id) {
+                $message->load('replyTo.sender');
+            }
+
+            return response()->json($message);
+        } catch (\Exception $e) {
+            Log::error('Erro ao enviar mensagem: ' . $e->getMessage());
+            return response()->json(['error' => 'Erro ao enviar mensagem: ' . $e->getMessage()], 500);
         }
-
-        $message = Message::create([
-            'sender_id' => $currentUser->id,
-            'receiver_id' => $request->receiver_id,
-            'message' => $request->message,
-            'is_read' => false,
-            'toast_notify' => false,
-            'reply_to_id' => $request->reply_to_id,
-            'created_at' => now(),
-        ]);
-        
-        // Reload to get relationships if needed, or just return basic
-        if ($message->reply_to_id) {
-            $message->load('replyTo.sender');
-        }
-
-        return response()->json($message);
     }
     
     public function blockUser(Request $request)

@@ -93,7 +93,7 @@
                         <div id="blockedMessage" class="d-none text-center text-muted small mb-2">
                             <i class="bi bi-lock-fill"></i> Esta conversa está bloqueada.
                         </div>
-                        <form id="messageForm" class="d-flex align-items-center gap-2">
+                        <form id="messageForm" class="d-flex align-items-center gap-2" action="javascript:void(0);" method="POST">
                             <button type="button" class="btn btn-light rounded-circle text-muted">
                                 <i class="bi bi-emoji-smile"></i>
                             </button>
@@ -597,10 +597,14 @@
                 credentials: 'same-origin',
                 body: JSON.stringify(payload)
             })
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
-                    if (response.status === 403) alert('Você não pode enviar mensagens para este usuário.');
-                    throw new Error('Falha ao enviar');
+                    if (response.status === 403) {
+                        alert('Você não pode enviar mensagens para este usuário.');
+                        throw new Error('Bloqueado');
+                    }
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Falha ao enviar');
                 }
                 return response.json();
             })
@@ -609,8 +613,10 @@
                 fetchUsers(); 
             })
             .catch(err => {
-                console.error('Send error:', err);
-                alert('Erro ao enviar mensagem.');
+                if (err.message !== 'Bloqueado') {
+                    console.error('Send error:', err);
+                    alert(err.message || 'Erro ao enviar mensagem.');
+                }
             });
         });
         
