@@ -17,7 +17,7 @@ class TurmasEucaristiaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = TurmaEucaristia::with('catequista');
+        $query = TurmaEucaristia::with('catequista')->withCount('catecandos');
 
         // Filter by search
         if ($request->has('search') && $request->search != '') {
@@ -53,7 +53,7 @@ class TurmasEucaristiaController extends Controller
                  // Sort by related model name would require join, for simplicity we might skip or do join
                  // Let's do a join for correct sorting if requested
                  $query->join('catequistas_eucaristia', 'turmas_catequese.tutor', '=', 'catequistas_eucaristia.id')
-                       ->select('turmas_catequese.*')
+                       ->addSelect('turmas_catequese.*')
                        ->orderBy('catequistas_eucaristia.nome', $sortDirection);
              } else {
                  $query->orderBy($sortColumn, $sortDirection);

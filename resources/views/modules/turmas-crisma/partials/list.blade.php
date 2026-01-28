@@ -40,7 +40,7 @@
                 <td>{{ $turma->catequista->nome ?? 'N/A' }}</td>
                 <td>{{ $turma->inicio ? $turma->inicio->format('d/m/Y') : '-' }}</td>
                 <td>{{ $turma->termino ? $turma->termino->format('d/m/Y') : '-' }}</td>
-                <td>{{ $turma->alunos_qntd }}</td>
+                <td>{{ $turma->crismandos_count }}</td>
                 <td>
                     @php
                         $statusColors = [

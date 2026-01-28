@@ -17,7 +17,7 @@ class TurmasCrismaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = TurmaCrisma::with('catequista');
+        $query = TurmaCrisma::with('catequista')->withCount('crismandos');
 
         // Filter by search
         if ($request->has('search') && $request->search != '') {
@@ -50,9 +50,11 @@ class TurmasCrismaController extends Controller
         if (in_array($sortColumn, $allowedSorts)) {
              // Handle relationship sorting if needed
              if ($sortColumn === 'tutor') {
-                 $query->join('catequistas_crisma', 'turmas.tutor', '=', 'catequistas_crisma.id')
-                       ->select('turmas.*')
-                       ->orderBy('catequistas_crisma.nome', $sortDirection);
+                 // Sort by related model name would require join, for simplicity we might skip or do join
+                 // Let's do a join for correct sorting if requested
+                  $query->join('catequistas_crisma', 'turmas.tutor', '=', 'catequistas_crisma.id')
+                        ->addSelect('turmas.*')
+                        ->orderBy('catequistas_crisma.nome', $sortDirection);
              } else {
                  $query->orderBy($sortColumn, $sortDirection);
              }

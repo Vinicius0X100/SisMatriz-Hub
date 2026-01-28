@@ -19,6 +19,9 @@
                 <th scope="col" class="border-0 sortable cursor-pointer" data-sort="termino">
                     Término <i class="bi bi-arrow-down-up small text-muted ms-1"></i>
                 </th>
+                <th scope="col" class="border-0 sortable cursor-pointer" data-sort="catecandos_count">
+                    Qtd. Catecandos <i class="bi bi-arrow-down-up small text-muted ms-1"></i>
+                </th>
                 <th scope="col" class="border-0 sortable cursor-pointer" data-sort="status">
                     Status <i class="bi bi-arrow-down-up small text-muted ms-1"></i>
                 </th>
@@ -37,6 +40,7 @@
                 <td>{{ $turma->catequista->nome ?? 'N/A' }}</td>
                 <td>{{ $turma->inicio ? $turma->inicio->format('d/m/Y') : '-' }}</td>
                 <td>{{ $turma->termino ? $turma->termino->format('d/m/Y') : '-' }}</td>
+                <td>{{ $turma->catecandos_count }}</td>
                 <td>
                     @php
                         $statusColors = [
@@ -72,7 +76,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="7" class="text-center py-4 text-muted">
+                <td colspan="8" class="text-center py-4 text-muted">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                     Nenhuma turma encontrada.
                 </td>
