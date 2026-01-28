@@ -188,10 +188,12 @@
         const messagesContainer = document.getElementById('messagesContainer');
         const messageForm = document.getElementById('messageForm');
         const messageInput = document.getElementById('messageInput');
+        const userSearch = document.getElementById('userSearch');
         
         let currentUserId = null;
         let currentUserData = null;
         let pollInterval = null;
+        let allUsers = []; // Store users for search
 
         // Fetch Users
         function fetchUsers() {
@@ -202,7 +204,8 @@
                 })
                 .then(users => {
                     userListLoading.style.display = 'none';
-                    renderUserList(users);
+                    allUsers = users;
+                    filterAndRenderUsers();
                     
                     // Auto-select user if passed via URL
                     const targetUserId = "{{ $targetUserId ?? '' }}";
@@ -220,8 +223,24 @@
                 });
         }
 
+        // Search Listener
+        userSearch.addEventListener('input', function() {
+            filterAndRenderUsers();
+        });
+
+        function filterAndRenderUsers() {
+            const term = userSearch.value.toLowerCase();
+            const filtered = allUsers.filter(user => user.display_name.toLowerCase().includes(term));
+            renderUserList(filtered);
+        }
+
         function renderUserList(users) {
             userList.innerHTML = '';
+            if (users.length === 0) {
+                userList.innerHTML = '<div class="text-center p-3 text-muted small">Nenhum contato encontrado.</div>';
+                return;
+            }
+
             users.forEach(user => {
                 const isActive = currentUserId == user.id;
                 const unreadBadge = user.unread_count > 0 
@@ -229,7 +248,7 @@
                     : '';
                 const lastMsg = user.last_message 
                     ? `<div class="small text-muted text-truncate" style="max-width: 180px;">${user.last_message.sender_id == AUTH_ID ? '<i class="bi bi-check2-all text-primary small"></i> ' : ''}${user.last_message.message}</div>` 
-                    : '<div class="small text-muted fst-italic">Nenhuma mensagem</div>';
+                    : `<div class="small text-muted fst-italic">Nenhuma mensagem</div>`;
                 
                 const time = user.last_message
                     ? new Date(user.last_message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
@@ -239,24 +258,32 @@
                     ? `/storage/uploads/avatars/${user.avatar}` 
                     : `https://ui-avatars.com/api/?name=${user.display_name}&background=random&color=fff`;
 
+                const pinIconClass = user.is_pinned ? 'bi-pin-angle-fill text-primary' : 'bi-pin-angle text-muted';
+
                 const item = document.createElement('a');
                 item.className = `list-group-item list-group-item-action py-3 user-list-item ${isActive ? 'active' : ''} ${user.unread_count > 0 ? 'fw-bold' : ''}`;
                 item.href = '#';
                 item.onclick = (e) => {
-                    e.preventDefault();
-                    selectUser(user);
+                    // Only select if not clicking the pin
+                    if (!e.target.closest('.pin-btn')) {
+                        e.preventDefault();
+                        selectUser(user);
+                    }
                 };
 
                 item.innerHTML = `
                     <div class="d-flex align-items-center">
                         <div class="position-relative me-3">
                             <img src="${avatarUrl}" class="rounded-circle border" width="48" height="48" style="object-fit: cover;">
-                            <!-- <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle"></span> -->
+                            ${user.is_pinned ? '<div class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-light border text-primary p-1" style="font-size: 0.6rem;"><i class="bi bi-pin-angle-fill"></i></div>' : ''}
                         </div>
                         <div class="flex-grow-1 overflow-hidden">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="mb-0 text-truncate">${user.display_name}</h6>
-                                <small class="text-muted ms-2">${time}</small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi ${pinIconClass} small pin-btn p-1" style="cursor: pointer;" title="${user.is_pinned ? 'Desafixar' : 'Fixar'}"></i>
+                                    <small class="text-muted">${time}</small>
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 ${lastMsg}
@@ -265,8 +292,34 @@
                         </div>
                     </div>
                 `;
+                
+                // Attach Pin Event
+                const pinBtn = item.querySelector('.pin-btn');
+                pinBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    togglePin(user.id);
+                });
+
                 userList.appendChild(item);
             });
+        }
+
+        function togglePin(userId) {
+            fetch('/chat/toggle-pin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                fetchUsers(); // Refresh list
+            })
+            .catch(err => console.error('Error toggling pin:', err));
         }
 
         function selectUser(user) {

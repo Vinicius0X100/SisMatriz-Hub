@@ -54,6 +54,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('/chat/messages/{userId}', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/chat/unread', [App\Http\Controllers\ChatController::class, 'getUnreadCount'])->name('chat.unread');
+    Route::post('/chat/toggle-pin', [App\Http\Controllers\ChatController::class, 'toggleUserPin'])->name('chat.toggle-pin');
 
 
     // Onboarding / Setup Routes

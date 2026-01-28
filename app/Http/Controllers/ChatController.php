@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\UserPin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +27,11 @@ class ChatController extends Controller
             ->select('id', 'name', 'avatar', 'user', 'hide_name') 
             ->get();
 
+        // Get pinned users IDs for current user
+        $pinnedUserIds = UserPin::where('user_id', $currentUser->id)
+            ->pluck('pinned_user_id')
+            ->toArray();
+
         // Optimize: Fetch all messages involving current user in one query
         $allMessages = Message::where('sender_id', $currentUser->id)
             ->orWhere('receiver_id', $currentUser->id)
@@ -37,8 +43,8 @@ class ChatController extends Controller
             return $msg->sender_id == $currentUser->id ? $msg->receiver_id : $msg->sender_id;
         });
 
-        // Attach unread count and last message for sorting/display
-        $users->map(function ($user) use ($conversations, $currentUser) {
+        // Attach unread count, last message and pin status
+        $users->map(function ($user) use ($conversations, $currentUser, $pinnedUserIds) {
             $userMessages = $conversations->get($user->id, collect());
             
             $lastMessage = $userMessages->first(); // Since it's ordered by desc, first is latest
@@ -50,6 +56,7 @@ class ChatController extends Controller
 
             $user->last_message = $lastMessage;
             $user->unread_count = $unreadCount;
+            $user->is_pinned = in_array($user->id, $pinnedUserIds);
             
             // Format name based on hide_name
              if ($user->hide_name) {
@@ -61,9 +68,22 @@ class ChatController extends Controller
             return $user;
         });
         
-        // Sort by last message date (desc) then name (asc)
-        $users = $users->sortByDesc(function ($user) {
-            return $user->last_message ? $user->last_message->created_at->timestamp : 0;
+        // Sort by Pinned (desc), then last message date (desc), then name (asc)
+        $users = $users->sort(function ($a, $b) {
+            // 1. Pinned first
+            if ($a->is_pinned && !$b->is_pinned) return -1;
+            if (!$a->is_pinned && $b->is_pinned) return 1;
+
+            // 2. Last message date (desc)
+            $timeA = $a->last_message ? $a->last_message->created_at->timestamp : 0;
+            $timeB = $b->last_message ? $b->last_message->created_at->timestamp : 0;
+            
+            if ($timeA != $timeB) {
+                return $timeB <=> $timeA;
+            }
+
+            // 3. Name (asc)
+            return strcasecmp($a->display_name, $b->display_name);
         })->values();
 
         return response()->json($users);
@@ -142,5 +162,30 @@ class ChatController extends Controller
             'total_unread' => $totalUnread,
             'details' => $unreadBySender
         ]);
+    }
+
+    public function toggleUserPin(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $currentUser = Auth::user();
+        $targetUserId = $request->user_id;
+
+        $pin = UserPin::where('user_id', $currentUser->id)
+            ->where('pinned_user_id', $targetUserId)
+            ->first();
+
+        if ($pin) {
+            $pin->delete();
+            return response()->json(['status' => 'unpinned']);
+        } else {
+            UserPin::create([
+                'user_id' => $currentUser->id,
+                'pinned_user_id' => $targetUserId,
+            ]);
+            return response()->json(['status' => 'pinned']);
+        }
     }
 }
