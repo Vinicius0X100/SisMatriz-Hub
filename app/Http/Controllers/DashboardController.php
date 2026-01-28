@@ -79,12 +79,15 @@ class DashboardController extends Controller
 
     public function getOnlineUsers()
     {
-        $currentUserId = Auth::id();
+        $user = Auth::user();
+        $currentUserId = $user->id;
+        $paroquiaId = $user->paroquia_id;
 
         $accesses = UserAccess::with('user')
             ->where('user_id', '!=', $currentUserId) // Exclude current user
-            ->whereHas('user', function ($q) {
-                $q->where('is_visible', true);
+            ->whereHas('user', function ($q) use ($paroquiaId) {
+                $q->where('is_visible', true)
+                  ->where('paroquia_id', $paroquiaId);
             })
             ->orderBy('access_date', 'desc')
             ->orderBy('access_time', 'desc')

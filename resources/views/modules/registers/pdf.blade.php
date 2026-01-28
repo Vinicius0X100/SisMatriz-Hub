@@ -30,6 +30,7 @@
                 @if(in_array('phone', $columns)) <th>Telefone</th> @endif
                 @if(in_array('cpf', $columns)) <th>CPF</th> @endif
                 @if(in_array('rg', $columns)) <th>RG</th> @endif
+                @if(in_array('sexo', $columns)) <th>Sexo</th> @endif
                 @if(in_array('civil_status', $columns)) <th>Estado Civil</th> @endif
                 @if(in_array('mother_name', $columns)) <th>Mãe</th> @endif
                 @if(in_array('father_name', $columns)) <th>Pai</th> @endif
