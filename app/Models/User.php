@@ -70,4 +70,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(ParoquiaSuperadmin::class, 'paroquia_id');
     }
+
+    public function blockedUsers()
+    {
+        return $this->hasMany(BlockedUser::class, 'user_id');
+    }
 }

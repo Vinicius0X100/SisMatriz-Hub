@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\UserPin;
+use App\Models\BlockedUser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,11 @@ class ChatController extends Controller
     {
         $currentUser = Auth::user();
         
+        // Get blocked users IDs
+        $blockedUserIds = BlockedUser::where('user_id', $currentUser->id)
+            ->pluck('blocked_user_id')
+            ->toArray();
+
         // Get users from the same paroquia, excluding current user
         $users = User::where('paroquia_id', $currentUser->paroquia_id)
             ->where('id', '!=', $currentUser->id)
@@ -33,8 +39,14 @@ class ChatController extends Controller
             ->toArray();
 
         // Optimize: Fetch all messages involving current user in one query
-        $allMessages = Message::where('sender_id', $currentUser->id)
-            ->orWhere('receiver_id', $currentUser->id)
+        $allMessages = Message::where(function($q) use ($currentUser) {
+                $q->where('sender_id', $currentUser->id)
+                  ->where('deleted_by_sender', false);
+            })
+            ->orWhere(function($q) use ($currentUser) {
+                $q->where('receiver_id', $currentUser->id)
+                  ->where('deleted_by_receiver', false);
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -44,7 +56,7 @@ class ChatController extends Controller
         });
 
         // Attach unread count, last message and pin status
-        $users->map(function ($user) use ($conversations, $currentUser, $pinnedUserIds) {
+        $users->map(function ($user) use ($conversations, $currentUser, $pinnedUserIds, $blockedUserIds) {
             $userMessages = $conversations->get($user->id, collect());
             
             $lastMessage = $userMessages->first(); // Since it's ordered by desc, first is latest
@@ -57,6 +69,7 @@ class ChatController extends Controller
             $user->last_message = $lastMessage;
             $user->unread_count = $unreadCount;
             $user->is_pinned = in_array($user->id, $pinnedUserIds);
+            $user->is_blocked = in_array($user->id, $blockedUserIds);
             
             // Format name based on hide_name
              if ($user->hide_name) {
@@ -93,6 +106,15 @@ class ChatController extends Controller
     {
         $currentUser = Auth::user();
 
+        // Check if user is blocked (by me or them) - optional, but let's check blocking status to return
+        $isBlockedByMe = BlockedUser::where('user_id', $currentUser->id)
+            ->where('blocked_user_id', $userId)
+            ->exists();
+        
+        $isBlockedByThem = BlockedUser::where('user_id', $userId)
+            ->where('blocked_user_id', $currentUser->id)
+            ->exists();
+
         // Mark messages as read
         Message::where('sender_id', $userId)
             ->where('receiver_id', $currentUser->id)
@@ -101,16 +123,23 @@ class ChatController extends Controller
 
         $messages = Message::where(function ($q) use ($userId, $currentUser) {
                 $q->where('sender_id', $userId)
-                  ->where('receiver_id', $currentUser->id);
+                  ->where('receiver_id', $currentUser->id)
+                  ->where('deleted_by_receiver', false);
             })
             ->orWhere(function ($q) use ($userId, $currentUser) {
                 $q->where('sender_id', $currentUser->id)
-                  ->where('receiver_id', $userId);
+                  ->where('receiver_id', $userId)
+                  ->where('deleted_by_sender', false);
             })
+            ->with(['replyTo.sender:id,name,user,hide_name']) // Eager load reply info
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return response()->json($messages);
+        return response()->json([
+            'messages' => $messages,
+            'is_blocked_by_me' => $isBlockedByMe,
+            'is_blocked_by_them' => $isBlockedByThem
+        ]);
     }
 
     public function sendMessage(Request $request)
@@ -118,17 +147,80 @@ class ChatController extends Controller
         $request->validate([
             'receiver_id' => 'required|exists:users,id',
             'message' => 'required|string',
+            'reply_to_id' => 'nullable|exists:messages,id',
         ]);
 
+        $currentUser = Auth::user();
+        
+        // Check if blocked
+        $isBlocked = BlockedUser::where(function($q) use ($currentUser, $request) {
+            $q->where('user_id', $currentUser->id)->where('blocked_user_id', $request->receiver_id);
+        })->orWhere(function($q) use ($currentUser, $request) {
+            $q->where('user_id', $request->receiver_id)->where('blocked_user_id', $currentUser->id);
+        })->exists();
+
+        if ($isBlocked) {
+            return response()->json(['error' => 'Não é possível enviar mensagem para este usuário.'], 403);
+        }
+
         $message = Message::create([
-            'sender_id' => Auth::id(),
+            'sender_id' => $currentUser->id,
             'receiver_id' => $request->receiver_id,
             'message' => $request->message,
             'is_read' => false,
             'toast_notify' => false,
+            'reply_to_id' => $request->reply_to_id,
+            'created_at' => now(),
         ]);
+        
+        // Reload to get relationships if needed, or just return basic
+        if ($message->reply_to_id) {
+            $message->load('replyTo.sender');
+        }
 
         return response()->json($message);
+    }
+    
+    public function blockUser(Request $request)
+    {
+        $request->validate(['user_id' => 'required|exists:users,id']);
+        
+        BlockedUser::firstOrCreate([
+            'user_id' => Auth::id(),
+            'blocked_user_id' => $request->user_id
+        ]);
+        
+        return response()->json(['status' => 'blocked']);
+    }
+    
+    public function unblockUser(Request $request)
+    {
+        $request->validate(['user_id' => 'required|exists:users,id']);
+        
+        BlockedUser::where('user_id', Auth::id())
+            ->where('blocked_user_id', $request->user_id)
+            ->delete();
+            
+        return response()->json(['status' => 'unblocked']);
+    }
+    
+    public function clearChat(Request $request)
+    {
+        $request->validate(['user_id' => 'required|exists:users,id']);
+        $currentUser = Auth::user();
+        $targetUserId = $request->user_id;
+        
+        // Update messages where I am sender -> deleted_by_sender = true
+        Message::where('sender_id', $currentUser->id)
+            ->where('receiver_id', $targetUserId)
+            ->update(['deleted_by_sender' => true]);
+            
+        // Update messages where I am receiver -> deleted_by_receiver = true
+        Message::where('receiver_id', $currentUser->id)
+            ->where('sender_id', $targetUserId)
+            ->update(['deleted_by_receiver' => true]);
+            
+        return response()->json(['status' => 'cleared']);
     }
     
     public function getUnreadCount()
