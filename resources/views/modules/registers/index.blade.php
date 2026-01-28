@@ -899,18 +899,37 @@
                                 <h6 class="fw-bold text-primary mb-3 border-bottom pb-2">Anexos</h6>
                                 ${data.attachments && data.attachments.length > 0 ? `
                                     <div class="list-group list-group-flush bg-transparent">
-                                        ${data.attachments.map(att => `
-                                            <a href="${att.url}" target="_blank" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center px-0">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-paperclip fs-5 me-3 text-muted"></i>
-                                                    <div>
-                                                        <div class="fw-medium text-dark text-truncate" style="max-width: 200px;">${att.original_name || att.filename}</div>
-                                                        <div class="small text-muted">${att.size_formatted || ''} • ${new Date(att.created_at).toLocaleDateString()}</div>
+                                        ${data.attachments.map(att => {
+                                            let iconOrPreview = '';
+                                            if (att.mime_type && att.mime_type.startsWith('image/')) {
+                                                iconOrPreview = `<img src="${att.url}" class="rounded border bg-white" style="width: 40px; height: 40px; object-fit: cover;">`;
+                                            } else if (att.mime_type && att.mime_type.includes('pdf')) {
+                                                iconOrPreview = `<i class="bi bi-file-earmark-pdf fs-2 text-danger"></i>`;
+                                            } else if (att.mime_type && (att.mime_type.includes('word') || att.mime_type.includes('document'))) {
+                                                iconOrPreview = `<i class="bi bi-file-earmark-word fs-2 text-primary"></i>`;
+                                            } else if (att.mime_type && (att.mime_type.includes('sheet') || att.mime_type.includes('excel'))) {
+                                                iconOrPreview = `<i class="bi bi-file-earmark-excel fs-2 text-success"></i>`;
+                                            } else {
+                                                iconOrPreview = `<i class="bi bi-file-earmark-text fs-2 text-muted"></i>`;
+                                            }
+
+                                            return `
+                                                <a href="${att.url}" target="_blank" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px;">
+                                                            ${iconOrPreview}
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-medium text-dark text-truncate" style="max-width: 250px;" title="${att.original_name}">${att.original_name || att.filename}</div>
+                                                            <div class="small text-muted">${att.size_formatted || ''}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <i class="bi bi-download text-primary"></i>
-                                            </a>
-                                        `).join('')}
+                                                    <div class="btn btn-sm btn-light rounded-circle p-2">
+                                                        <i class="bi bi-download text-primary"></i>
+                                                    </div>
+                                                </a>
+                                            `;
+                                        }).join('')}
                                     </div>
                                 ` : '<div class="text-center text-muted py-3 small">Nenhum anexo encontrado.</div>'}
                             </div>

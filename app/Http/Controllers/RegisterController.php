@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Register;
+use App\Models\RegisterAttachment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -128,7 +129,7 @@ class RegisterController extends Controller
 
         // Anexos
         $data['attachments'] = $register->attachments->map(function($att) {
-            $att->url = asset('uploads/anexos_registers/' . $att->filename);
+            $att->url = asset('storage/uploads/anexos_registers/' . $att->filename);
             // Formatar tamanho
             $size = $att->size_bytes;
             if ($size < 1024) {
@@ -190,7 +191,10 @@ class RegisterController extends Controller
             $validated['photo'] = basename($path);
         }
 
-        Register::create($validated);
+        $register = Register::create($validated);
+
+        // Upload de Anexos
+        $this->handleAttachments($request, $register);
 
         return redirect()->route('registers.index')->with('success', 'Registro criado com sucesso!');
     }
@@ -228,6 +232,7 @@ class RegisterController extends Controller
             'familly_qntd' => 'nullable|integer',
             'status' => 'required|boolean',
             'photo' => 'nullable|image|max:2048',
+            'attachments.*' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,rtf,jpg,jpeg,png,gif,zip,rar,7z',
         ]);
 
         if (!empty($validated['born_date'])) {
@@ -245,6 +250,9 @@ class RegisterController extends Controller
         }
 
         $register->update($validated);
+
+        // Upload de Anexos
+        $this->handleAttachments($request, $register);
 
         return redirect()->route('registers.index')->with('success', 'Registro atualizado com sucesso!');
     }
@@ -314,5 +322,50 @@ class RegisterController extends Controller
         $exists = $query->exists();
 
         return response()->json(['exists' => $exists]);
+    }
+
+    private function handleAttachments(Request $request, Register $register)
+    {
+        if ($request->hasFile('attachments')) {
+            $files = $request->file('attachments');
+            $currentCount = $register->attachments()->count();
+            
+            foreach ($files as $file) {
+                if ($currentCount >= 10) break;
+
+                // Validate mime type (no video)
+                if (str_starts_with($file->getMimeType(), 'video/')) continue;
+
+                $filename = 'reg-' . $register->id . '-' . time() . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('uploads/anexos_registers', $filename, 'public');
+
+                RegisterAttachment::create([
+                    'register_id' => $register->id,
+                    'filename' => $filename,
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size_bytes' => $file->getSize(),
+                ]);
+                
+                $currentCount++;
+            }
+        }
+    }
+
+    public function destroyAttachment($id)
+    {
+        $attachment = RegisterAttachment::with('register')->findOrFail($id);
+        
+        if ($attachment->register->paroquia_id !== Auth::user()->paroquia_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if (Storage::disk('public')->exists('uploads/anexos_registers/' . $attachment->filename)) {
+            Storage::disk('public')->delete('uploads/anexos_registers/' . $attachment->filename);
+        }
+        
+        $attachment->delete();
+
+        return response()->json(['success' => true]);
     }
 }

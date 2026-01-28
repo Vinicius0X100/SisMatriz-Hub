@@ -38,6 +38,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('registers/search', [RegisterController::class, 'searchPeople'])->name('registers.search');
     Route::post('registers/pdf', [RegisterController::class, 'generatePdf'])->name('registers.pdf');
     Route::get('registers/check-phone', [RegisterController::class, 'checkPhone'])->name('registers.check-phone');
+    Route::delete('registers/attachments/{id}', [RegisterController::class, 'destroyAttachment'])->name('registers.attachments.destroy');
     Route::resource('registers', RegisterController::class);
 
     // Onboarding / Setup Routes

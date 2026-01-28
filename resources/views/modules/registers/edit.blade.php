@@ -219,6 +219,59 @@
                     </div>
                 </div>
 
+                <!-- Row 8: Anexos Drag & Drop -->
+                <div class="row g-4 mb-5">
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-muted">Anexos (Documentos)</label>
+                        <div class="file-drop-area rounded-4 border-2 border-dashed bg-light p-5 text-center position-relative" id="attachmentsDropArea">
+                            <input type="file" name="attachments[]" id="attachments" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" multiple>
+                            <div class="d-flex flex-column align-items-center justify-content-center" id="attachmentsDropContent">
+                                <i class="bi bi-paperclip display-4 text-secondary mb-3"></i>
+                                <h6 class="fw-bold text-dark">Arraste e solte documentos aqui</h6>
+                                <p class="text-muted small mb-0">ou clique para selecionar (Max 10 arquivos no total, exceto vídeos)</p>
+                            </div>
+                        </div>
+
+                        <!-- Existing Attachments -->
+                        @if($register->attachments->count() > 0)
+                            <div id="existingAttachmentsArea" class="row g-3 mt-3">
+                                <div class="col-12"><h6 class="text-muted small fw-bold">Anexos Existentes:</h6></div>
+                                @foreach($register->attachments as $attachment)
+                                    <div class="col-md-6 col-lg-4" id="attachment-{{ $attachment->id }}">
+                                        <div class="card border shadow-sm h-100 position-relative">
+                                            <div class="card-body d-flex align-items-center p-3">
+                                                @php
+                                                    $iconClass = 'bi-file-earmark-text';
+                                                    if (str_contains($attachment->mime_type, 'pdf')) $iconClass = 'bi-file-earmark-pdf text-danger';
+                                                    elseif (str_contains($attachment->mime_type, 'image')) $iconClass = 'bi-file-earmark-image text-primary';
+                                                    elseif (str_contains($attachment->mime_type, 'word') || str_contains($attachment->mime_type, 'document')) $iconClass = 'bi-file-earmark-word text-primary';
+                                                    elseif (str_contains($attachment->mime_type, 'sheet') || str_contains($attachment->mime_type, 'excel')) $iconClass = 'bi-file-earmark-excel text-success';
+                                                @endphp
+                                                <i class="bi {{ $iconClass }} fs-2 me-3"></i>
+                                                <div class="overflow-hidden" style="flex: 1;">
+                                                    <a href="{{ asset('storage/uploads/anexos_registers/' . $attachment->filename) }}" target="_blank" class="text-decoration-none text-dark">
+                                                        <h6 class="card-title text-truncate mb-0" title="{{ $attachment->original_name }}">{{ $attachment->original_name }}</h6>
+                                                    </a>
+                                                    <small class="text-muted">{{ round($attachment->size_bytes / 1024, 2) }} KB</small>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-link text-danger ms-2 p-0" onclick="deleteAttachment({{ $attachment->id }})">
+                                                    <i class="bi bi-trash fs-5"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        
+                        <!-- Preview Container for NEW files -->
+                        <div id="attachmentsPreviewArea" class="row g-3 mt-3 d-none">
+                            <div class="col-12"><h6 class="text-muted small fw-bold">Novos Anexos:</h6></div>
+                            <!-- Items added via JS -->
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-end gap-2 align-items-center">
                     <div id="submitSpinner" class="d-none d-flex align-items-center me-3">
                         <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
@@ -566,6 +619,167 @@ document.addEventListener('DOMContentLoaded', function() {
         previewArea.classList.add('d-none');
         dropContent.classList.remove('d-none');
     });
+
+    // 4.1 Attachments Drag & Drop
+    const attachmentsDropArea = document.getElementById('attachmentsDropArea');
+    const attachmentsInput = document.getElementById('attachments');
+    const attachmentsPreviewArea = document.getElementById('attachmentsPreviewArea');
+    
+    // Store files in a DataTransfer object to manage them
+    const attachmentsDT = new DataTransfer();
+
+    if (attachmentsDropArea) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            attachmentsDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            attachmentsDropArea.addEventListener(eventName, () => attachmentsDropArea.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            attachmentsDropArea.addEventListener(eventName, () => attachmentsDropArea.classList.remove('dragover'), false);
+        });
+
+        attachmentsDropArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            handleAttachmentFiles(files);
+        });
+
+        attachmentsInput.addEventListener('change', function() {
+            // Merge new files with existing ones
+            handleAttachmentFiles(this.files);
+        });
+    }
+
+    function handleAttachmentFiles(files) {
+        if (!files || files.length === 0) return;
+
+        const maxFiles = 10;
+        const existingCount = document.querySelectorAll('#existingAttachmentsArea .card').length;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            // Check limit
+            if (attachmentsDT.items.length + existingCount >= maxFiles) {
+                alert('Limite máximo de 10 arquivos atingido (somando existentes e novos).');
+                break;
+            }
+
+            // Check mime type (no video)
+            if (file.type.startsWith('video/')) {
+                alert(`O arquivo "${file.name}" é um vídeo e não é permitido.`);
+                continue;
+            }
+
+            // Check if already added (by name and size)
+            let duplicate = false;
+            for (let j = 0; j < attachmentsDT.files.length; j++) {
+                if (attachmentsDT.files[j].name === file.name && attachmentsDT.files[j].size === file.size) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) continue;
+
+            attachmentsDT.items.add(file);
+        }
+
+        // Update input
+        attachmentsInput.files = attachmentsDT.files;
+
+        // Render preview
+        renderAttachmentsPreview();
+    }
+
+    function renderAttachmentsPreview() {
+        if (attachmentsDT.items.length > 0) {
+            attachmentsPreviewArea.classList.remove('d-none');
+        } else {
+            attachmentsPreviewArea.classList.add('d-none');
+        }
+
+        attachmentsPreviewArea.innerHTML = '<div class="col-12"><h6 class="text-muted small fw-bold">Novos Anexos:</h6></div>';
+
+        Array.from(attachmentsDT.files).forEach((file, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4';
+            
+            const card = document.createElement('div');
+            card.className = 'card border shadow-sm h-100 position-relative';
+            
+            let iconClass = 'bi-file-earmark-text';
+            if (file.type.includes('pdf')) iconClass = 'bi-file-earmark-pdf text-danger';
+            else if (file.type.includes('image')) iconClass = 'bi-file-earmark-image text-primary';
+            else if (file.type.includes('word') || file.type.includes('document')) iconClass = 'bi-file-earmark-word text-primary';
+            else if (file.type.includes('sheet') || file.type.includes('excel')) iconClass = 'bi-file-earmark-excel text-success';
+            
+            card.innerHTML = `
+                <div class="card-body d-flex align-items-center p-3">
+                    <i class="bi ${iconClass} fs-2 me-3"></i>
+                    <div class="overflow-hidden" style="flex: 1;">
+                        <h6 class="card-title text-truncate mb-0" title="${file.name}">${file.name}</h6>
+                        <small class="text-muted">${formatBytes(file.size)}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-link text-danger ms-2 p-0" onclick="removeAttachment(${index})">
+                        <i class="bi bi-x-circle-fill fs-5"></i>
+                    </button>
+                </div>
+            `;
+            
+            col.appendChild(card);
+            attachmentsPreviewArea.appendChild(col);
+        });
+    }
+
+    // Make remove function global so onclick works
+    window.removeAttachment = function(index) {
+        attachmentsDT.items.remove(index);
+        attachmentsInput.files = attachmentsDT.files;
+        renderAttachmentsPreview();
+    }
+
+    // Global function for deleting existing attachments
+    window.deleteAttachment = function(id) {
+        if (confirm('Tem certeza que deseja excluir este anexo?')) {
+            fetch(`/registers/attachments/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const el = document.getElementById(`attachment-${id}`);
+                    if (el) el.remove();
+                    // Check if existingAttachmentsArea is empty
+                    const remaining = document.querySelectorAll('#existingAttachmentsArea .col-md-6').length;
+                    if (remaining === 0) {
+                         const area = document.getElementById('existingAttachmentsArea');
+                         if(area) area.classList.add('d-none');
+                    }
+                } else {
+                    alert('Erro ao excluir anexo: ' + (data.error || 'Erro desconhecido'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erro ao excluir anexo.');
+            });
+        }
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
     
     // 5. Form Validation
     // form variable already declared above
@@ -627,15 +841,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+</script>
 
 @if ($errors->any())
-    document.addEventListener('DOMContentLoaded', function() {
-        let errors = "";
-        @foreach ($errors->all() as $error)
-            errors += "- {{ $error }}\n";
-        @endforeach
-        alert('Erros de validação encontrados:\n\n' + errors);
-    });
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const errors = @json($errors->all());
+            let errorMsg = "Erros de validação encontrados:\n\n";
+            errors.forEach(function(error) {
+                errorMsg += "- " + error + "\n";
+            });
+            alert(errorMsg);
+        });
+    </script>
 @endif
-</script>
 @endsection
