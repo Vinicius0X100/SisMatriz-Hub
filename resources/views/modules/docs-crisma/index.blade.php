@@ -24,19 +24,29 @@
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
-                <div class="position-relative w-100">
-                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" id="search-input" class="form-control rounded-pill bg-light border-0 ps-5 py-2" placeholder="Pesquisar por nome...">
+            <div class="row mb-4 g-3">
+                <div class="col-md-5">
+                    <div class="position-relative">
+                        <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="search-input" class="form-control rounded-pill bg-light border-0 ps-5 py-2" placeholder="Pesquisar por nome...">
+                    </div>
                 </div>
-                <div class="w-50">
+                <div class="col-md-3">
                     <select id="turma-filter" class="form-select rounded-pill bg-light border-0 py-2">
                         <option value="">Todas as Turmas</option>
                         @foreach($turmas as $turma)
                             <option value="{{ $turma->id }}">{{ $turma->turma }}</option>
                         @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select id="status-filter" class="form-select rounded-pill bg-light border-0 py-2">
+                        <option value="">Todos os Status</option>
+                        <option value="pendente">Documentação Pendente</option>
+                        <option value="obrigatoria_entregue">Documentação Obrigatória Entregue</option>
+                        <option value="entregue">Documentação Entregue</option>
                     </select>
                 </div>
             </div>
@@ -52,12 +62,14 @@
     let searchTimeout;
     const searchInput = document.getElementById('search-input');
     const turmaFilter = document.getElementById('turma-filter');
+    const statusFilter = document.getElementById('status-filter');
 
     function fetchResults() {
         const query = searchInput.value;
         const turmaId = turmaFilter.value;
+        const status = statusFilter.value;
 
-        fetch(`{{ route('docs-crisma.index') }}?search=${query}&turma_id=${turmaId}`, {
+        fetch(`{{ route('docs-crisma.index') }}?search=${query}&turma_id=${turmaId}&status=${status}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -74,5 +86,6 @@
     });
 
     turmaFilter.addEventListener('change', fetchResults);
+    statusFilter.addEventListener('change', fetchResults);
 </script>
 @endsection

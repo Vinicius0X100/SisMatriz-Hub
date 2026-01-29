@@ -14,6 +14,7 @@ class DocsEucaristiaController extends Controller
     {
         $search = $request->input('search');
         $turmaId = $request->input('turma_id');
+        $status = $request->input('status');
 
         $query = Catecando::with(['register.docsEucaristia', 'turma'])
             ->whereHas('register', function ($q) {
@@ -28,6 +29,25 @@ class DocsEucaristiaController extends Controller
 
         if ($turmaId) {
             $query->where('turma_id', $turmaId);
+        }
+
+        if ($status) {
+            if ($status === 'pendente') {
+                $query->where(function($q) {
+                    $q->whereDoesntHave('register.docsEucaristia')
+                      ->orWhereHas('register.docsEucaristia', function($d) {
+                          $d->where('rg', false)
+                            ->orWhere('comprovante_residencia', false)
+                            ->orWhere('certidao_batismo', false);
+                      });
+                });
+            } elseif ($status === 'obrigatoria_entregue' || $status === 'entregue') {
+                $query->whereHas('register.docsEucaristia', function($d) {
+                    $d->where('rg', true)
+                      ->where('comprovante_residencia', true)
+                      ->where('certidao_batismo', true);
+                });
+            }
         }
 
         $students = $query->paginate(10);

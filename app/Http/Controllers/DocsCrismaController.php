@@ -14,6 +14,7 @@ class DocsCrismaController extends Controller
     {
         $search = $request->input('search');
         $turmaId = $request->input('turma_id');
+        $status = $request->input('status');
 
         $query = Crismando::with(['register.docsCrisma', 'turma'])
             ->whereHas('register', function ($q) {
@@ -28,6 +29,42 @@ class DocsCrismaController extends Controller
 
         if ($turmaId) {
             $query->where('turma_id', $turmaId);
+        }
+
+        if ($status) {
+            if ($status === 'pendente') {
+                $query->where(function($q) {
+                    $q->whereDoesntHave('register.docsCrisma')
+                      ->orWhereHas('register.docsCrisma', function($d) {
+                          $d->where('rg', false)
+                            ->orWhere('comprovante_residencia', false)
+                            ->orWhere('certidao_batismo', false)
+                            ->orWhere('certidao_eucaristia', false)
+                            ->orWhere('rg_padrinho', false)
+                            ->orWhere('certidao_crisma_padrinho', false);
+                      });
+                });
+            } elseif ($status === 'obrigatoria_entregue') {
+                $query->whereHas('register.docsCrisma', function($d) {
+                    $d->where('rg', true)
+                      ->where('comprovante_residencia', true)
+                      ->where('certidao_batismo', true)
+                      ->where('certidao_eucaristia', true)
+                      ->where('rg_padrinho', true)
+                      ->where('certidao_crisma_padrinho', true)
+                      ->where('certidao_casamento_padrinho', false);
+                });
+            } elseif ($status === 'entregue') {
+                $query->whereHas('register.docsCrisma', function($d) {
+                    $d->where('rg', true)
+                      ->where('comprovante_residencia', true)
+                      ->where('certidao_batismo', true)
+                      ->where('certidao_eucaristia', true)
+                      ->where('rg_padrinho', true)
+                      ->where('certidao_crisma_padrinho', true)
+                      ->where('certidao_casamento_padrinho', true);
+                });
+            }
         }
 
         $students = $query->paginate(10);
