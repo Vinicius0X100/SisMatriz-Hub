@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TurmaEucaristia;
-use App\Models\CatequistaEucaristia;
-use App\Models\Catecando;
-use App\Models\FaltaCatequese;
+use App\Models\TurmaAdultos;
+use App\Models\CatequistaAdultos;
+use App\Models\CatecandoAdultos;
+use App\Models\FaltaAdultos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class TurmasEucaristiaController extends Controller
+class TurmasAdultosController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = TurmaEucaristia::with('catequista')->withCount('catecandos');
+        $query = TurmaAdultos::with('catequista')->withCount('catecandos');
 
         // Filter by search
         if ($request->has('search') && $request->search != '') {
@@ -49,13 +49,10 @@ class TurmasEucaristiaController extends Controller
         
         $allowedSorts = ['turma', 'tutor', 'inicio', 'termino', 'status', 'created_at'];
         if (in_array($sortColumn, $allowedSorts)) {
-             // Handle relationship sorting if needed, but for now simple column sort
              if ($sortColumn === 'tutor') {
-                 // Sort by related model name would require join, for simplicity we might skip or do join
-                 // Let's do a join for correct sorting if requested
-                 $query->join('catequistas_eucaristia', 'turmas_catequese.tutor', '=', 'catequistas_eucaristia.id')
-                       ->addSelect('turmas_catequese.*')
-                       ->orderBy('catequistas_eucaristia.nome', $sortDirection);
+                 $query->join('catequistas_adultos', 'turmas_adultos.tutor', '=', 'catequistas_adultos.id')
+                       ->addSelect('turmas_adultos.*')
+                       ->orderBy('catequistas_adultos.nome', $sortDirection);
              } else {
                  $query->orderBy($sortColumn, $sortDirection);
              }
@@ -66,16 +63,16 @@ class TurmasEucaristiaController extends Controller
         $turmas = $query->paginate(10);
 
         if ($request->ajax()) {
-            return view('modules.turmas-eucaristia.partials.list', compact('turmas'))->render();
+            return view('modules.turmas-adultos.partials.list', compact('turmas'))->render();
         }
 
         $stats = [
-            'total' => TurmaEucaristia::where('paroquia_id', Auth::user()->paroquia_id)->count(),
-            'active' => TurmaEucaristia::where('paroquia_id', Auth::user()->paroquia_id)->whereIn('status', [1, 3])->count(),
-            'inactive' => TurmaEucaristia::where('paroquia_id', Auth::user()->paroquia_id)->whereIn('status', [2, 4])->count(),
+            'total' => TurmaAdultos::where('paroquia_id', Auth::user()->paroquia_id)->count(),
+            'active' => TurmaAdultos::where('paroquia_id', Auth::user()->paroquia_id)->whereIn('status', [1, 3])->count(),
+            'inactive' => TurmaAdultos::where('paroquia_id', Auth::user()->paroquia_id)->whereIn('status', [2, 4])->count(),
         ];
 
-        return view('modules.turmas-eucaristia.index', compact('turmas', 'stats'));
+        return view('modules.turmas-adultos.index', compact('turmas', 'stats'));
     }
 
     /**
@@ -83,12 +80,12 @@ class TurmasEucaristiaController extends Controller
      */
     public function create()
     {
-        $catequistas = CatequistaEucaristia::where('paroquia_id', Auth::user()->paroquia_id)
+        $catequistas = CatequistaAdultos::where('paroquia_id', Auth::user()->paroquia_id)
                                            ->where('status', 1)
                                            ->orderBy('nome')
                                            ->get();
 
-        return view('modules.turmas-eucaristia.create', compact('catequistas'));
+        return view('modules.turmas-adultos.create', compact('catequistas'));
     }
 
     /**
@@ -98,13 +95,13 @@ class TurmasEucaristiaController extends Controller
     {
         $request->validate([
             'turma' => 'required|string|max:255',
-            'tutor' => 'required|exists:catequistas_eucaristia,id',
+            'tutor' => 'required|exists:catequistas_adultos,id',
             'inicio' => 'required|date',
             'termino' => 'required|date|after_or_equal:inicio',
             'status' => 'required|in:1,2,3,4',
         ]);
 
-        $turma = TurmaEucaristia::create([
+        $turma = TurmaAdultos::create([
             'turma' => $request->turma,
             'tutor' => $request->tutor,
             'inicio' => $request->inicio,
@@ -117,7 +114,7 @@ class TurmasEucaristiaController extends Controller
         if ($request->has('students') && is_array($request->students)) {
             foreach ($request->students as $studentData) {
                 if (isset($studentData['id'])) {
-                    Catecando::create([
+                    CatecandoAdultos::create([
                         'turma_id' => $turma->id,
                         'register_id' => $studentData['id'],
                         'batizado' => isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false,
@@ -126,7 +123,7 @@ class TurmasEucaristiaController extends Controller
             }
         }
 
-        return redirect()->route('turmas-eucaristia.index')->with('success', 'Turma adicionada com sucesso!');
+        return redirect()->route('turmas-adultos.index')->with('success', 'Turma adicionada com sucesso!');
     }
 
     /**
@@ -134,19 +131,19 @@ class TurmasEucaristiaController extends Controller
      */
     public function edit(string $id)
     {
-        $turma = TurmaEucaristia::with('catecandos.register')->findOrFail($id);
+        $turma = TurmaAdultos::with('catecandos.register')->findOrFail($id);
         
         // Ensure security check for paroquia
         if ($turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
         }
 
-        $catequistas = CatequistaEucaristia::where('paroquia_id', Auth::user()->paroquia_id)
+        $catequistas = CatequistaAdultos::where('paroquia_id', Auth::user()->paroquia_id)
                                            ->where('status', 1)
                                            ->orderBy('nome')
                                            ->get();
 
-        return view('modules.turmas-eucaristia.edit', compact('turma', 'catequistas'));
+        return view('modules.turmas-adultos.edit', compact('turma', 'catequistas'));
     }
 
     /**
@@ -154,7 +151,7 @@ class TurmasEucaristiaController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $turma = TurmaEucaristia::findOrFail($id);
+        $turma = TurmaAdultos::findOrFail($id);
 
         if ($turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
@@ -162,7 +159,7 @@ class TurmasEucaristiaController extends Controller
 
         $request->validate([
             'turma' => 'required|string|max:255',
-            'tutor' => 'required|exists:catequistas_eucaristia,id',
+            'tutor' => 'required|exists:catequistas_adultos,id',
             'inicio' => 'required|date',
             'termino' => 'required|date|after_or_equal:inicio',
             'status' => 'required|in:1,2,3,4',
@@ -182,7 +179,7 @@ class TurmasEucaristiaController extends Controller
             foreach ($request->students as $studentData) {
                 if (isset($studentData['id'])) {
                     $submittedStudentIds[] = $studentData['id'];
-                    $catecando = Catecando::where('turma_id', $turma->id)
+                    $catecando = CatecandoAdultos::where('turma_id', $turma->id)
                                           ->where('register_id', $studentData['id'])
                                           ->first();
                     
@@ -194,7 +191,7 @@ class TurmasEucaristiaController extends Controller
                         $catecando->save();
                     } else {
                         // Create new
-                        Catecando::create([
+                        CatecandoAdultos::create([
                             'turma_id' => $turma->id,
                             'register_id' => $studentData['id'],
                             'batizado' => $isBatizado,
@@ -205,11 +202,11 @@ class TurmasEucaristiaController extends Controller
         }
 
         // Remove students not in the submitted list
-        Catecando::where('turma_id', $turma->id)
+        CatecandoAdultos::where('turma_id', $turma->id)
                  ->whereNotIn('register_id', $submittedStudentIds)
                  ->delete();
 
-        return redirect()->route('turmas-eucaristia.index')->with('success', 'Turma atualizada com sucesso!');
+        return redirect()->route('turmas-adultos.index')->with('success', 'Turma atualizada com sucesso!');
     }
 
     /**
@@ -217,7 +214,7 @@ class TurmasEucaristiaController extends Controller
      */
     public function destroy(string $id)
     {
-        $turma = TurmaEucaristia::findOrFail($id);
+        $turma = TurmaAdultos::findOrFail($id);
 
         if ($turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
@@ -225,12 +222,12 @@ class TurmasEucaristiaController extends Controller
 
         $turma->delete();
 
-        return redirect()->route('turmas-eucaristia.index')->with('success', 'Turma removida com sucesso!');
+        return redirect()->route('turmas-adultos.index')->with('success', 'Turma removida com sucesso!');
     }
 
     public function getStudents(string $id)
     {
-        $turma = TurmaEucaristia::with(['catecandos.register', 'catequista'])->findOrFail($id);
+        $turma = TurmaAdultos::with(['catecandos.register', 'catequista'])->findOrFail($id);
 
         if ($turma->paroquia_id != Auth::user()->paroquia_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -247,7 +244,7 @@ class TurmasEucaristiaController extends Controller
             ];
         });
 
-        $availableTurmas = TurmaEucaristia::where('paroquia_id', Auth::user()->paroquia_id)
+        $availableTurmas = TurmaAdultos::where('paroquia_id', Auth::user()->paroquia_id)
                                           ->where('id', '!=', $id)
                                           ->whereIn('status', [1, 3])
                                           ->get(['id', 'turma']);
@@ -262,18 +259,18 @@ class TurmasEucaristiaController extends Controller
     public function transferStudent(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:catecandos,cr_id',
-            'new_turma_id' => 'required|exists:turmas_catequese,id',
+            'student_id' => 'required|exists:catecandos_adultos,cr_id',
+            'new_turma_id' => 'required|exists:turmas_adultos,id',
         ]);
 
-        $catecando = Catecando::findOrFail($request->student_id);
+        $catecando = CatecandoAdultos::findOrFail($request->student_id);
         
         // Verify ownership via current turma
         if ($catecando->turma && $catecando->turma->paroquia_id != Auth::user()->paroquia_id) {
              return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $newTurma = TurmaEucaristia::findOrFail($request->new_turma_id);
+        $newTurma = TurmaAdultos::findOrFail($request->new_turma_id);
 
         if ($newTurma->paroquia_id != Auth::user()->paroquia_id) {
              return response()->json(['error' => 'Unauthorized'], 403);
@@ -290,7 +287,7 @@ class TurmasEucaristiaController extends Controller
 
     public function exportStudents(Request $request, string $id)
     {
-        $turma = TurmaEucaristia::with(['catecandos.register', 'catequista'])->findOrFail($id);
+        $turma = TurmaAdultos::with(['catecandos.register', 'catequista'])->findOrFail($id);
 
         if ($turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
@@ -311,13 +308,13 @@ class TurmasEucaristiaController extends Controller
                 'typeLabel' => 'Catecandos(as)',
                 'paroquia' => Auth::user()->paroquia
             ]);
-            return $pdf->download('turma_'.$id.'_catecandos.pdf');
+            return $pdf->download('turma_'.$id.'_catecandos_adultos.pdf');
         }
 
         if ($request->type === 'excel') {
             $headers = [
                 "Content-type"        => "text/csv",
-                "Content-Disposition" => "attachment; filename=turma_".$id."_catecandos.csv",
+                "Content-Disposition" => "attachment; filename=turma_".$id."_catecandos_adultos.csv",
                 "Pragma"              => "no-cache",
                 "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
                 "Expires"             => "0"
@@ -356,7 +353,7 @@ class TurmasEucaristiaController extends Controller
             return response()->json(['error' => 'Não foi possível criar o arquivo ZIP'], 500);
         }
 
-        $turmas = TurmaEucaristia::whereIn('id', $ids)
+        $turmas = TurmaAdultos::whereIn('id', $ids)
             ->where('paroquia_id', Auth::user()->paroquia_id)
             ->with(['catecandos.register', 'catequista'])
             ->get();
@@ -399,19 +396,19 @@ class TurmasEucaristiaController extends Controller
 
         $zip->close();
 
-        return response()->download($zipFile, 'turmas_export_'.date('Y-m-d_H-i').'.zip')->deleteFileAfterSend(true);
+        return response()->download($zipFile, 'turmas_adultos_export_'.date('Y-m-d_H-i').'.zip')->deleteFileAfterSend(true);
     }
 
     public function getAttendance(Request $request, $id)
     {
-        $turma = TurmaEucaristia::findOrFail($id);
+        $turma = TurmaAdultos::findOrFail($id);
         $date = $request->input('date', date('Y-m-d'));
         
-        $students = Catecando::where('turma_id', $id)
+        $students = CatecandoAdultos::where('turma_id', $id)
             ->with('register')
             ->get()
             ->map(function ($student) use ($id, $date) {
-                $falta = FaltaCatequese::where('turma_id', $id)
+                $falta = FaltaAdultos::where('turma_id', $id)
                     ->where('aluno_id', $student->register_id)
                     ->where('data_aula', $date)
                     ->first();
@@ -435,14 +432,14 @@ class TurmasEucaristiaController extends Controller
     public function saveAttendance(Request $request)
     {
         $request->validate([
-            'turma_id' => 'required|exists:turmas_catequese,id',
+            'turma_id' => 'required|exists:turmas_adultos,id',
             'aluno_id' => 'required|exists:registers,id',
             'data_aula' => 'required|date',
             'title' => 'required|string',
             'status' => 'required|boolean',
         ]);
 
-        $falta = FaltaCatequese::updateOrCreate(
+        $falta = FaltaAdultos::updateOrCreate(
             [
                 'turma_id' => $request->turma_id,
                 'aluno_id' => $request->aluno_id,
@@ -460,7 +457,7 @@ class TurmasEucaristiaController extends Controller
     public function saveBulkAttendance(Request $request)
     {
         $request->validate([
-            'turma_id' => 'required|exists:turmas_catequese,id',
+            'turma_id' => 'required|exists:turmas_adultos,id',
             'data_aula' => 'required|date',
             'title' => 'required|string',
             'students' => 'required|array',
@@ -469,7 +466,7 @@ class TurmasEucaristiaController extends Controller
         ]);
 
         foreach ($request->students as $studentData) {
-            FaltaCatequese::updateOrCreate(
+            FaltaAdultos::updateOrCreate(
                 [
                     'turma_id' => $request->turma_id,
                     'aluno_id' => $studentData['aluno_id'],
@@ -487,7 +484,7 @@ class TurmasEucaristiaController extends Controller
 
     public function attendanceAnalysis(Request $request, $id)
     {
-        $turma = TurmaEucaristia::with(['catequista'])->findOrFail($id);
+        $turma = TurmaAdultos::with(['catequista'])->findOrFail($id);
         
         if (Auth::user()->paroquia_id && $turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
@@ -513,23 +510,23 @@ class TurmasEucaristiaController extends Controller
         }
 
         $students = $query->get()->map(function($catecando) use ($turma) {
-            $presencas = FaltaCatequese::where('turma_id', $turma->id)
+            $presencas = FaltaAdultos::where('turma_id', $turma->id)
                                     ->where('aluno_id', $catecando->register_id)
                                     ->where('status', 1)
                                     ->count();
             
-            $faltas = FaltaCatequese::where('turma_id', $turma->id)
+            $faltas = FaltaAdultos::where('turma_id', $turma->id)
                                  ->where('aluno_id', $catecando->register_id)
                                  ->where('status', 0)
                                  ->count();
             
-            $presencasList = FaltaCatequese::where('turma_id', $turma->id)
+            $presencasList = FaltaAdultos::where('turma_id', $turma->id)
                                         ->where('aluno_id', $catecando->register_id)
                                         ->where('status', 1)
                                         ->orderBy('data_aula', 'desc')
                                         ->get(['data_aula', 'title']);
                                         
-            $faltasList = FaltaCatequese::where('turma_id', $turma->id)
+            $faltasList = FaltaAdultos::where('turma_id', $turma->id)
                                      ->where('aluno_id', $catecando->register_id)
                                      ->where('status', 0)
                                      ->orderBy('data_aula', 'desc')
@@ -555,19 +552,19 @@ class TurmasEucaristiaController extends Controller
             }
         }
 
-        return view('modules.turmas-eucaristia.attendance-analysis', compact('turma', 'students'));
+        return view('modules.turmas-adultos.attendance-analysis', compact('turma', 'students'));
     }
 
     public function attendanceHistory(Request $request, $id, $student_id)
     {
-        $turma = TurmaEucaristia::findOrFail($id);
+        $turma = TurmaAdultos::findOrFail($id);
         $student = \App\Models\Register::findOrFail($student_id);
         
         if (Auth::user()->paroquia_id && $turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
         }
 
-        $query = FaltaCatequese::with('justificativa')
+        $query = FaltaAdultos::with('justificativa')
                               ->where('turma_id', $id)
                               ->where('aluno_id', $student_id);
 
@@ -591,29 +588,50 @@ class TurmasEucaristiaController extends Controller
 
         $history = $query->orderBy('data_aula', 'desc')->get();
 
-        return view('modules.turmas-eucaristia.attendance-history', compact('turma', 'student', 'history'));
+        return view('modules.turmas-adultos.attendance-history', compact('turma', 'student', 'history'));
     }
 
     public function storeJustification(Request $request)
     {
         $request->validate([
-            'falta_id' => 'required|exists:faltas_catequese,id',
+            'falta_id' => 'required|exists:faltas_adultos,id',
             'justify' => 'required|string|max:255',
         ]);
 
-        $falta = FaltaCatequese::findOrFail($request->falta_id);
+        $falta = FaltaAdultos::findOrFail($request->falta_id);
         
         // Check permission
-        $turma = TurmaEucaristia::findOrFail($falta->turma_id);
+        $turma = TurmaAdultos::findOrFail($falta->turma_id);
         if (Auth::user()->paroquia_id && $turma->paroquia_id != Auth::user()->paroquia_id) {
             abort(403);
         }
 
-        \App\Models\FaltaJustifyCatequese::updateOrCreate(
+        \App\Models\FaltaJustifyAdultos::updateOrCreate(
             ['faltas_id' => $request->falta_id],
-            ['justify' => $request->justify]
+            ['motivo' => $request->justify]
         );
 
         return back()->with('success', 'Justificativa salva com sucesso!');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = explode(',', $request->ids);
+        
+        // Validate IDs are integers
+        $ids = array_filter($ids, function($id) {
+            return is_numeric($id);
+        });
+
+        if (empty($ids)) {
+            return redirect()->back()->with('error', 'Nenhuma turma selecionada.');
+        }
+
+        // Delete turmas ensuring ownership
+        TurmaAdultos::whereIn('id', $ids)
+                    ->where('paroquia_id', Auth::user()->paroquia_id)
+                    ->delete();
+
+        return redirect()->route('turmas-adultos.index')->with('success', 'Turmas selecionadas removidas com sucesso!');
     }
 }

@@ -5,13 +5,13 @@
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
             <h2 class="mb-0 fw-bold text-dark">Histórico de Presenças</h2>
-            <p class="text-muted small mb-0">Crismando(a): {{ $student->name }} | Turma: {{ $turma->turma }}</p>
+            <p class="text-muted small mb-0">Catecando(a): {{ $student->name }} | Turma: {{ $turma->turma }}</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('turmas-crisma.index') }}" class="text-decoration-none">Turmas de Crisma</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('turmas-crisma.attendance-analysis', $turma->id) }}" class="text-decoration-none">Apuração</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('turmas-adultos.index') }}" class="text-decoration-none">Turmas de Adultos</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('turmas-adultos.attendance-analysis', $turma->id) }}" class="text-decoration-none">Apuração</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Histórico</li>
             </ol>
         </nav>
@@ -19,7 +19,7 @@
 
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
-            <form action="{{ route('turmas-crisma.attendance-history', ['id' => $turma->id, 'student_id' => $student->id]) }}" method="GET" class="row g-3">
+            <form action="{{ route('turmas-adultos.attendance-history', ['id' => $turma->id, 'student_id' => $student->id]) }}" method="GET" class="row g-3">
                 <div class="col-md-3">
                     <label for="status" class="form-label text-muted small fw-bold">Status</label>
                     <select name="status" id="status" class="form-select bg-light">
@@ -63,9 +63,9 @@
                             <td>{{ $record->title }}</td>
                             <td class="text-muted small" style="max-width: 250px;">
                                 @if($record->justificativa)
-                                    {{ Str::limit($record->justificativa->justify, 50) }}
-                                    @if(strlen($record->justificativa->justify) > 50)
-                                        <i class="bi bi-info-circle text-primary" data-bs-toggle="tooltip" title="{{ $record->justificativa->justify }}"></i>
+                                    {{ Str::limit($record->justificativa->motivo, 50) }}
+                                    @if(strlen($record->justificativa->motivo) > 50)
+                                        <i class="bi bi-info-circle text-primary" data-bs-toggle="tooltip" title="{{ $record->justificativa->motivo }}"></i>
                                     @endif
                                 @else
                                     <span class="text-muted fst-italic">-</span>
@@ -85,7 +85,7 @@
                             <td class="text-end pe-4">
                                 <button class="btn btn-sm btn-outline-primary rounded-pill" 
                                         data-id="{{ $record->id }}" 
-                                        data-justify="{{ $record->justificativa->justify ?? '' }}"
+                                        data-justify="{{ $record->justificativa->motivo ?? '' }}"
                                         onclick="openJustifyModal(this)">
                                     <i class="bi bi-pencil-square me-1"></i> Justificar
                                 </button>
@@ -115,7 +115,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="justifyForm" action="{{ route('turmas-crisma.attendance.justify') }}" method="POST">
+                <form id="justifyForm" action="{{ route('turmas-adultos.attendance.justify') }}" method="POST">
                     @csrf
                     <input type="hidden" name="falta_id" id="modalFaltaId">
                     <div class="mb-3">

@@ -27,7 +27,9 @@ return [
     ['name' => 'Protocolos', 'icon' => 'shield-check'],
     ['name' => 'Catequistas de Primeira Eucaristia', 'icon' => 'person-badge', 'url' => '/catequistas-eucaristia'],
     ['name' => 'Catequistas de Crisma', 'icon' => 'person-badge-fill', 'url' => '/catequistas-crisma'],
+    ['name' => 'Catequistas de Catequese de Adultos', 'icon' => 'person-badge-fill', 'url' => '/catequistas-adultos'],
     ['name' => 'Turmas de Primeira Eucaristia', 'icon' => 'people-fill', 'url' => '/turmas-eucaristia'],
     ['name' => 'Turmas de Crisma', 'icon' => 'people', 'url' => '/turmas-crisma'],
+    ['name' => 'Turmas de Catequese de Adultos', 'icon' => 'people', 'url' => '/turmas-adultos'],
     ['name' => 'Início', 'icon' => 'house'],
 ];

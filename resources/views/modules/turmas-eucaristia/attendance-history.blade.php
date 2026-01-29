@@ -17,6 +17,32 @@
         </nav>
     </div>
 
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form action="{{ route('turmas-eucaristia.attendance-history', ['id' => $turma->id, 'student_id' => $student->id]) }}" method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label text-muted small fw-bold">Status</label>
+                    <select name="status" id="status" class="form-select bg-light">
+                        <option value="">Todos</option>
+                        <option value="present" {{ request('status') == 'present' ? 'selected' : '' }}>Presenças</option>
+                        <option value="absent" {{ request('status') == 'absent' ? 'selected' : '' }}>Faltas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label text-muted small fw-bold">Data Inicial</label>
+                    <input type="date" name="start_date" id="start_date" class="form-control bg-light" value="{{ request('start_date') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label text-muted small fw-bold">Data Final</label>
+                    <input type="date" name="end_date" id="end_date" class="form-control bg-light" value="{{ request('end_date') }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill"><i class="bi bi-filter me-1"></i> Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <div class="table-responsive">

@@ -80,6 +80,24 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('turmas-crisma/attendance/justify', [App\Http\Controllers\TurmasCrismaController::class, 'storeJustification'])->name('turmas-crisma.attendance.justify');
     Route::resource('turmas-crisma', App\Http\Controllers\TurmasCrismaController::class);
 
+    // Catequese Adultos
+    Route::resource('catequese-adultos', App\Http\Controllers\CatequeseAdultosController::class);
+    Route::resource('catequistas-adultos', App\Http\Controllers\CatequistasAdultosController::class);
+
+    // Turmas Adultos
+    Route::get('turmas-adultos/{id}/students', [App\Http\Controllers\TurmasAdultosController::class, 'getStudents'])->name('turmas-adultos.students');
+    Route::get('turmas-adultos/export-bulk', [App\Http\Controllers\TurmasAdultosController::class, 'exportBulk'])->name('turmas-adultos.export-bulk');
+    Route::get('turmas-adultos/{id}/export', [App\Http\Controllers\TurmasAdultosController::class, 'exportStudents'])->name('turmas-adultos.export');
+    Route::post('turmas-adultos/transfer', [App\Http\Controllers\TurmasAdultosController::class, 'transferStudent'])->name('turmas-adultos.transfer');
+    Route::get('turmas-adultos/{id}/attendance', [App\Http\Controllers\TurmasAdultosController::class, 'getAttendance'])->name('turmas-adultos.attendance');
+    Route::post('turmas-adultos/attendance/save', [App\Http\Controllers\TurmasAdultosController::class, 'saveAttendance'])->name('turmas-adultos.attendance.save');
+    Route::post('turmas-adultos/attendance/save-bulk', [App\Http\Controllers\TurmasAdultosController::class, 'saveBulkAttendance'])->name('turmas-adultos.attendance.save-bulk');
+    Route::get('turmas-adultos/{id}/attendance-analysis', [App\Http\Controllers\TurmasAdultosController::class, 'attendanceAnalysis'])->name('turmas-adultos.attendance-analysis');
+    Route::get('turmas-adultos/{id}/attendance-history/{student_id}', [App\Http\Controllers\TurmasAdultosController::class, 'attendanceHistory'])->name('turmas-adultos.attendance-history');
+    Route::post('turmas-adultos/attendance/justify', [App\Http\Controllers\TurmasAdultosController::class, 'storeJustification'])->name('turmas-adultos.attendance.justify');
+    Route::post('turmas-adultos/bulk-delete', [App\Http\Controllers\TurmasAdultosController::class, 'bulkDestroy'])->name('turmas-adultos.bulk-delete');
+    Route::resource('turmas-adultos', App\Http\Controllers\TurmasAdultosController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');

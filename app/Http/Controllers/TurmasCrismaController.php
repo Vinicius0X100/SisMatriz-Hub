@@ -130,7 +130,7 @@ class TurmasCrismaController extends Controller
             $turma->save();
         }
 
-        return redirect()->route('catequese-crisma.index')->with('success', 'Turma adicionada com sucesso!');
+        return redirect()->route('turmas-crisma.index')->with('success', 'Turma adicionada com sucesso!');
     }
 
     /**
@@ -558,7 +558,7 @@ class TurmasCrismaController extends Controller
         return view('modules.turmas-crisma.attendance-analysis', compact('turma', 'students'));
     }
 
-    public function attendanceHistory($id, $student_id)
+    public function attendanceHistory(Request $request, $id, $student_id)
     {
         $turma = TurmaCrisma::findOrFail($id);
         $student = \App\Models\Register::findOrFail($student_id);
@@ -567,11 +567,29 @@ class TurmasCrismaController extends Controller
             abort(403);
         }
 
-        $history = FaltaCrisma::with('justificativa')
+        $query = FaltaCrisma::with('justificativa')
                               ->where('turma_id', $id)
-                              ->where('aluno_id', $student_id)
-                              ->orderBy('data_aula', 'desc')
-                              ->get();
+                              ->where('aluno_id', $student_id);
+
+        // Filter by Status (Presence/Absence)
+        if ($request->filled('status')) {
+            if ($request->status == 'present') {
+                $query->where('status', 1);
+            } elseif ($request->status == 'absent') {
+                $query->where('status', 0);
+            }
+        }
+
+        // Filter by Date Range
+        if ($request->filled('start_date')) {
+            $query->whereDate('data_aula', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('data_aula', '<=', $request->end_date);
+        }
+
+        $history = $query->orderBy('data_aula', 'desc')->get();
 
         return view('modules.turmas-crisma.attendance-history', compact('turma', 'student', 'history'));
     }
