@@ -1,6 +1,68 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 120px;
+        height: 34px;
+    }
+    .switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #dc3545;
+        -webkit-transition: .4s;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+        border-radius: 50%;
+        z-index: 2;
+    }
+    .slider:after {
+        content: 'FALTA';
+        color: white;
+        display: block;
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        transform: translateY(-50%);
+        font-size: 11px;
+        font-weight: bold;
+    }
+    input:checked + .slider {
+        background-color: #198754;
+    }
+    input:checked + .slider:after {
+        content: 'PRESENTE';
+        right: auto;
+        left: 15px;
+    }
+    input:checked + .slider:before {
+        -webkit-transform: translateX(86px);
+        -ms-transform: translateX(86px);
+        transform: translateX(86px);
+    }
+</style>
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <h2 class="mb-0 fw-bold text-dark">Turmas de Primeira Eucaristia</h2>
@@ -360,6 +422,10 @@
                 }
                 document.getElementById('managePeriodo').textContent = periodo;
 
+                document.getElementById('btnRealizarChamada').onclick = function() {
+                    openAttendanceModal(id);
+                };
+
                 // Students
                 currentStudents = data.students;
                 applyModalFilters();
@@ -592,6 +658,150 @@
         });
     });
 
+    // Attendance Modal Logic
+    let currentAttendanceTurmaId = null;
+    let currentAttendanceData = null;
+
+    function openAttendanceModal(turmaId) {
+        currentAttendanceTurmaId = turmaId;
+        currentAttendanceData = null;
+        document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('attendanceTitle').value = '';
+        document.getElementById('attendanceListBody').innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">Selecione uma data e clique em Carregar.</td></tr>';
+        
+        // Close manage modal if open
+        const manageModalEl = document.getElementById('manageModal');
+        const manageModal = bootstrap.Modal.getInstance(manageModalEl);
+        if (manageModal) {
+            manageModal.hide();
+        }
+        
+        const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+        attendanceModal.show();
+        
+        // Auto load for today
+        loadAttendanceList();
+    }
+
+    async function loadAttendanceList() {
+        if (!currentAttendanceTurmaId) return;
+        
+        const date = document.getElementById('attendanceDate').value;
+        const tbody = document.getElementById('attendanceListBody');
+        
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando...</span></div></td></tr>';
+        
+        try {
+            const response = await fetch(`{{ route('turmas-eucaristia.attendance.get', ':id') }}`.replace(':id', currentAttendanceTurmaId) + `?date=${date}`);
+            const data = await response.json();
+            
+            currentAttendanceData = data;
+            
+            // Pre-fill title if available from the first student record that has a title
+            const existingRecord = data.students.find(s => s.title);
+            if (existingRecord) {
+                 document.getElementById('attendanceTitle').value = existingRecord.title;
+            }
+
+            renderAttendanceRows();
+            
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-danger">Erro ao carregar lista.</td></tr>';
+        }
+    }
+
+    function renderAttendanceRows() {
+        const tbody = document.getElementById('attendanceListBody');
+        const titleInput = document.getElementById('attendanceTitle');
+        const date = document.getElementById('attendanceDate').value;
+
+        if (!currentAttendanceData || currentAttendanceData.students.length === 0) {
+             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">Nenhum aluno nesta turma.</td></tr>';
+             return;
+        }
+
+        if (!titleInput.value.trim()) {
+             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">Digite o Tema/Título para visualizar a lista.</td></tr>';
+             return;
+        }
+
+        tbody.innerHTML = '';
+        currentAttendanceData.students.forEach(student => {
+            const status = student.status;
+            const isChecked = (status == 1) ? 'checked' : '';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${date.split('-').reverse().join('/')}</td>
+                <td>${student.name}</td>
+                <td class="attendance-title-cell">${student.title || titleInput.value || '-'}</td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" ${isChecked} onchange="toggleAttendance(${student.id}, this)">
+                        <span class="slider round"></span>
+                    </label>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Add listener to title input
+    document.addEventListener('DOMContentLoaded', function() {
+        const titleInput = document.getElementById('attendanceTitle');
+        if(titleInput) {
+            titleInput.addEventListener('input', function() {
+                renderAttendanceRows();
+            });
+        }
+    });
+
+    async function toggleAttendance(studentId, checkbox) {
+        const date = document.getElementById('attendanceDate').value;
+        const title = document.getElementById('attendanceTitle').value;
+        
+        if (!title.trim()) {
+            alert('Por favor, digite o Tema/Título do encontro antes de marcar a presença.');
+            checkbox.checked = !checkbox.checked; // Revert check
+            document.getElementById('attendanceTitle').focus();
+            return;
+        }
+
+        const newStatus = checkbox.checked ? 1 : 0;
+        checkbox.disabled = true;
+        
+        try {
+            const response = await fetch(`{{ route('turmas-eucaristia.attendance.save') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    turma_id: currentAttendanceTurmaId,
+                    aluno_id: studentId,
+                    data_aula: date,
+                    title: title,
+                    status: newStatus
+                })
+            });
+
+            if (!response.ok) throw new Error('Erro ao salvar');
+            
+            // Update title cell
+            const row = checkbox.closest('tr');
+            row.querySelector('.attendance-title-cell').innerText = title;
+            
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao salvar presença. Tente novamente.');
+            checkbox.checked = !checkbox.checked; // Revert
+        } finally {
+            checkbox.disabled = false;
+        }
+    }
+
 </script>
 
 <!-- Manage Modal -->
@@ -616,6 +826,19 @@
                                 <span><i class="bi bi-person me-1"></i> <span id="manageCatequista"></span></span>
                                 <span><i class="bi bi-calendar me-1"></i> <span id="managePeriodo"></span></span>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary rounded-pill w-100 py-2 d-flex align-items-center justify-content-center gap-2" id="btnRealizarChamada">
+                                <i class="bi bi-calendar-check"></i> Realizar Chamada
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-info rounded-pill w-100 py-2 d-flex align-items-center justify-content-center gap-2" id="btnApuracaoPresencas">
+                                <i class="bi bi-clipboard-data"></i> Apuração de Presenças
+                            </button>
                         </div>
                     </div>
 
@@ -740,6 +963,51 @@
                     <button type="button" class="btn btn-primary rounded-pill py-2" id="btnExportConfirm" onclick="confirmExport()">
                         <i class="bi bi-download me-2"></i> Gerar Arquivo
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Realizar Chamada -->
+<div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Realizar Chamada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row mb-4 g-3">
+                    <div class="col-md-5">
+                        <label for="attendanceDate" class="form-label fw-bold small text-muted">Data da Aula</label>
+                        <input type="date" class="form-control rounded-pill" id="attendanceDate" value="{{ date('Y-m-d') }}" onchange="loadAttendanceList()">
+                    </div>
+                    <div class="col-md-7">
+                        <label for="attendanceTitle" class="form-label fw-bold small text-muted">Tema/Título</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control rounded-pill rounded-end" id="attendanceTitle" placeholder="Digite o tema do encontro">
+                            <button class="btn btn-primary rounded-pill ms-2 px-4" type="button" onclick="loadAttendanceList()">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Carregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive rounded-3 border">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%">Data</th>
+                                <th style="width: 35%">Nome</th>
+                                <th style="width: 30%">Tema/Título</th>
+                                <th style="width: 20%">Comparecimento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceListBody">
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Selecione uma data e clique em Carregar.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

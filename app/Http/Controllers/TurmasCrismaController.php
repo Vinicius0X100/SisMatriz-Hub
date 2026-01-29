@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TurmaCrisma;
 use App\Models\CatequistaCrisma;
 use App\Models\Crismando;
+use App\Models\FaltaCrisma;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -269,30 +270,22 @@ class TurmasCrismaController extends Controller
     public function transferStudent(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:crismandos,cr_id',
+            'student_id' => 'required|exists:crismandos,register_id',
             'new_turma_id' => 'required|exists:turmas,id',
         ]);
 
-        $crismando = Crismando::findOrFail($request->student_id);
+        $student = Crismando::where('register_id', $request->student_id)->first();
         
-        // Verify ownership
-        if ($crismando->turma && $crismando->turma->paroquia_id != Auth::user()->paroquia_id) {
-             return response()->json(['error' => 'Unauthorized'], 403);
+        if (!$student) {
+            return response()->json(['error' => 'Aluno não encontrado'], 404);
         }
 
-        $newTurma = TurmaCrisma::findOrFail($request->new_turma_id);
+        $student->turma_id = $request->new_turma_id;
+        $student->is_transfered = true;
+        $student->transfer_date = now();
+        $student->save();
 
-        if ($newTurma->paroquia_id != Auth::user()->paroquia_id) {
-             return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $crismando->update([
-            'turma_id' => $request->new_turma_id,
-            'is_transfered' => true,
-            'transfer_date' => now(),
-        ]);
-
-        return response()->json(['success' => true, 'message' => 'Aluno transferido com sucesso!']);
+        return response()->json(['success' => true]);
     }
 
     public function exportStudents(Request $request, string $id)
@@ -407,5 +400,60 @@ class TurmasCrismaController extends Controller
         $zip->close();
 
         return response()->download($zipFile, 'turmas_export_'.date('Y-m-d_H-i').'.zip')->deleteFileAfterSend(true);
+    }
+
+    public function getAttendance(Request $request, $id)
+    {
+        $turma = TurmaCrisma::findOrFail($id);
+        $date = $request->input('date', date('Y-m-d'));
+        
+        $students = Crismando::where('turma_id', $id)
+            ->with('register')
+            ->get()
+            ->map(function ($student) use ($id, $date) {
+                $falta = FaltaCrisma::where('turma_id', $id)
+                    ->where('aluno_id', $student->register_id)
+                    ->where('data_aula', $date)
+                    ->first();
+                
+                return [
+                    'id' => $student->register->id,
+                    'name' => $student->register->name,
+                    'status' => $falta ? $falta->status : 0,
+                    'title' => $falta ? $falta->title : '',
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        return response()->json([
+            'turma' => $turma->turma,
+            'students' => $students
+        ]);
+    }
+
+    public function saveAttendance(Request $request)
+    {
+        $request->validate([
+            'turma_id' => 'required|exists:turmas,id',
+            'aluno_id' => 'required|exists:registers,id',
+            'data_aula' => 'required|date',
+            'title' => 'required|string',
+            'status' => 'required|boolean',
+        ]);
+
+        $falta = FaltaCrisma::updateOrCreate(
+            [
+                'turma_id' => $request->turma_id,
+                'aluno_id' => $request->aluno_id,
+                'data_aula' => $request->data_aula,
+            ],
+            [
+                'title' => $request->title,
+                'status' => $request->status,
+            ]
+        );
+
+        return response()->json(['success' => true, 'data' => $falta]);
     }
 }

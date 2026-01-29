@@ -83,7 +83,7 @@
                     <div class="col-md-6">
                         <div class="card h-100 border shadow-sm">
                             <div class="card-header bg-white py-3">
-                                <h5 class="card-title mb-0 fw-bold text-dark">Alunos Disponíveis</h5>
+                                <h5 class="card-title mb-0 fw-bold text-dark">Cadastros Disponíveis</h5>
                             </div>
                             <div class="card-body p-3">
                                 <div class="mb-3">

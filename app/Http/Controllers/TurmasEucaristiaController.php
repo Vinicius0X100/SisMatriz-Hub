@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TurmaEucaristia;
 use App\Models\CatequistaEucaristia;
 use App\Models\Catecando;
+use App\Models\FaltaCatequese;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -399,5 +400,60 @@ class TurmasEucaristiaController extends Controller
         $zip->close();
 
         return response()->download($zipFile, 'turmas_export_'.date('Y-m-d_H-i').'.zip')->deleteFileAfterSend(true);
+    }
+
+    public function getAttendance(Request $request, $id)
+    {
+        $turma = TurmaEucaristia::findOrFail($id);
+        $date = $request->input('date', date('Y-m-d'));
+        
+        $students = Catecando::where('turma_id', $id)
+            ->with('register')
+            ->get()
+            ->map(function ($student) use ($id, $date) {
+                $falta = FaltaCatequese::where('turma_id', $id)
+                    ->where('aluno_id', $student->register_id)
+                    ->where('data_aula', $date)
+                    ->first();
+                
+                return [
+                    'id' => $student->register->id,
+                    'name' => $student->register->name,
+                    'status' => $falta ? $falta->status : 0,
+                    'title' => $falta ? $falta->title : '',
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        return response()->json([
+            'turma' => $turma->turma,
+            'students' => $students
+        ]);
+    }
+
+    public function saveAttendance(Request $request)
+    {
+        $request->validate([
+            'turma_id' => 'required|exists:turmas_catequese,id',
+            'aluno_id' => 'required|exists:registers,id',
+            'data_aula' => 'required|date',
+            'title' => 'required|string',
+            'status' => 'required|boolean',
+        ]);
+
+        $falta = FaltaCatequese::updateOrCreate(
+            [
+                'turma_id' => $request->turma_id,
+                'aluno_id' => $request->aluno_id,
+                'data_aula' => $request->data_aula,
+            ],
+            [
+                'title' => $request->title,
+                'status' => $request->status,
+            ]
+        );
+
+        return response()->json(['success' => true, 'data' => $falta]);
     }
 }
