@@ -61,6 +61,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('turmas-eucaristia/transfer', [App\Http\Controllers\TurmasEucaristiaController::class, 'transferStudent'])->name('turmas-eucaristia.transfer');
     Route::get('turmas-eucaristia/{id}/attendance', [App\Http\Controllers\TurmasEucaristiaController::class, 'getAttendance'])->name('turmas-eucaristia.attendance.get');
     Route::post('turmas-eucaristia/attendance', [App\Http\Controllers\TurmasEucaristiaController::class, 'saveAttendance'])->name('turmas-eucaristia.attendance.save');
+    Route::post('turmas-eucaristia/attendance/bulk', [App\Http\Controllers\TurmasEucaristiaController::class, 'saveBulkAttendance'])->name('turmas-eucaristia.attendance.save-bulk');
     Route::resource('turmas-eucaristia', App\Http\Controllers\TurmasEucaristiaController::class);
     
     // Turmas Crisma
@@ -70,6 +71,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('turmas-crisma/transfer', [App\Http\Controllers\TurmasCrismaController::class, 'transferStudent'])->name('turmas-crisma.transfer');
     Route::get('turmas-crisma/{id}/attendance', [App\Http\Controllers\TurmasCrismaController::class, 'getAttendance'])->name('turmas-crisma.attendance.get');
     Route::post('turmas-crisma/attendance', [App\Http\Controllers\TurmasCrismaController::class, 'saveAttendance'])->name('turmas-crisma.attendance.save');
+    Route::post('turmas-crisma/attendance/bulk', [App\Http\Controllers\TurmasCrismaController::class, 'saveBulkAttendance'])->name('turmas-crisma.attendance.save-bulk');
     Route::resource('turmas-crisma', App\Http\Controllers\TurmasCrismaController::class);
 
     // Chat

@@ -47,8 +47,8 @@
         right: 15px;
         transform: translateY(-50%);
         font-size: 11px;
-        font-weight: bold;
-    }
+    font-weight: bold;
+}
     input:checked + .slider {
         background-color: #198754;
     }
@@ -189,6 +189,8 @@
     // State
     let selectedIds = new Set();
     let currentSort = { column: 'created_at', order: 'desc' };
+    let currentAttendanceTurmaId = null;
+    let currentAttendanceData = null;
 
     // Elements
     const searchInput = document.getElementById('searchInput');
@@ -593,20 +595,25 @@
     }
 
     // Modal Filters Event Listeners
-    document.getElementById('searchStudent').addEventListener('input', applyModalFilters);
-    document.getElementById('filterBatizado').addEventListener('change', applyModalFilters);
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchStudent = document.getElementById('searchStudent');
+        if (searchStudent) searchStudent.addEventListener('input', applyModalFilters);
+        
+        const filterBatizado = document.getElementById('filterBatizado');
+        if (filterBatizado) filterBatizado.addEventListener('change', applyModalFilters);
 
-    // Modal Sorting Event Listeners
-    document.querySelectorAll('.sortable-modal').forEach(th => {
-        th.addEventListener('click', function() {
-            const column = this.dataset.sort;
-            if (currentSortModal.column === column) {
-                currentSortModal.order = currentSortModal.order === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortModal.column = column;
-                currentSortModal.order = 'asc';
-            }
-            applyModalFilters();
+        // Modal Sorting Event Listeners
+        document.querySelectorAll('.sortable-modal').forEach(th => {
+            th.addEventListener('click', function() {
+                const column = this.dataset.sort;
+                if (currentSortModal.column === column) {
+                    currentSortModal.order = currentSortModal.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortModal.column = column;
+                    currentSortModal.order = 'asc';
+                }
+                applyModalFilters();
+            });
         });
     });
 
@@ -621,46 +628,49 @@
     }
 
     // Submit Transfer
-    document.getElementById('transferForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const btn = this.querySelector('button[type="submit"]');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Processando...';
+    document.addEventListener('DOMContentLoaded', function() {
+        const transferForm = document.getElementById('transferForm');
+        if (transferForm) {
+            transferForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const btn = this.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = 'Processando...';
 
-        fetch("{{ route('turmas-eucaristia.transfer') }}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if(data.success) {
-                alert(data.message);
-                transferModal.hide();
-                manageModal.hide();
-                fetchData(); // Refresh main table
-            } else {
-                alert(data.error || 'Erro ao transferir.');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Erro ao processar requisição.');
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        });
+                fetch("{{ route('turmas-eucaristia.transfer') }}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        alert(data.message);
+                        transferModal.hide();
+                        manageModal.hide();
+                        fetchData(); // Refresh main table
+                    } else {
+                        alert(data.error || 'Erro ao transferir.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Erro ao processar requisição.');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+            });
+        }
     });
 
     // Attendance Modal Logic
-    let currentAttendanceTurmaId = null;
-    let currentAttendanceData = null;
 
     function openAttendanceModal(turmaId) {
         currentAttendanceTurmaId = turmaId;
@@ -669,6 +679,10 @@
         document.getElementById('attendanceTitle').value = '';
         document.getElementById('attendanceListBody').innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">Selecione uma data e clique em Carregar.</td></tr>';
         
+        // Clear alerts
+        const alertContainer = document.getElementById('attendanceAlertContainer');
+        if(alertContainer) alertContainer.innerHTML = '';
+
         // Close manage modal if open
         const manageModalEl = document.getElementById('manageModal');
         const manageModal = bootstrap.Modal.getInstance(manageModalEl);
@@ -699,7 +713,11 @@
             
             // Pre-fill title if available from the first student record that has a title
             const existingRecord = data.students.find(s => s.title);
-            if (existingRecord) {
+            
+            // Clear title first (default for new dates or empty records)
+            document.getElementById('attendanceTitle').value = '';
+            
+            if (existingRecord && existingRecord.title) {
                  document.getElementById('attendanceTitle').value = existingRecord.title;
             }
 
@@ -799,6 +817,122 @@
             checkbox.checked = !checkbox.checked; // Revert
         } finally {
             checkbox.disabled = false;
+        }
+    }
+
+    async function saveAllAttendance() {
+        if (!currentAttendanceTurmaId) return;
+
+        const date = document.getElementById('attendanceDate').value;
+        const title = document.getElementById('attendanceTitle').value;
+        const alertContainer = document.getElementById('attendanceAlertContainer');
+        alertContainer.innerHTML = ''; // Clear previous alerts
+
+        if (!title.trim()) {
+            showAlert('warning', 'Por favor, informe o tema/título do encontro.');
+            return;
+        }
+
+        // Collect all student statuses
+        const students = [];
+        const rows = document.querySelectorAll('#attendanceListBody tr');
+        
+        // Check if rows are valid
+        if (rows.length === 1 && (rows[0].innerText.includes('Carregando') || rows[0].innerText.includes('Selecione uma data') || rows[0].innerText.includes('Nenhum aluno'))) {
+            showAlert('warning', 'Carregue a lista de alunos primeiro.');
+            return;
+        }
+
+        rows.forEach(row => {
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                // Assuming toggleAttendance is onchange="toggleAttendance(id, this)"
+                // We can extract ID from the function call or better, add data-student-id to the checkbox
+                // Let's modify renderAttendanceRows to add data-student-id for reliability
+                // Or parse the onclick/onchange attribute. 
+                // The current implementation is onchange="toggleAttendance(${student.id}, this)"
+                const onchange = checkbox.getAttribute('onchange');
+                const match = onchange.match(/toggleAttendance\((\d+)/);
+                if (match && match[1]) {
+                    const studentId = match[1];
+                    const status = checkbox.checked ? 1 : 0;
+                    students.push({
+                        aluno_id: studentId,
+                        status: status
+                    });
+                }
+            }
+        });
+
+        if (students.length === 0) {
+            showAlert('warning', 'Nenhum aluno encontrado.');
+            return;
+        }
+
+        // Show loading state
+        const btn = document.querySelector('button[onclick="saveAllAttendance()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`{{ route('turmas-eucaristia.attendance.save-bulk') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    turma_id: currentAttendanceTurmaId,
+                    data_aula: date,
+                    title: title,
+                    students: students
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showAlert('success', 'Presença de todos os alunos salva com sucesso!');
+                
+                // Update title cells visually
+                document.querySelectorAll('.attendance-title-cell').forEach(cell => {
+                    cell.innerText = title;
+                });
+
+                // Close modal after 1.5 seconds
+                setTimeout(() => {
+                    const attendanceModalEl = document.getElementById('attendanceModal');
+                    const modal = bootstrap.Modal.getInstance(attendanceModalEl);
+                    if (modal) modal.hide();
+                    
+                    // Refresh main list if needed, or just clear alert for next time
+                    alertContainer.innerHTML = '';
+                }, 1500);
+
+            } else {
+                showAlert('danger', 'Erro ao salvar presença.');
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert('danger', 'Erro ao salvar presença: ' + error.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function showAlert(type, message) {
+        const alertContainer = document.getElementById('attendanceAlertContainer');
+        if (alertContainer) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+        } else {
+            alert(message);
         }
     }
 
@@ -978,6 +1112,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                <div id="attendanceAlertContainer"></div>
                 <div class="row mb-4 g-3">
                     <div class="col-md-5">
                         <label for="attendanceDate" class="form-label fw-bold small text-muted">Data da Aula</label>
@@ -1009,6 +1144,12 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="saveAllAttendance()">
+                    <i class="bi bi-save me-1"></i> Salvar Presença
+                </button>
             </div>
         </div>
     </div>

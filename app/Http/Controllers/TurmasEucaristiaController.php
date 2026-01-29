@@ -456,4 +456,32 @@ class TurmasEucaristiaController extends Controller
 
         return response()->json(['success' => true, 'data' => $falta]);
     }
+
+    public function saveBulkAttendance(Request $request)
+    {
+        $request->validate([
+            'turma_id' => 'required|exists:turmas_catequese,id',
+            'data_aula' => 'required|date',
+            'title' => 'required|string',
+            'students' => 'required|array',
+            'students.*.aluno_id' => 'required|exists:registers,id',
+            'students.*.status' => 'required|boolean',
+        ]);
+
+        foreach ($request->students as $studentData) {
+            FaltaCatequese::updateOrCreate(
+                [
+                    'turma_id' => $request->turma_id,
+                    'aluno_id' => $studentData['aluno_id'],
+                    'data_aula' => $request->data_aula,
+                ],
+                [
+                    'title' => $request->title,
+                    'status' => $studentData['status'],
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
+    }
 }
