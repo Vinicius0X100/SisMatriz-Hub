@@ -2,7 +2,8 @@
 
 return [
     ['name' => 'Reservas e calendário', 'icon' => 'calendar-event'],
-    ['name' => 'Documentação para crisma a primeira eucaristia', 'icon' => 'file-earmark-text'],
+    ['name' => 'Documentação de Crisma', 'icon' => 'file-earmark-text', 'url' => '/docs-crisma'],
+    ['name' => 'Documentação de Eucaristia', 'icon' => 'file-earmark-text', 'url' => '/docs-eucaristia'],
     ['name' => 'Estoque', 'icon' => 'box-seam'],
     ['name' => 'Inventário', 'icon' => 'clipboard-data'],
     ['name' => 'Buckets de mídia', 'icon' => 'collection-play'],

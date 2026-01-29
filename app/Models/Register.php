@@ -64,4 +64,14 @@ class Register extends Model
     {
         return $this->hasMany(RegisterAttachment::class, 'register_id');
     }
+
+    public function docsCrisma()
+    {
+        return $this->hasOne(DocsCrisma::class, 'register_id');
+    }
+
+    public function docsEucaristia()
+    {
+        return $this->hasOne(DocsEucaristia::class, 'register_id');
+    }
 }

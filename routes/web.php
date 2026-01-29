@@ -98,6 +98,10 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('turmas-adultos/bulk-delete', [App\Http\Controllers\TurmasAdultosController::class, 'bulkDestroy'])->name('turmas-adultos.bulk-delete');
     Route::resource('turmas-adultos', App\Http\Controllers\TurmasAdultosController::class);
 
+    // Documentação
+    Route::resource('docs-crisma', App\Http\Controllers\DocsCrismaController::class);
+    Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
