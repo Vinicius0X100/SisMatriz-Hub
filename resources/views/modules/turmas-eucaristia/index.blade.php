@@ -428,6 +428,10 @@
                     openAttendanceModal(id);
                 };
 
+                document.getElementById('btnApuracaoPresencas').onclick = function() {
+                    window.location.href = `/turmas-eucaristia/${id}/attendance-analysis`;
+                };
+
                 // Students
                 currentStudents = data.students;
                 applyModalFilters();
@@ -706,7 +710,7 @@
         tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando...</span></div></td></tr>';
         
         try {
-            const response = await fetch(`{{ route('turmas-eucaristia.attendance.get', ':id') }}`.replace(':id', currentAttendanceTurmaId) + `?date=${date}`);
+            const response = await fetch(`{{ route('turmas-eucaristia.attendance', ':id') }}`.replace(':id', currentAttendanceTurmaId) + `?date=${date}`);
             const data = await response.json();
             
             currentAttendanceData = data;
@@ -735,7 +739,7 @@
         const date = document.getElementById('attendanceDate').value;
 
         if (!currentAttendanceData || currentAttendanceData.students.length === 0) {
-             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">Nenhum aluno nesta turma.</td></tr>';
+             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">Nenhum catecando(a) nesta turma.</td></tr>';
              return;
         }
 
@@ -838,8 +842,8 @@
         const rows = document.querySelectorAll('#attendanceListBody tr');
         
         // Check if rows are valid
-        if (rows.length === 1 && (rows[0].innerText.includes('Carregando') || rows[0].innerText.includes('Selecione uma data') || rows[0].innerText.includes('Nenhum aluno'))) {
-            showAlert('warning', 'Carregue a lista de alunos primeiro.');
+        if (rows.length === 1 && (rows[0].innerText.includes('Carregando') || rows[0].innerText.includes('Selecione uma data') || rows[0].innerText.includes('Nenhum catecando(a)'))) {
+            showAlert('warning', 'Carregue a lista de catecandos primeiro.');
             return;
         }
 
@@ -865,7 +869,7 @@
         });
 
         if (students.length === 0) {
-            showAlert('warning', 'Nenhum aluno encontrado.');
+            showAlert('warning', 'Nenhum catecando(a) encontrado.');
             return;
         }
 
@@ -893,7 +897,7 @@
             const result = await response.json();
 
             if (result.success) {
-                showAlert('success', 'Presença de todos os alunos salva com sucesso!');
+                showAlert('success', 'Presença de todos os catecandos(a) salva com sucesso!');
                 
                 // Update title cells visually
                 document.querySelectorAll('.attendance-title-cell').forEach(cell => {
@@ -1020,7 +1024,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Transferir Aluno</h5>
+                <h5 class="modal-title fw-bold">Transferir Catecando(a)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
@@ -1076,7 +1080,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <p class="text-muted mb-4">Selecione o formato para exportar a lista de alunos desta turma.</p>
+                <p class="text-muted mb-4">Selecione o formato para exportar a lista de catecandos(a) desta turma.</p>
                 
                 <div class="d-flex gap-3 justify-content-center mb-4">
                     <div class="form-check form-check-inline bg-light p-3 rounded-3 border w-100 m-0 d-flex align-items-center justify-content-center" style="cursor: pointer;" onclick="document.getElementById('exportExcel').checked = true">

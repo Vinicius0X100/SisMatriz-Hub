@@ -484,4 +484,118 @@ class TurmasCrismaController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function attendanceAnalysis(Request $request, $id)
+    {
+        $turma = TurmaCrisma::with(['catequista'])->findOrFail($id);
+        
+        if (Auth::user()->paroquia_id && $turma->paroquia_id != Auth::user()->paroquia_id) {
+            abort(403);
+        }
+
+        $query = $turma->crismandos()->with('register');
+
+        // Filter by Name
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('register', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by Batizado
+        if ($request->has('filter_batizado') && $request->filter_batizado !== null && $request->filter_batizado !== '') {
+            if ($request->filter_batizado == '1') {
+                $query->where('batizado', true);
+            } elseif ($request->filter_batizado == '0') {
+                $query->where('batizado', false);
+            }
+        }
+
+        $students = $query->get()->map(function($crismando) use ($turma) {
+            $presencas = FaltaCrisma::where('turma_id', $turma->id)
+                                    ->where('aluno_id', $crismando->register_id)
+                                    ->where('status', 1)
+                                    ->count();
+            
+            $faltas = FaltaCrisma::where('turma_id', $turma->id)
+                                 ->where('aluno_id', $crismando->register_id)
+                                 ->where('status', 0)
+                                 ->count();
+            
+            $presencasList = FaltaCrisma::where('turma_id', $turma->id)
+                                        ->where('aluno_id', $crismando->register_id)
+                                        ->where('status', 1)
+                                        ->orderBy('data_aula', 'desc')
+                                        ->get(['data_aula', 'title']);
+                                        
+            $faltasList = FaltaCrisma::where('turma_id', $turma->id)
+                                     ->where('aluno_id', $crismando->register_id)
+                                     ->where('status', 0)
+                                     ->orderBy('data_aula', 'desc')
+                                     ->get(['data_aula', 'title']);
+
+            return [
+                'id' => $crismando->register_id,
+                'name' => $crismando->register->name ?? 'Sem Nome',
+                'batizado' => $crismando->batizado,
+                'presencas' => $presencas,
+                'faltas' => $faltas,
+                'presencas_list' => $presencasList,
+                'faltas_list' => $faltasList,
+            ];
+        });
+
+        // Filter by Attendance (Post-processing)
+        if ($request->has('filter_attendance') && $request->filter_attendance != '') {
+            if ($request->filter_attendance == 'has_faults') {
+                $students = $students->filter(function($s) { return $s['faltas'] > 0; });
+            } elseif ($request->filter_attendance == 'has_presences') {
+                $students = $students->filter(function($s) { return $s['presencas'] > 0; });
+            }
+        }
+
+        return view('modules.turmas-crisma.attendance-analysis', compact('turma', 'students'));
+    }
+
+    public function attendanceHistory($id, $student_id)
+    {
+        $turma = TurmaCrisma::findOrFail($id);
+        $student = \App\Models\Register::findOrFail($student_id);
+        
+        if (Auth::user()->paroquia_id && $turma->paroquia_id != Auth::user()->paroquia_id) {
+            abort(403);
+        }
+
+        $history = FaltaCrisma::with('justificativa')
+                              ->where('turma_id', $id)
+                              ->where('aluno_id', $student_id)
+                              ->orderBy('data_aula', 'desc')
+                              ->get();
+
+        return view('modules.turmas-crisma.attendance-history', compact('turma', 'student', 'history'));
+    }
+
+    public function storeJustification(Request $request)
+    {
+        $request->validate([
+            'falta_id' => 'required|exists:faltas_crisma,id',
+            'justify' => 'required|string|max:255',
+        ]);
+
+        $falta = FaltaCrisma::findOrFail($request->falta_id);
+        
+        // Check permission
+        $turma = TurmaCrisma::findOrFail($falta->turma_id);
+        if (Auth::user()->paroquia_id && $turma->paroquia_id != Auth::user()->paroquia_id) {
+            abort(403);
+        }
+
+        \App\Models\FaltaJustify::updateOrCreate(
+            ['faltas_id' => $request->falta_id],
+            ['justify' => $request->justify]
+        );
+
+        return back()->with('success', 'Justificativa salva com sucesso!');
+    }
 }

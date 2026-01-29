@@ -34,4 +34,9 @@ class FaltaCrisma extends Model
     {
         return $this->belongsTo(TurmaCrisma::class, 'turma_id');
     }
+
+    public function justificativa()
+    {
+        return $this->hasOne(FaltaJustify::class, 'faltas_id');
+    }
 }

@@ -34,4 +34,9 @@ class FaltaCatequese extends Model
     {
         return $this->belongsTo(TurmaEucaristia::class, 'turma_id');
     }
+
+    public function justificativa()
+    {
+        return $this->hasOne(FaltaJustifyCatequese::class, 'faltas_id');
+    }
 }

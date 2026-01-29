@@ -27,7 +27,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('/dashboard/online-users', [DashboardController::class, 'getOnlineUsers'])->name('dashboard.online-users');
 
     // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Settings
@@ -59,9 +59,12 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('turmas-eucaristia/export-bulk', [App\Http\Controllers\TurmasEucaristiaController::class, 'exportBulk'])->name('turmas-eucaristia.export-bulk');
     Route::get('turmas-eucaristia/{id}/export', [App\Http\Controllers\TurmasEucaristiaController::class, 'exportStudents'])->name('turmas-eucaristia.export');
     Route::post('turmas-eucaristia/transfer', [App\Http\Controllers\TurmasEucaristiaController::class, 'transferStudent'])->name('turmas-eucaristia.transfer');
-    Route::get('turmas-eucaristia/{id}/attendance', [App\Http\Controllers\TurmasEucaristiaController::class, 'getAttendance'])->name('turmas-eucaristia.attendance.get');
-    Route::post('turmas-eucaristia/attendance', [App\Http\Controllers\TurmasEucaristiaController::class, 'saveAttendance'])->name('turmas-eucaristia.attendance.save');
-    Route::post('turmas-eucaristia/attendance/bulk', [App\Http\Controllers\TurmasEucaristiaController::class, 'saveBulkAttendance'])->name('turmas-eucaristia.attendance.save-bulk');
+    Route::get('turmas-eucaristia/{id}/attendance', [App\Http\Controllers\TurmasEucaristiaController::class, 'getAttendance'])->name('turmas-eucaristia.attendance');
+    Route::post('turmas-eucaristia/attendance/save', [App\Http\Controllers\TurmasEucaristiaController::class, 'saveAttendance'])->name('turmas-eucaristia.attendance.save');
+    Route::post('turmas-eucaristia/attendance/save-bulk', [App\Http\Controllers\TurmasEucaristiaController::class, 'saveBulkAttendance'])->name('turmas-eucaristia.attendance.save-bulk');
+    Route::get('turmas-eucaristia/{id}/attendance-analysis', [App\Http\Controllers\TurmasEucaristiaController::class, 'attendanceAnalysis'])->name('turmas-eucaristia.attendance-analysis');
+    Route::get('turmas-eucaristia/{id}/attendance-history/{student_id}', [App\Http\Controllers\TurmasEucaristiaController::class, 'attendanceHistory'])->name('turmas-eucaristia.attendance-history');
+    Route::post('turmas-eucaristia/attendance/justify', [App\Http\Controllers\TurmasEucaristiaController::class, 'storeJustification'])->name('turmas-eucaristia.attendance.justify');
     Route::resource('turmas-eucaristia', App\Http\Controllers\TurmasEucaristiaController::class);
     
     // Turmas Crisma
@@ -69,9 +72,12 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('turmas-crisma/export-bulk', [App\Http\Controllers\TurmasCrismaController::class, 'exportBulk'])->name('turmas-crisma.export-bulk');
     Route::get('turmas-crisma/{id}/export', [App\Http\Controllers\TurmasCrismaController::class, 'exportStudents'])->name('turmas-crisma.export');
     Route::post('turmas-crisma/transfer', [App\Http\Controllers\TurmasCrismaController::class, 'transferStudent'])->name('turmas-crisma.transfer');
-    Route::get('turmas-crisma/{id}/attendance', [App\Http\Controllers\TurmasCrismaController::class, 'getAttendance'])->name('turmas-crisma.attendance.get');
-    Route::post('turmas-crisma/attendance', [App\Http\Controllers\TurmasCrismaController::class, 'saveAttendance'])->name('turmas-crisma.attendance.save');
-    Route::post('turmas-crisma/attendance/bulk', [App\Http\Controllers\TurmasCrismaController::class, 'saveBulkAttendance'])->name('turmas-crisma.attendance.save-bulk');
+    Route::get('turmas-crisma/{id}/attendance', [App\Http\Controllers\TurmasCrismaController::class, 'getAttendance'])->name('turmas-crisma.attendance');
+    Route::post('turmas-crisma/attendance/save', [App\Http\Controllers\TurmasCrismaController::class, 'saveAttendance'])->name('turmas-crisma.attendance.save');
+    Route::post('turmas-crisma/attendance/save-bulk', [App\Http\Controllers\TurmasCrismaController::class, 'saveBulkAttendance'])->name('turmas-crisma.attendance.save-bulk');
+    Route::get('turmas-crisma/{id}/attendance-analysis', [App\Http\Controllers\TurmasCrismaController::class, 'attendanceAnalysis'])->name('turmas-crisma.attendance-analysis');
+    Route::get('turmas-crisma/{id}/attendance-history/{student_id}', [App\Http\Controllers\TurmasCrismaController::class, 'attendanceHistory'])->name('turmas-crisma.attendance-history');
+    Route::post('turmas-crisma/attendance/justify', [App\Http\Controllers\TurmasCrismaController::class, 'storeJustification'])->name('turmas-crisma.attendance.justify');
     Route::resource('turmas-crisma', App\Http\Controllers\TurmasCrismaController::class);
 
     // Chat
