@@ -23,7 +23,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // View Composer para o menu de módulos global
         View::composer('layouts.app', function ($view) {
-            $modules = config('modules');
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $modules = $user ? $user->getAccessibleModules() : collect([]);
             
             // Process modules just for display (no pinning logic needed here for simple link list)
             $allModules = collect($modules)->map(function ($module) {

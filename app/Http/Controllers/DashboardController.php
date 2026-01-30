@@ -16,8 +16,8 @@ class DashboardController extends Controller
         $user = Auth::user();
         $paroquiaId = $user->paroquia_id; // Assuming user has this field or relation
 
-        // Fetch modules from config
-        $modules = config('modules');
+        // Fetch modules based on permissions
+        $modules = $user->getAccessibleModules();
 
         // Fetch pinned modules (records)
         $pinnedRecords = PinnedModule::where('user_id', $user->id)
