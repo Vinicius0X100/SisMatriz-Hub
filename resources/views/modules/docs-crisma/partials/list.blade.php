@@ -86,6 +86,9 @@
                     <form action="{{ route('docs-crisma.update', $student->register_id) }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<span class=\'spinner-border spinner-border-sm me-2\' role=\'status\' aria-hidden=\'true\'></span>Salvando...';">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="turma_id" value="{{ request('turma_id') }}">
+                        <input type="hidden" name="status" value="{{ request('status') }}">
                         
                         <div class="row g-4">
                             <!-- Coluna 1: Crismando -->
@@ -143,5 +146,5 @@
 @endforeach
 
 <div class="d-flex justify-content-end mt-4">
-    {{ $students->links('partials.pagination') }}
+    {{ $students->appends(request()->query())->links('partials.pagination') }}
 </div>

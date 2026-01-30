@@ -79,6 +79,12 @@ class DocsEucaristiaController extends Controller
             $data
         );
 
-        return back()->with('success', 'Documentação atualizada com sucesso!');
+        $params = [
+            'search' => $request->input('search'),
+            'turma_id' => $request->input('turma_id'),
+            'status' => $request->input('status'),
+        ];
+
+        return redirect()->route('docs-eucaristia.index', $params)->with('success', 'Documentação atualizada com sucesso!');
     }
 }

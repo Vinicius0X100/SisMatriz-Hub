@@ -62,6 +62,9 @@
                     <form action="{{ route('docs-eucaristia.update', $student->register_id) }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<span class=\'spinner-border spinner-border-sm me-2\' role=\'status\' aria-hidden=\'true\'></span>Salvando...';">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="turma_id" value="{{ request('turma_id') }}">
+                        <input type="hidden" name="status" value="{{ request('status') }}">
                         
                         <h6 class="text-muted text-uppercase small fw-bold mb-3"><i class="bi bi-file-earmark-text me-1"></i> Documentos Obrigatórios</h6>
                         <div class="d-flex flex-column gap-3">
@@ -91,5 +94,5 @@
 @endforeach
 
 <div class="d-flex justify-content-end mt-4">
-    {{ $students->links('partials.pagination') }}
+    {{ $students->appends(request()->query())->links('partials.pagination') }}
 </div>

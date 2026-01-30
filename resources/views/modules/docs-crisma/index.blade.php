@@ -30,23 +30,23 @@
                         <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input type="text" id="search-input" class="form-control rounded-pill bg-light border-0 ps-5 py-2" placeholder="Pesquisar por nome...">
+                        <input type="text" id="search-input" class="form-control rounded-pill bg-light border-0 ps-5 py-2" placeholder="Pesquisar por nome..." value="{{ request('search') }}">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <select id="turma-filter" class="form-select rounded-pill bg-light border-0 py-2">
                         <option value="">Todas as Turmas</option>
                         @foreach($turmas as $turma)
-                            <option value="{{ $turma->id }}">{{ $turma->turma }}</option>
+                            <option value="{{ $turma->id }}" {{ request('turma_id') == $turma->id ? 'selected' : '' }}>{{ $turma->turma }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-4">
                     <select id="status-filter" class="form-select rounded-pill bg-light border-0 py-2">
                         <option value="">Todos os Status</option>
-                        <option value="pendente">Documentação Pendente</option>
-                        <option value="obrigatoria_entregue">Documentação Obrigatória Entregue</option>
-                        <option value="entregue">Documentação Entregue</option>
+                        <option value="pendente" {{ request('status') == 'pendente' ? 'selected' : '' }}>Documentação Pendente</option>
+                        <option value="obrigatoria_entregue" {{ request('status') == 'obrigatoria_entregue' ? 'selected' : '' }}>Documentação Obrigatória Entregue</option>
+                        <option value="entregue" {{ request('status') == 'entregue' ? 'selected' : '' }}>Documentação Entregue</option>
                     </select>
                 </div>
             </div>
