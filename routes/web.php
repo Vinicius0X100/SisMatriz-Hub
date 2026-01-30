@@ -102,6 +102,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('docs-crisma', App\Http\Controllers\DocsCrismaController::class);
     Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);
 
+    // Acólitos e Coroinhas
+    Route::get('acolitos/search-registers', [App\Http\Controllers\AcolitoController::class, 'searchRegisters'])->name('acolitos.search-registers');
+Route::post('acolitos/bulk-delete', [App\Http\Controllers\AcolitoController::class, 'bulkDestroy'])->name('acolitos.bulk-delete');
+Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
