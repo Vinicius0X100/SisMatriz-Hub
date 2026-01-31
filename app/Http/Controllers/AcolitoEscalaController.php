@@ -527,7 +527,7 @@ class AcolitoEscalaController extends Controller
                         'time' => $request->hora,
                         'local' => Entidade::find($request->ent_id)->ent_name ?? 'Local não informado'
                     ];
-                    SendEscalaWhatsappJob::dispatch($acolitoIds, $details);
+                    SendEscalaWhatsappJob::dispatchSync($acolitoIds, $details);
                 }
 
                 return response()->json([
