@@ -107,6 +107,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('acolitos/bulk-delete', [App\Http\Controllers\AcolitoController::class, 'bulkDestroy'])->name('acolitos.bulk-delete');
     Route::post('acolitos/funcoes/bulk-delete', [App\Http\Controllers\AcolitoFuncaoController::class, 'bulkDestroy'])->name('acolitos.funcoes.bulk-delete');
     Route::resource('acolitos/funcoes', App\Http\Controllers\AcolitoFuncaoController::class, ['as' => 'acolitos']);
+    Route::post('acolitos/notes/bulk-delete', [App\Http\Controllers\AcolitoNoteController::class, 'bulkDestroy'])->name('acolitos.notes.bulk-delete');
+    Route::resource('acolitos/notes', App\Http\Controllers\AcolitoNoteController::class, ['as' => 'acolitos']);
     Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
     // Chat

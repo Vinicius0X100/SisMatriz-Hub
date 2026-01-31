@@ -67,16 +67,42 @@ class AcolitoController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        if ($request->boolean('select_all')) {
+            $query = Acolito::where('paroquia_id', Auth::user()->paroquia_id);
+
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->whereHas('register', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('ent_id')) {
+                $query->where('ent_id', $request->input('ent_id'));
+            }
+
+            if ($request->filled('type')) {
+                $query->where('type', $request->input('type'));
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
+
+            $count = $query->delete();
+            return response()->json(['message' => "$count registros excluídos com sucesso."]);
+        }
+
         $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:acolitos,id'
         ]);
 
-        Acolito::whereIn('id', $request->ids)
+        $count = Acolito::whereIn('id', $request->ids)
             ->where('paroquia_id', Auth::user()->paroquia_id)
             ->delete();
 
-        return response()->json(['message' => 'Registros excluídos com sucesso.']);
+        return response()->json(['message' => "$count registros excluídos com sucesso."]);
     }
 
     public function create()

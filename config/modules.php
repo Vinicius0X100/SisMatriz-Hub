@@ -11,7 +11,7 @@ return [
     ['name' => 'Configurações', 'icon' => 'gear', 'url' => '/settings', 'allowed_roles' => []], // Only Admins
     ['name' => 'Escalas de Acólitos e Coroinhas', 'icon' => 'calendar-check', 'url' => '/acolitos/escalas', 'allowed_roles' => ['6', '8']],
     ['name' => 'Funções de Acólitos e Coroinhas', 'icon' => 'list-task', 'url' => '/acolitos/funcoes', 'allowed_roles' => ['6', '8']],
-    ['name' => 'Notas e Avisos de Acólitos e Coroinhas', 'icon' => 'journal-bookmark', 'url' => '/acolitos/avisos', 'allowed_roles' => ['6', '8']],
+    ['name' => 'Notas e Avisos de Acólitos e Coroinhas', 'icon' => 'journal-bookmark', 'url' => '/acolitos/notes', 'allowed_roles' => ['6', '8']],
     ['name' => 'Lista de Acólitos e Coroinhas', 'icon' => 'person-lines-fill', 'url' => '/acolitos', 'allowed_roles' => ['6']],
     ['name' => 'Vicentinos', 'icon' => 'heart', 'allowed_roles' => ['4']],
     ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],

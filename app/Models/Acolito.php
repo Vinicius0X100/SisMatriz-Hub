@@ -32,4 +32,9 @@ class Acolito extends Model
     {
         return $this->belongsTo(Entidade::class, 'ent_id', 'ent_id');
     }
+
+    public function notes()
+    {
+        return $this->hasMany(AcolitoNote::class, 'ac_id');
+    }
 }

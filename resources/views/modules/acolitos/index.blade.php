@@ -233,6 +233,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let debounceTimer;
     let globalSelectedIds = new Set();
+    let selectAllMode = false;
+    let totalRecords = 0;
     let currentDeleteId = null;
     let isBulkDelete = false;
 
@@ -244,37 +246,52 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             currentPage = 1;
+            resetSelection();
             fetchData();
         }, 300);
     });
 
     entIdSelect.addEventListener('change', function() {
         currentPage = 1;
+        resetSelection();
         fetchData();
     });
 
     typeSelect.addEventListener('change', function() {
         currentPage = 1;
+        resetSelection();
         fetchData();
     });
 
     statusSelect.addEventListener('change', function() {
         currentPage = 1;
+        resetSelection();
         fetchData();
     });
 
     selectAllCheckbox.addEventListener('change', function() {
+        selectAllMode = this.checked;
         const checkboxes = document.querySelectorAll('.row-checkbox');
-        checkboxes.forEach(cb => {
-            cb.checked = this.checked;
-            toggleSelection(cb.value, this.checked);
-        });
+        
+        if (selectAllMode) {
+            // Se selecionar tudo, marcamos visualmente os da página atual
+            // e limpamos a lista de IDs manuais (pois selectAllMode cobre tudo)
+            globalSelectedIds.clear();
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                // Não adicionamos ao globalSelectedIds pois selectAllMode trata disso
+            });
+        } else {
+            // Desmarcar tudo
+            globalSelectedIds.clear();
+            checkboxes.forEach(cb => cb.checked = false);
+        }
         updateBulkActions();
     });
 
     bulkDeleteBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (globalSelectedIds.size === 0) return;
+        if (globalSelectedIds.size === 0 && !selectAllMode) return;
         
         isBulkDelete = true;
         deleteModal.show();
@@ -290,6 +307,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Functions
+    function resetSelection() {
+        selectAllMode = false;
+        globalSelectedIds.clear();
+        selectAllCheckbox.checked = false;
+        updateBulkActions();
+    }
+
     function fetchData(url = null) {
         const params = new URLSearchParams({
             page: currentPage,
@@ -319,6 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            totalRecords = data.total;
             renderTable(data.data);
             renderPagination(data);
             updateBulkActions();
@@ -337,7 +362,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tableBody.innerHTML = '';
         data.forEach(item => {
-            const isSelected = globalSelectedIds.has(item.id);
+            // Checkbox logic:
+            // 1. If selectAllMode is ON, everything is checked.
+            // 2. If selectAllMode is OFF, check if ID is in globalSelectedIds.
+            const isSelected = selectAllMode || globalSelectedIds.has(item.id);
+
             // 0 = Ativo, 1 = Inativo
             const statusBadge = item.status == 0 
                 ? '<span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Ativo</span>' 
@@ -417,25 +446,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.toggleSelection = function(id, checked) {
-        if (checked) {
-            globalSelectedIds.add(parseInt(id));
+        if (selectAllMode) {
+            // Se está em modo Select All e desmarca um, sai do modo Select All
+            // e seleciona apenas os que estão visíveis e marcados.
+            // Esta é uma simplificação para evitar complexidade de "Select All Except One"
+            if (!checked) {
+                selectAllMode = false;
+                globalSelectedIds.clear();
+                // Adiciona todos os VISÍVEIS que estão marcados
+                document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
+                    globalSelectedIds.add(parseInt(cb.value));
+                });
+                selectAllCheckbox.checked = false;
+            }
         } else {
-            globalSelectedIds.delete(parseInt(id));
+            if (checked) {
+                globalSelectedIds.add(parseInt(id));
+            } else {
+                globalSelectedIds.delete(parseInt(id));
+            }
         }
         updateBulkActions();
     };
 
     function updateBulkActions() {
         const checkboxes = document.querySelectorAll('.row-checkbox');
-        if (checkboxes.length > 0) {
-             selectAllCheckbox.checked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        // Se estiver em modo Select All, o header deve estar marcado
+        if (selectAllMode) {
+            selectAllCheckbox.checked = true;
+            // E todos os checkboxes visíveis também (caso não estejam)
+            checkboxes.forEach(cb => cb.checked = true);
         } else {
-             selectAllCheckbox.checked = false;
+             // Marca o header se todos visíveis estiverem marcados
+             if (checkboxes.length > 0) {
+                 selectAllCheckbox.checked = Array.from(checkboxes).every(cb => cb.checked);
+             } else {
+                 selectAllCheckbox.checked = false;
+             }
         }
 
-        if (globalSelectedIds.size > 0) {
+        let count = selectAllMode ? totalRecords : globalSelectedIds.size;
+
+        if (count > 0) {
             bulkActionsBtn.disabled = false;
-            bulkActionsBtn.innerHTML = `Ações (${globalSelectedIds.size})`;
+            bulkActionsBtn.innerHTML = `Ações (${count})`;
         } else {
             bulkActionsBtn.disabled = true;
             bulkActionsBtn.innerHTML = 'Ações';
@@ -464,6 +519,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // If backend returns JSON or just status
             if (response.ok) {
                 showToast('Registro excluído com sucesso!', 'success');
+                // Se era o único registro da página, volta uma página se possível
+                // Mas fetchData lida com isso se não achar nada
                 fetchData();
             } else {
                 showToast('Erro ao excluir registro.', 'error');
@@ -475,6 +532,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function performBulkDelete() {
+        const payload = selectAllMode ? {
+            select_all: true,
+            search: searchInput.value,
+            ent_id: entIdSelect.value,
+            type: typeSelect.value,
+            status: statusSelect.value
+        } : {
+            ids: Array.from(globalSelectedIds)
+        };
+
         fetch('{{ route("acolitos.bulk-delete") }}', {
             method: 'POST',
             headers: {
@@ -482,12 +549,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ ids: Array.from(globalSelectedIds) })
+            body: JSON.stringify(payload)
         })
         .then(response => response.json())
         .then(data => {
-            globalSelectedIds.clear();
-            updateBulkActions();
+            resetSelection();
             showToast(data.message || 'Registros excluídos com sucesso!', 'success');
             fetchData();
         })
