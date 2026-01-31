@@ -113,6 +113,14 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('acolitos/funcoes', App\Http\Controllers\AcolitoFuncaoController::class, ['as' => 'acolitos']);
     Route::post('acolitos/notes/bulk-delete', [App\Http\Controllers\AcolitoNoteController::class, 'bulkDestroy'])->name('acolitos.notes.bulk-delete');
     Route::resource('acolitos/notes', App\Http\Controllers\AcolitoNoteController::class, ['as' => 'acolitos']);
+    
+    // Escalas Management Routes
+    Route::get('acolitos/escalas/{id}/manage', [App\Http\Controllers\AcolitoEscalaController::class, 'manage'])->name('acolitos.escalas.manage');
+    Route::post('acolitos/escalas/{id}/celebrations', [App\Http\Controllers\AcolitoEscalaController::class, 'storeCelebration'])->name('acolitos.escalas.celebrations.store');
+    Route::put('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'updateCelebration'])->name('acolitos.escalas.celebrations.update');
+    Route::delete('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'destroyCelebration'])->name('acolitos.escalas.celebrations.destroy');
+    Route::resource('acolitos/escalas', App\Http\Controllers\AcolitoEscalaController::class, ['as' => 'acolitos']);
+    
     Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
     // Chat
