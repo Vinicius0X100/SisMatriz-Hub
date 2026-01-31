@@ -35,13 +35,19 @@ class SendEscalaWhatsappJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('SendEscalaWhatsappJob started', ['acolitoIds' => $this->acolitoIds]);
+
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
         $from = config('services.twilio.whatsapp_from');
-        $contentSid = config('services.twilio.content_sid');
+        $contentSid = config('services.twilio.content_sid_acolitos');
 
         if (!$sid || !$token || !$from) {
-            Log::error('Twilio credentials not configured.');
+            Log::error('Twilio credentials not configured.', [
+                'sid_configured' => !empty($sid),
+                'token_configured' => !empty($token),
+                'from_configured' => !empty($from)
+            ]);
             return;
         }
 
@@ -53,6 +59,11 @@ class SendEscalaWhatsappJob implements ShouldQueue
         }
 
         $acolitos = Acolito::whereIn('id', $this->acolitoIds)->with('register')->get();
+        
+        if ($acolitos->isEmpty()) {
+            Log::warning('No acolitos found for IDs provided.', ['ids' => $this->acolitoIds]);
+            return;
+        }
 
         foreach ($acolitos as $acolito) {
             if (!$acolito->register || empty($acolito->register->phone)) {
