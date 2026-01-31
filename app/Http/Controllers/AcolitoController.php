@@ -210,7 +210,7 @@ class AcolitoController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'user' => $user->user,
-                    'rule' => $user->rule
+                    'rule' => $user->role_label // Use label instead of raw ID
                 ]
             ]);
         }
@@ -288,6 +288,7 @@ class AcolitoController extends Controller
                         'user_id' => $user->id,
                         'user_name' => $user->name,
                         'user_email' => $user->email,
+                        'user_role' => $user->role_label,
                         'confidence' => $isReliable ? 'high' : 'low'
                     ];
                 }

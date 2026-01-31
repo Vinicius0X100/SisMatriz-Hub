@@ -66,6 +66,26 @@ class User extends Authenticatable
      */
     public $timestamps = false;
 
+    public const ROLE_LABELS = [
+                    111 => 'Administrador do Sistema',
+                    1 => 'Administrador Geral',
+                    2  => 'Gestor de Ministério',               // Mais amplo e representativo que "Gestor Pleno"
+                    3  => 'Coordenador - Crisma',               // Mais direto que "Instrutor. Crisma"
+                    4  => 'Membro - Vicentinos',               // Dá clareza de pertencimento ao grupo
+                    5  => 'Coordenador - Música Litúrgica',    // "Min. Música" pode ser vago
+                    6  => 'Coordenador - Acólitos',            // Representa liderança sobre o grupo
+                    7  => 'Coordenador - 1ª Eucaristia',        // Nome mais direto e padronizado
+                    8  => 'Acólito',                           // Mantido pois está claro e direto
+                    9  => 'Coordenador - PASCOM',              // Comunicação exige papel de coordenação
+                    10 => 'Membro - PASCOM',
+                    11 => 'Tesoureiro', // Novo cargo adicionado
+                    12  => 'Catequista - 1ª Eucaristia',
+                    13  => 'Catequista - Crisma',
+                    14  => 'Dizimista',
+                    15  => 'Gerencia de Estoque/Inventário e Salas e Espaços',
+                    16  => 'Coordenador - Matrimônio (Visualizar e Imprimir fichas apenas)'
+    ];
+
     public function paroquia()
     {
         return $this->belongsTo(ParoquiaSuperadmin::class, 'paroquia_id');
@@ -79,6 +99,21 @@ class User extends Authenticatable
     public function getRolesAttribute()
     {
         return $this->rule ? explode(',', str_replace(' ', '', $this->rule)) : [];
+    }
+
+    /**
+     * Get the user's role label.
+     *
+     * @return string
+     */
+    public function getRoleLabelAttribute()
+    {
+        $roles = $this->roles;
+        $labels = [];
+        foreach ($roles as $role) {
+            $labels[] = self::ROLE_LABELS[$role] ?? $role;
+        }
+        return implode(', ', $labels);
     }
 
     /**
