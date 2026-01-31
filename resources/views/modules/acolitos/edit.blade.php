@@ -110,18 +110,78 @@
                         <i class="bi bi-check-lg me-2"></i>Salvar Alterações
                     </button>
                 </div>
+
+                <!-- Hidden Input for User ID -->
+                <input type="hidden" name="user_id" id="userIdInput" value="{{ $acolito->user_id }}">
             </form>
         </div>
     </div>
 </div>
 
-<script>
+<!-- Modal de Confirmação de Vínculo com Usuário -->
+<div class="modal fade" id="userMatchModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-primary">Vínculo com Usuário Encontrado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center py-3">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                <i class="bi bi-person-badge fs-1 text-primary"></i>
+            </div>
+            <h5 class="fw-bold mb-3">Encontramos um usuário com este nome!</h5>
+            <p class="text-muted mb-4">Deseja vincular este acólito/coroinha ao usuário existente no sistema?</p>
+            
+            <div class="card bg-light border-0 rounded-4 mb-3">
+                <div class="card-body text-start">
+                    <h6 class="fw-bold text-dark mb-3 small text-uppercase">Dados do Usuário</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-person text-muted me-2"></i>
+                        <span id="modalUserName" class="fw-bold text-dark"></span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-envelope text-muted me-2"></i>
+                        <span id="modalUserEmail" class="text-muted"></span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-lock text-muted me-2"></i>
+                        <span id="modalUserRole" class="badge bg-secondary rounded-pill"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="small text-muted mb-0">Isso permitirá que o sistema associe as atividades deste acólito à conta de usuário correspondente.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
+        <button type="button" class="btn btn-light rounded-pill px-4" id="btnRejectMatch">Não, são pessoas diferentes</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="btnConfirmMatch">Sim, vincular usuário</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
     const searchInput = document.getElementById('searchInput');
     const resultsContainer = document.getElementById('searchResults');
     const hiddenInput = document.getElementById('hiddenInput');
     const selectedPersonDiv = document.getElementById('selectedPersonDiv');
     const selectedPersonName = document.getElementById('selectedPersonName');
+    const userIdInput = document.getElementById('userIdInput');
+    const editForm = document.getElementById('editAcolitoForm');
+    
+    // Modal Elements
+    let userMatchModal;
+    const modalUserName = document.getElementById('modalUserName');
+    const modalUserEmail = document.getElementById('modalUserEmail');
+    const modalUserRole = document.getElementById('modalUserRole');
+    const btnConfirmMatch = document.getElementById('btnConfirmMatch');
+    const btnRejectMatch = document.getElementById('btnRejectMatch');
+
     let timeoutId;
+    let pendingUserId = null;
 
     searchInput.addEventListener('input', function() {
         clearTimeout(timeoutId);
@@ -178,6 +238,7 @@
     function clearSelection() {
         hiddenInput.value = '';
         selectedPersonName.textContent = '';
+        userIdInput.value = ''; // Clear user ID too
         
         searchInput.closest('.position-relative').classList.remove('d-none');
         selectedPersonDiv.classList.add('d-none');
@@ -194,12 +255,94 @@
         }
     });
 
-    // Submit Spinner Logic
-    document.getElementById('editAcolitoForm').addEventListener('submit', function() {
+    // Submit Spinner Logic & Check User Logic
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Check if already linked or if we already checked/rejected in this session
+        if (userIdInput.value && userIdInput.value !== '0') {
+             submitForm();
+             return;
+        }
+
+        if (this.dataset.userChecked === 'true') {
+            submitForm();
+            return;
+        }
+
+        const name = selectedPersonName.textContent;
+        if (!name) {
+             submitForm();
+             return;
+        }
+
+        // Check for User
+        const btn = document.getElementById('submitBtn');
+        const originalBtnContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verificando...';
+
+        fetch('{{ route("acolitos.check-user") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ name: name })
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnContent;
+
+            if (data.found) {
+                // If found user is same as current (unlikely if user_id was 0, but check)
+                if (data.user.id == userIdInput.value) {
+                    submitForm();
+                    return;
+                }
+
+                pendingUserId = data.user.id;
+                modalUserName.textContent = data.user.name;
+                modalUserEmail.textContent = data.user.email || 'Sem e-mail';
+                modalUserRole.textContent = data.user.rule || 'N/A';
+                
+                if (!userMatchModal && window.bootstrap) {
+                     userMatchModal = new window.bootstrap.Modal(document.getElementById('userMatchModal'));
+                }
+                if (userMatchModal) userMatchModal.show();
+            } else {
+                editForm.dataset.userChecked = 'true';
+                submitForm();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            editForm.dataset.userChecked = 'true';
+            submitForm();
+        });
+    });
+
+    btnConfirmMatch.addEventListener('click', function() {
+        userIdInput.value = pendingUserId;
+        editForm.dataset.userChecked = 'true';
+        if (userMatchModal) userMatchModal.hide();
+        submitForm();
+    });
+
+    btnRejectMatch.addEventListener('click', function() {
+        // userIdInput.value = ''; // Keep as is (0 or empty)
+        editForm.dataset.userChecked = 'true';
+        if (userMatchModal) userMatchModal.hide();
+        submitForm();
+    });
+
+    function submitForm() {
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Salvando alterações...';
-    });
+        editForm.submit();
+    }
 </script>
 
 <style>

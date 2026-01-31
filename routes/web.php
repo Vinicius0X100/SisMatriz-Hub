@@ -104,6 +104,10 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Acólitos e Coroinhas
     Route::get('acolitos/search-registers', [App\Http\Controllers\AcolitoController::class, 'searchRegisters'])->name('acolitos.search-registers');
+    Route::post('acolitos/check-user', [App\Http\Controllers\AcolitoController::class, 'checkUser'])->name('acolitos.check-user');
+    Route::post('acolitos/{id}/link-user', [App\Http\Controllers\AcolitoController::class, 'linkUser'])->name('acolitos.link-user');
+    Route::post('acolitos/check-bulk-matches', [App\Http\Controllers\AcolitoController::class, 'checkBulkUserMatches'])->name('acolitos.check-bulk-matches');
+    Route::post('acolitos/bulk-link-users', [App\Http\Controllers\AcolitoController::class, 'bulkLinkUsers'])->name('acolitos.bulk-link-users');
     Route::post('acolitos/bulk-delete', [App\Http\Controllers\AcolitoController::class, 'bulkDestroy'])->name('acolitos.bulk-delete');
     Route::post('acolitos/funcoes/bulk-delete', [App\Http\Controllers\AcolitoFuncaoController::class, 'bulkDestroy'])->name('acolitos.funcoes.bulk-delete');
     Route::resource('acolitos/funcoes', App\Http\Controllers\AcolitoFuncaoController::class, ['as' => 'acolitos']);

@@ -135,6 +135,7 @@
                             Ações
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="bulkActionsBtn">
+                            <li><a class="dropdown-item text-primary" href="#" id="bulkLinkBtn"><i class="bi bi-link-45deg me-2"></i> Vincular Usuários</a></li>
                             <li><a class="dropdown-item text-danger" href="#" id="bulkDeleteBtn"><i class="bi bi-trash me-2"></i> Excluir Selecionados</a></li>
                         </ul>
                     </div>
@@ -159,6 +160,7 @@
                             <th scope="col">Tipo</th>
                             <th scope="col">Idade</th>
                             <th scope="col">Ano Formação</th>
+                            <th scope="col">Vínculo</th>
                             <th scope="col">Status</th>
                             <th scope="col" class="text-end pe-4">Ações</th>
                         </tr>
@@ -210,6 +212,112 @@
   </div>
 </div>
 
+<!-- Modal de Vinculação em Massa -->
+<div class="modal fade" id="bulkLinkModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-primary">Vinculação em Massa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- State: Searching -->
+        <div id="bulkLinkSearching" class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h5 class="fw-bold">Procurando vínculos...</h5>
+            <p class="text-muted">Analisando nomes e buscando correspondências na base de usuários.</p>
+        </div>
+
+        <!-- State: Results -->
+        <div id="bulkLinkResults" style="display: none;">
+            <div class="alert alert-info border-0 rounded-4 mb-4 d-flex align-items-center" role="alert">
+                <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>Atenção:</strong> A vinculação automática pode conter falhas. Verifique cuidadosamente os nomes antes de confirmar.
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th width="40" class="text-center">
+                                <input class="form-check-input" type="checkbox" id="selectAllLinks" checked>
+                            </th>
+                            <th>Acólito/Coroinha</th>
+                            <th>Usuário Encontrado</th>
+                            <th>Confiança</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bulkLinkTableBody">
+                        <!-- Content via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- State: No Matches -->
+        <div id="bulkLinkNoMatches" style="display: none;" class="text-center py-5">
+            <div class="rounded-circle bg-secondary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                <i class="bi bi-search fs-1 text-secondary"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Nenhuma correspondência encontrada</h5>
+            <p class="text-muted">Não encontramos usuários com nomes idênticos aos selecionados.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-end pb-4" id="bulkLinkFooter" style="display: none;">
+        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="confirmBulkLinkBtn">Confirmar Vinculação</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Vínculo com Usuário -->
+<div class="modal fade" id="userMatchModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-primary">Vínculo com Usuário Encontrado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center py-3">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                <i class="bi bi-person-badge fs-1 text-primary"></i>
+            </div>
+            <h5 class="fw-bold mb-3">Encontramos um usuário com este nome!</h5>
+            <p class="text-muted mb-4">Deseja vincular este acólito/coroinha ao usuário existente no sistema?</p>
+            
+            <div class="card bg-light border-0 rounded-4 mb-3">
+                <div class="card-body text-start">
+                    <h6 class="fw-bold text-dark mb-3 small text-uppercase">Dados do Usuário</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-person text-muted me-2"></i>
+                        <span id="modalUserName" class="fw-bold text-dark"></span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-envelope text-muted me-2"></i>
+                        <span id="modalUserEmail" class="text-muted"></span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-lock text-muted me-2"></i>
+                        <span id="modalUserRole" class="badge bg-secondary rounded-pill"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="small text-muted mb-0">Isso permitirá que o sistema associe as atividades deste acólito à conta de usuário correspondente.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
+        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="btnConfirmLink">Sim, vincular usuário</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -224,11 +332,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('selectAll');
     const bulkActionsBtn = document.getElementById('bulkActionsBtn');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkLinkBtn = document.getElementById('bulkLinkBtn');
     const ajaxAlertContainer = document.getElementById('ajaxAlertContainer');
 
     // Modal elements
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    // Bulk Link Modal Elements
+    const bulkLinkModal = new bootstrap.Modal(document.getElementById('bulkLinkModal'));
+    const bulkLinkSearching = document.getElementById('bulkLinkSearching');
+    const bulkLinkResults = document.getElementById('bulkLinkResults');
+    const bulkLinkNoMatches = document.getElementById('bulkLinkNoMatches');
+    const bulkLinkTableBody = document.getElementById('bulkLinkTableBody');
+    const bulkLinkFooter = document.getElementById('bulkLinkFooter');
+    const confirmBulkLinkBtn = document.getElementById('confirmBulkLinkBtn');
+    const selectAllLinks = document.getElementById('selectAllLinks');
+    let bulkMatches = [];
+
+    // Link User Modal Elements
+    let userMatchModal;
+    const modalUserName = document.getElementById('modalUserName');
+    const modalUserEmail = document.getElementById('modalUserEmail');
+    const modalUserRole = document.getElementById('modalUserRole');
+    const btnConfirmLink = document.getElementById('btnConfirmLink');
+    let pendingLinkAcolitoId = null;
+    let pendingLinkUserId = null;
 
     let currentPage = 1;
     let debounceTimer;
@@ -296,6 +425,191 @@ document.addEventListener('DOMContentLoaded', function() {
         isBulkDelete = true;
         deleteModal.show();
     });
+
+    bulkLinkBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (globalSelectedIds.size === 0 && !selectAllMode) return;
+        
+        // Reset Modal State
+        bulkLinkSearching.style.display = 'block';
+        bulkLinkResults.style.display = 'none';
+        bulkLinkNoMatches.style.display = 'none';
+        bulkLinkFooter.style.display = 'none';
+        bulkMatches = [];
+        
+        bulkLinkModal.show();
+        
+        // Prepare Payload
+        const payload = selectAllMode ? {
+            select_all: true,
+            search: searchInput.value,
+            ent_id: entIdSelect.value,
+            type: typeSelect.value,
+            status: statusSelect.value
+        } : {
+            ids: Array.from(globalSelectedIds)
+        };
+
+        // Fetch Matches
+        fetch('{{ route("acolitos.check-bulk-matches") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(async response => {
+            if (response.status === 419 || response.status === 401) {
+                throw new Error('Sessão expirada. Por favor, recarregue a página.');
+            }
+
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || 'Erro no servidor (' + response.status + ')');
+                }
+                return data;
+            } catch (e) {
+                console.error('Invalid JSON response:', text);
+                if (!response.ok) throw new Error('Erro no servidor: ' + response.statusText);
+                throw new Error('Resposta inválida do servidor. Contate o suporte.');
+            }
+        })
+        .then(data => {
+            bulkLinkSearching.style.display = 'none';
+            bulkMatches = data.matches || [];
+            
+            if (bulkMatches.length > 0) {
+                renderBulkMatches(bulkMatches);
+                bulkLinkResults.style.display = 'block';
+                bulkLinkFooter.style.display = 'flex';
+            } else {
+                bulkLinkNoMatches.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            bulkLinkSearching.style.display = 'none';
+            alert('Erro ao buscar vínculos: ' + error.message);
+            bulkLinkModal.hide();
+        });
+    });
+
+    selectAllLinks.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.link-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    confirmBulkLinkBtn.addEventListener('click', function() {
+        const selectedLinks = [];
+        document.querySelectorAll('.link-checkbox:checked').forEach(cb => {
+            const index = cb.value;
+            const match = bulkMatches[index];
+            if (match) {
+                selectedLinks.push({
+                    acolito_id: match.acolito_id,
+                    user_id: match.user_id
+                });
+            }
+        });
+
+        if (selectedLinks.length === 0) return;
+
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Vinculando...';
+
+        fetch('{{ route("acolitos.bulk-link-users") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ links: selectedLinks })
+        })
+        .then(async response => {
+            if (response.status === 419 || response.status === 401) {
+                throw new Error('Sessão expirada. Por favor, recarregue a página.');
+            }
+            
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || 'Erro ao vincular (' + response.status + ')');
+                }
+                return data;
+            } catch (e) {
+                console.error('Invalid JSON response:', text);
+                if (!response.ok) throw new Error('Erro no servidor: ' + response.statusText);
+                throw new Error('Resposta inválida do servidor ao vincular.');
+            }
+        })
+        .then(data => {
+            bulkLinkModal.hide();
+            showToast(data.message, 'success');
+            resetSelection();
+            fetchData();
+        })
+        .catch(error => {
+            console.error(error);
+            showToast('Erro ao vincular usuários.', 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
+
+    function renderBulkMatches(matches) {
+        bulkLinkTableBody.innerHTML = '';
+        matches.forEach((match, index) => {
+            const isHighConfidence = match.confidence === 'high';
+            const rowClass = isHighConfidence ? '' : 'table-warning';
+            const confidenceBadge = isHighConfidence 
+                ? '<span class="badge bg-success bg-opacity-10 text-success rounded-pill">Alta</span>'
+                : '<span class="badge bg-warning text-dark rounded-pill" data-bs-toggle="tooltip" title="Nome incompleto ou curto. Verifique com atenção.">Baixa</span>';
+            
+            const tr = document.createElement('tr');
+            if (!isHighConfidence) tr.classList.add('table-warning');
+            
+            tr.innerHTML = `
+                <td class="text-center">
+                    <input class="form-check-input link-checkbox" type="checkbox" value="${index}" checked>
+                </td>
+                <td>
+                    <div class="fw-bold text-dark">${match.acolito_name}</div>
+                    <div class="small text-muted">ID: ${match.acolito_id}</div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">${match.user_name}</div>
+                            <div class="small text-muted">${match.user_email || 'Sem e-mail'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${confidenceBadge}</td>
+            `;
+            bulkLinkTableBody.appendChild(tr);
+        });
+
+        // Re-init tooltips inside modal
+        if (window.bootstrap) {
+            const tooltipTriggerList = [].slice.call(bulkLinkTableBody.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new window.bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+    }
 
     confirmDeleteBtn.addEventListener('click', function() {
         if (isBulkDelete) {
@@ -393,13 +707,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${typeBadge}</td>
                 <td>${item.age == 0 ? 'Não informado' : item.age + ' anos'}</td>
                 <td>${item.graduation_year}</td>
+                <td>
+                    ${item.user_id ? 
+                        '<i class="bi bi-shield-check text-success fs-5" data-bs-toggle="tooltip" data-bs-title="Vinculado com sucesso"></i>' : 
+                        `<i class="bi bi-shield-x text-danger fs-5 cursor-pointer" style="cursor: pointer;" data-bs-toggle="tooltip" data-bs-title="Sem vínculo" data-name="${item.name.replace(/"/g, '&quot;')}" onclick="checkAndLinkUser(this, ${item.id}, this.getAttribute('data-name'))"></i>`
+                    }
+                </td>
                 <td>${statusBadge}</td>
                 <td class="text-end pe-4">
                     <div class="d-flex gap-2 justify-content-end">
-                        <a href="{{ url('acolitos') }}/${item.id}/edit" class="btn btn-light text-primary btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Editar">
+                        <a href="{{ url('acolitos') }}/${item.id}/edit" class="btn btn-light text-primary btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" data-bs-toggle="tooltip" data-bs-title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <button class="btn btn-light text-danger btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Excluir" onclick="confirmDelete(${item.id})">
+                        <button class="btn btn-light text-danger btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" data-bs-toggle="tooltip" data-bs-title="Excluir" onclick="confirmDelete(${item.id})">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -407,6 +727,14 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             tableBody.appendChild(tr);
         });
+
+        // Initialize Bootstrap tooltips
+        if (window.bootstrap) {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new window.bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
     }
 
     function renderPagination(data) {
@@ -444,6 +772,87 @@ document.addEventListener('DOMContentLoaded', function() {
             paginationLinks.appendChild(li);
         });
     }
+
+    window.checkAndLinkUser = function(btnElement, id, name) {
+        // Show spinner
+        const originalDisplay = btnElement.style.display;
+        btnElement.style.display = 'none';
+        
+        const loader = document.createElement('span');
+        loader.className = 'd-inline-flex align-items-center text-muted small';
+        loader.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Procurando vínculo...';
+        
+        btnElement.parentNode.insertBefore(loader, btnElement.nextSibling);
+        
+        fetch('{{ route("acolitos.check-user") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ name: name })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.found) {
+                pendingLinkAcolitoId = id;
+                pendingLinkUserId = data.user.id;
+                modalUserName.textContent = data.user.name;
+                modalUserEmail.textContent = data.user.email || 'Sem e-mail';
+                modalUserRole.textContent = data.user.rule || 'N/A';
+                
+                if (!userMatchModal && window.bootstrap) {
+                     userMatchModal = new window.bootstrap.Modal(document.getElementById('userMatchModal'));
+                }
+                if (userMatchModal) userMatchModal.show();
+            } else {
+                alert('Nenhum usuário correspondente encontrado para este nome.');
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            // Restore icon (if table wasn't refreshed yet)
+            if (loader && loader.parentNode) {
+                loader.remove();
+            }
+            if (btnElement) {
+                btnElement.style.display = originalDisplay;
+            }
+        });
+    };
+
+    btnConfirmLink.addEventListener('click', function() {
+        if (!pendingLinkAcolitoId || !pendingLinkUserId) return;
+
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Vinculando...';
+
+        fetch(`{{ url('acolitos') }}/${pendingLinkAcolitoId}/link-user`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ user_id: pendingLinkUserId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (userMatchModal) userMatchModal.hide();
+                fetchData(); // Refresh table
+                // Show success toast/alert
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
 
     window.toggleSelection = function(id, checked) {
         if (selectAllMode) {
