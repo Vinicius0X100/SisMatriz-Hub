@@ -51,6 +51,11 @@ class SendEscalaWhatsappJob implements ShouldQueue
             return;
         }
 
+        // Ensure 'whatsapp:' prefix is present in 'from'
+        if (!str_starts_with($from, 'whatsapp:')) {
+            $from = 'whatsapp:' . $from;
+        }
+
         try {
             $twilio = new Client($sid, $token);
         } catch (\Exception $e) {
