@@ -267,8 +267,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data.data) {
+                throw new Error('Formato de resposta inválido');
+            }
             renderTable(data.data);
             renderPagination(data);
             updateBulkActions();
@@ -280,7 +288,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-5 text-danger">Erro ao carregar dados.</td></tr>';
+            let msg = 'Erro ao carregar dados.';
+            if (error.message) msg += ' ' + error.message;
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-5 text-danger"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>${msg}</td></tr>`;
         });
     }
 

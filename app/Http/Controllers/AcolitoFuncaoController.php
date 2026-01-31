@@ -36,7 +36,20 @@ class AcolitoFuncaoController extends Controller
                 $query->where('title', 'like', "%{$search}%");
             }
 
-            $funcoes = $query->paginate(10);
+            try {
+                $funcoes = $query->paginate(10);
+            } catch (\Exception $e) {
+                // Fallback seguro em caso de erro na ordenação (ex: coluna created_at não existe)
+                $query = AcolitoFuncao::where('paroquia_id', Auth::user()->paroquia_id);
+                
+                if ($request->filled('search')) {
+                    $search = $request->input('search');
+                    $query->where('title', 'like', "%{$search}%");
+                }
+                
+                $query->orderBy('f_id', 'desc');
+                $funcoes = $query->paginate(10);
+            }
 
             return response()->json($funcoes);
         }
