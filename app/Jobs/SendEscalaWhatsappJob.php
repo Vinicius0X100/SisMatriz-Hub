@@ -40,19 +40,18 @@ class SendEscalaWhatsappJob implements ShouldQueue
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
         $from = config('services.twilio.whatsapp_from');
-        $contentSid = config('services.twilio.content_sid_acolitos');
+        
+        // Messaging Service ID e Content SID fornecidos explicitamente
+        $messagingServiceSid = 'MG0c8f18b918fffa9283c956b7631f1230';
+        $contentSid = 'HXf3131ce5e50a977bcfa2ad874628cec9';
 
-        if (!$sid || !$token || !$from) {
-            Log::error('Twilio credentials not configured.', [
-                'sid_configured' => !empty($sid),
-                'token_configured' => !empty($token),
-                'from_configured' => !empty($from)
-            ]);
+        if (!$sid || !$token) {
+            Log::error('Twilio credentials (SID/Token) not configured.');
             return;
         }
 
-        // Ensure 'whatsapp:' prefix is present in 'from'
-        if (!str_starts_with($from, 'whatsapp:')) {
+        // Ensure 'whatsapp:' prefix is present in 'from' if it exists
+        if ($from && !str_starts_with($from, 'whatsapp:')) {
             $from = 'whatsapp:' . $from;
         }
 
@@ -79,7 +78,6 @@ class SendEscalaWhatsappJob implements ShouldQueue
             $phone = preg_replace('/\D/', '', $acolito->register->phone);
 
             // Validação: 11 dígitos (DDD + 9 dígitos)
-            // Ignora números inválidos ou nulos/zeros
             if (strlen($phone) !== 11 || (int)$phone === 0) {
                 continue;
             }
@@ -87,34 +85,26 @@ class SendEscalaWhatsappJob implements ShouldQueue
             $to = 'whatsapp:+55' . $phone;
 
             try {
-                // Se o Content SID estiver configurado, usa o template
-                if ($contentSid) {
-                    $twilio->messages->create($to, [
-                        'from' => $from,
-                        'contentSid' => $contentSid,
-                        'contentVariables' => json_encode([
-                            '1' => 'SisMatriz',
-                            '2' => 'https://central.sismatriz.online'
-                        ]),
-                    ]);
-                } else {
-                    // Fallback para mensagem de texto simples caso o template não esteja configurado
-                    // Mantém a mensagem detalhada apenas no fallback
-                    $messageBody = "Olá {$acolito->name}, você foi escalado para: {$this->details['title']} \nData: {$this->details['date']} \nHorário: {$this->details['time']} \nLocal: {$this->details['local']}.";
-                    
-                    $twilio->messages->create($to, [
-                        'from' => $from,
-                        'body' => $messageBody,
-                    ]);
+                $messageOptions = [
+                    'messagingServiceSid' => $messagingServiceSid,
+                    'contentSid' => $contentSid,
+                    'contentVariables' => json_encode([
+                        "1" => "SisMatriz para Android",
+                        "2" => "https://central.sismatriz.online"
+                    ])
+                ];
+
+                // Se houver 'from' configurado, adiciona (embora MessagingServiceSid geralmente substitua)
+                if ($from) {
+                    $messageOptions['from'] = $from;
                 }
 
-                Log::info("WhatsApp sent to {$acolito->name} ({$to})");
+                $twilio->messages->create($to, $messageOptions);
                 
-                // Delay of 5 seconds to avoid spam detection
-                sleep(5);
+                Log::info("Message sent to {$to} using MessagingService {$messagingServiceSid}");
 
             } catch (\Exception $e) {
-                Log::error("Failed to send WhatsApp to {$acolito->name}: " . $e->getMessage());
+                Log::error("Failed to send WhatsApp to {$to}: " . $e->getMessage());
             }
         }
     }
