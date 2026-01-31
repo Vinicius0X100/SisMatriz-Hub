@@ -339,7 +339,7 @@
 
         filtered.forEach(ac => {
             const name = ac.user_name || ac.name || 'Sem Nome';
-            const avatar = ac.user_avatar ? `/uploads/avatars/${ac.user_avatar}` : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name);
+            const avatar = ac.user_avatar ? `/storage/uploads/avatars/${ac.user_avatar}` : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name);
             
             const div = document.createElement('div');
             div.className = 'd-flex align-items-center justify-content-between p-3 border-bottom hover-bg-light';
@@ -367,7 +367,7 @@
             // Try to find fresh data from allAcolytes if possible, fallback to stored object
             const originalAc = allAcolytes.find(a => a.id === ac.id);
             const name = originalAc ? (originalAc.user_name || originalAc.name) : ac.name;
-            const avatar = originalAc?.user_avatar ? `/uploads/avatars/${originalAc.user_avatar}` : (ac.avatar ? `/uploads/avatars/${ac.avatar}` : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name));
+            const avatar = originalAc?.user_avatar ? `/storage/uploads/avatars/${originalAc.user_avatar}` : (ac.avatar ? `/storage/uploads/avatars/${ac.avatar}` : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name));
 
             const div = document.createElement('div');
             div.className = 'p-3 border-bottom bg-white m-2 rounded-3 shadow-sm';
