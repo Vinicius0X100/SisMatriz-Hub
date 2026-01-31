@@ -104,8 +104,10 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Acólitos e Coroinhas
     Route::get('acolitos/search-registers', [App\Http\Controllers\AcolitoController::class, 'searchRegisters'])->name('acolitos.search-registers');
-Route::post('acolitos/bulk-delete', [App\Http\Controllers\AcolitoController::class, 'bulkDestroy'])->name('acolitos.bulk-delete');
-Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
+    Route::post('acolitos/bulk-delete', [App\Http\Controllers\AcolitoController::class, 'bulkDestroy'])->name('acolitos.bulk-delete');
+    Route::post('acolitos/funcoes/bulk-delete', [App\Http\Controllers\AcolitoFuncaoController::class, 'bulkDestroy'])->name('acolitos.funcoes.bulk-delete');
+    Route::resource('acolitos/funcoes', App\Http\Controllers\AcolitoFuncaoController::class, ['as' => 'acolitos']);
+    Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');

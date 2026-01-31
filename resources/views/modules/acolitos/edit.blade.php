@@ -105,12 +105,10 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 align-items-center mt-5">
-                    <div id="submitSpinner" class="d-none d-flex align-items-center me-3">
-                        <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
-                        <span class="text-primary fw-bold small">Salvando...</span>
-                    </div>
                     <a href="{{ route('acolitos.index') }}" class="btn btn-light rounded-pill px-4">Cancelar</a>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold" id="submitBtn">Salvar Alterações</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold" id="submitBtn">
+                        <i class="bi bi-check-lg me-2"></i>Salvar Alterações
+                    </button>
                 </div>
             </form>
         </div>
@@ -199,10 +197,8 @@
     // Submit Spinner Logic
     document.getElementById('editAcolitoForm').addEventListener('submit', function() {
         const btn = document.getElementById('submitBtn');
-        const spinner = document.getElementById('submitSpinner');
-        
         btn.disabled = true;
-        spinner.classList.remove('d-none');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Salvando alterações...';
     });
 </script>
 
