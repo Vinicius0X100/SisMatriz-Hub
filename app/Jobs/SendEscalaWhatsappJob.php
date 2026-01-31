@@ -35,7 +35,7 @@ class SendEscalaWhatsappJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('SendEscalaWhatsappJob started', ['acolitoIds' => $this->acolitoIds]);
+        Log::info('DEBUG: SendEscalaWhatsappJob started', ['acolitoIds' => $this->acolitoIds]);
 
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
@@ -45,8 +45,16 @@ class SendEscalaWhatsappJob implements ShouldQueue
         $messagingServiceSid = 'MG0c8f18b918fffa9283c956b7631f1230';
         $contentSid = 'HXf3131ce5e50a977bcfa2ad874628cec9';
 
+        Log::info('DEBUG: Twilio Config', [
+            'sid_set' => !empty($sid),
+            'token_set' => !empty($token),
+            'from_set' => !empty($from),
+            'messagingServiceSid' => $messagingServiceSid,
+            'contentSid' => $contentSid
+        ]);
+
         if (!$sid || !$token) {
-            Log::error('Twilio credentials (SID/Token) not configured.');
+            Log::error('DEBUG: Twilio credentials (SID/Token) not configured.');
             return;
         }
 
@@ -57,32 +65,42 @@ class SendEscalaWhatsappJob implements ShouldQueue
 
         try {
             $twilio = new Client($sid, $token);
+            Log::info('DEBUG: Twilio Client initialized successfully');
         } catch (\Exception $e) {
-            Log::error('Twilio Client init failed: ' . $e->getMessage());
+            Log::error('DEBUG: Twilio Client init failed: ' . $e->getMessage());
             return;
         }
 
         $acolitos = Acolito::whereIn('id', $this->acolitoIds)->with('register')->get();
         
+        Log::info('DEBUG: Acolitos found', ['count' => $acolitos->count()]);
+
         if ($acolitos->isEmpty()) {
-            Log::warning('No acolitos found for IDs provided.', ['ids' => $this->acolitoIds]);
+            Log::warning('DEBUG: No acolitos found for IDs provided.', ['ids' => $this->acolitoIds]);
             return;
         }
 
         foreach ($acolitos as $acolito) {
+            Log::info("DEBUG: Processing acolito {$acolito->id} - {$acolito->name}");
+
             if (!$acolito->register || empty($acolito->register->phone)) {
+                Log::warning("DEBUG: Acolito {$acolito->id} has no register or phone");
                 continue;
             }
 
             // Remove non-numeric characters
             $phone = preg_replace('/\D/', '', $acolito->register->phone);
 
+            Log::info("DEBUG: Phone raw: {$acolito->register->phone}, Cleaned: {$phone}");
+
             // Validação: 11 dígitos (DDD + 9 dígitos)
             if (strlen($phone) !== 11 || (int)$phone === 0) {
+                Log::warning("DEBUG: Invalid phone length or value for acolito {$acolito->id}: {$phone}");
                 continue;
             }
 
             $to = 'whatsapp:+55' . $phone;
+            Log::info("DEBUG: Preparing to send to {$to}");
 
             try {
                 $messageOptions = [
@@ -99,13 +117,18 @@ class SendEscalaWhatsappJob implements ShouldQueue
                     $messageOptions['from'] = $from;
                 }
 
-                $twilio->messages->create($to, $messageOptions);
+                Log::info("DEBUG: Calling Twilio API create for {$to}", ['options' => $messageOptions]);
+
+                $message = $twilio->messages->create($to, $messageOptions);
                 
-                Log::info("Message sent to {$to} using MessagingService {$messagingServiceSid}");
+                Log::info("DEBUG: Message sent successfully to {$to} using MessagingService {$messagingServiceSid}. SID: " . $message->sid);
 
             } catch (\Exception $e) {
-                Log::error("Failed to send WhatsApp to {$to}: " . $e->getMessage());
+                Log::error("DEBUG: Failed to send WhatsApp to {$to}: " . $e->getMessage());
+                Log::error("DEBUG: Exception Trace: " . $e->getTraceAsString());
             }
         }
+        
+        Log::info('DEBUG: SendEscalaWhatsappJob finished');
     }
 }

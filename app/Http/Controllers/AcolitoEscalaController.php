@@ -15,7 +15,9 @@ use App\Models\AcolitoFuncao;
 use App\Models\EscalaDraft;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\SendEscalaWhatsappJob;
+use Illuminate\Support\Facades\Log;
+use Twilio\Rest\Client;
+// use App\Jobs\SendEscalaWhatsappJob;
 
 class AcolitoEscalaController extends Controller
 {
@@ -213,6 +215,8 @@ class AcolitoEscalaController extends Controller
      */
     public function storeCelebration(Request $request, $id)
     {
+        Log::info('DEBUG: storeCelebration called', ['request_all' => $request->all(), 'escala_id' => $id]);
+
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
                         ->firstOrFail();
@@ -288,13 +292,15 @@ class AcolitoEscalaController extends Controller
                 }
             }
             
+            Log::info('DEBUG: acolitoIds collected', ['ids' => $acolitoIds]);
+            
             // Update total acolytes count in scale
             $totalAcolitos = EscaladoData::where('escala_id', $escala->es_id)->count();
             $escala->update(['qntd_acolitos' => $totalAcolitos]);
 
             DB::commit();
 
-            // Dispatch WhatsApp Job
+            // Send WhatsApp Notification (Inline)
             if (!empty($acolitoIds)) {
                 $details = [
                     'title' => $request->celebration,
@@ -302,7 +308,9 @@ class AcolitoEscalaController extends Controller
                     'time' => $request->hora,
                     'local' => Entidade::find($request->ent_id)->ent_name ?? 'Local não informado'
                 ];
-                SendEscalaWhatsappJob::dispatch($acolitoIds, $details);
+                
+                // Call private method directly
+                $this->sendWhatsappNotification($acolitoIds, $details);
             }
 
             return response()->json([
@@ -443,6 +451,8 @@ class AcolitoEscalaController extends Controller
 
     private function handleDraftUpdate(Request $request, Escala $escala, $draftIdStr)
     {
+        Log::info('DEBUG: handleDraftUpdate called', ['request_all' => $request->all(), 'draft_id' => $draftIdStr]);
+
         $draftId = str_replace('draft_', '', $draftIdStr);
         $draft = EscalaDraft::where('id', $draftId)
                             ->where('es_id', $escala->es_id)
@@ -507,6 +517,8 @@ class AcolitoEscalaController extends Controller
                     }
                 }
                 
+                Log::info('DEBUG: acolitoIds collected (Draft Publish)', ['ids' => $acolitoIds]);
+                
                 // Update total acolytes count
                 $totalAcolitos = EscaladoData::where('escala_id', $escala->es_id)->count();
                 $escala->update(['qntd_acolitos' => $totalAcolitos]);
@@ -519,7 +531,7 @@ class AcolitoEscalaController extends Controller
 
                 DB::commit();
 
-                // Dispatch WhatsApp Job
+                // Send WhatsApp Notification (Inline)
                 if (!empty($acolitoIds)) {
                     $details = [
                         'title' => $request->celebration,
@@ -527,7 +539,9 @@ class AcolitoEscalaController extends Controller
                         'time' => $request->hora,
                         'local' => Entidade::find($request->ent_id)->ent_name ?? 'Local não informado'
                     ];
-                    SendEscalaWhatsappJob::dispatchSync($acolitoIds, $details);
+                    
+                    // Call private method directly
+                    $this->sendWhatsappNotification($acolitoIds, $details);
                 }
 
                 return response()->json([
@@ -556,5 +570,97 @@ class AcolitoEscalaController extends Controller
 
         return redirect()->route('acolitos.escalas.index')
                          ->with('success', 'Escala removida com sucesso!');
+    }
+
+    /**
+     * Send WhatsApp notification directly (Inline)
+     */
+    private function sendWhatsappNotification(array $acolitoIds, array $details)
+    {
+        Log::info('DEBUG: sendWhatsappNotification (Inline) started', ['acolitoIds' => $acolitoIds]);
+
+        $sid = config('services.twilio.sid');
+        $token = config('services.twilio.token');
+        $from = config('services.twilio.whatsapp_from');
+        
+        // Messaging Service ID e Content SID via config
+        $messagingServiceSid = config('services.twilio.messaging_service_sid');
+        $contentSid = config('services.twilio.content_sid_acolitos');
+
+        Log::info('DEBUG: Twilio Config', [
+            'sid_set' => !empty($sid),
+            'token_set' => !empty($token),
+            'from' => $from,
+            'messagingServiceSid' => $messagingServiceSid,
+            'contentSid' => $contentSid
+        ]);
+
+        if (!$sid || !$token) {
+            Log::error('DEBUG: Twilio credentials (SID/Token) not configured.');
+            return;
+        }
+
+        try {
+            $twilio = new Client($sid, $token);
+            Log::info('DEBUG: Twilio Client initialized successfully');
+        } catch (\Exception $e) {
+            Log::error('DEBUG: Twilio Client init failed: ' . $e->getMessage());
+            return;
+        }
+
+        $acolitos = Acolito::with('user')->whereIn('id', $acolitoIds)->get();
+
+        foreach ($acolitos as $acolito) {
+            $userPhone = $acolito->user->celular ?? null;
+            
+            if (!$userPhone) {
+                Log::warning("DEBUG: Acolito ID {$acolito->id} has no phone number.");
+                continue;
+            }
+
+            // Limpeza do número: remove tudo que não for dígito
+            $cleanPhone = preg_replace('/[^0-9]/', '', $userPhone);
+
+            // Formatação para o padrão do Twilio: whatsapp:+55DDDNNNNNNNNN
+            // Assumindo que o número no banco já tem DDD (10 ou 11 dígitos) mas não tem DDI (55)
+            // Se tiver menos de 10 dígitos, provavelmente é inválido.
+            // Se tiver 12 ou 13 dígitos e começar com 55, talvez já tenha DDI.
+            
+            // Lógica simples: Se tiver 10 ou 11 dígitos, adiciona 55.
+            if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
+                $to = "whatsapp:+55" . $cleanPhone;
+            } elseif (strlen($cleanPhone) > 11 && str_starts_with($cleanPhone, '55')) {
+                 $to = "whatsapp:+" . $cleanPhone;
+            } else {
+                 // Fallback ou número já formatado estranhamente, tenta usar como está se tiver +
+                 $to = "whatsapp:+" . $cleanPhone;
+            }
+
+            Log::info("DEBUG: Preparing to send to {$to} (Original: {$userPhone})");
+
+            try {
+                // Estrutura conforme solicitado pelo usuário: From + MessagingServiceSid + ContentSid
+                $messageOptions = [
+                    'from' => $from, 
+                    'messagingServiceSid' => $messagingServiceSid,
+                    'contentSid' => $contentSid,
+                    'contentVariables' => json_encode([
+                        "1" => $details['title'] . " - " . $details['date'] . " às " . $details['time'] . " (" . $details['local'] . ")",
+                        "2" => "https://central.sismatriz.online"
+                    ])
+                ];
+
+                Log::info("DEBUG: Calling Twilio API create for {$to}", ['options' => $messageOptions]);
+
+                $message = $twilio->messages->create($to, $messageOptions);
+                
+                Log::info("DEBUG: Message sent successfully to {$to}. SID: " . $message->sid);
+
+            } catch (\Exception $e) {
+                Log::error("DEBUG: Failed to send WhatsApp to {$acolito->user->name} ({$to}): " . $e->getMessage());
+            }
+        }
+        
+        Log::info('DEBUG: sendWhatsappNotification (Inline) finished');
     }
 }
