@@ -334,6 +334,8 @@ class AcolitoEscalaController extends Controller
      */
     public function updateCelebration(Request $request, $id, $celebrationId)
     {
+        Log::info('DEBUG: updateCelebration hit', ['id' => $id, 'celebrationId' => $celebrationId, 'data' => $request->all()]);
+
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
                         ->firstOrFail();
@@ -368,6 +370,7 @@ class AcolitoEscalaController extends Controller
             // Sync acolytes: remove all and re-add (simplest approach)
             EscaladoData::where('d_id', $celebration->d_id)->delete();
 
+            $acolitoIds = [];
             if ($request->has('acolitos')) {
                 foreach ($request->acolitos as $acolitoData) {
                     EscaladoData::create([
@@ -376,6 +379,7 @@ class AcolitoEscalaController extends Controller
                         'acolito_id' => $acolitoData['id'],
                         'funcao_id' => $acolitoData['funcao_id'] ?? null,
                     ]);
+                    $acolitoIds[] = $acolitoData['id'];
                 }
             }
             
@@ -384,6 +388,19 @@ class AcolitoEscalaController extends Controller
             $escala->update(['qntd_acolitos' => $totalAcolitos]);
 
             DB::commit();
+
+            // Send WhatsApp Notification (Inline)
+            if (!empty($acolitoIds)) {
+                $details = [
+                    'title' => $request->celebration,
+                    'date' => $celebration->data . '/' . $escala->month . '/' . $escala->year,
+                    'time' => $request->hora,
+                    'local' => Entidade::find($request->ent_id)->ent_name ?? 'Local não informado'
+                ];
+                
+                // Call private method directly
+                $this->sendWhatsappNotification($acolitoIds, $details);
+            }
 
             return response()->json([
                 'success' => true,
@@ -575,20 +592,22 @@ class AcolitoEscalaController extends Controller
     /**
      * Send WhatsApp notification directly (Inline)
      */
-  private function sendWhatsappNotification(array $acolitoIds, array $details)
+    private function sendWhatsappNotification(array $acolitoIds, array $details)
     {
         Log::info('DEBUG: sendWhatsappNotification started', ['acolitoIds' => $acolitoIds]);
 
         $sid  = config('services.twilio.sid');
         $token = config('services.twilio.token');
+        $from = config('services.twilio.whatsapp_from');
         $messagingServiceSid = config('services.twilio.messaging_service_sid');
         $contentSid = config('services.twilio.content_sid_acolitos');
 
         // 🔒 Validação COMPLETA
-        if (!$sid || !$token || !$messagingServiceSid || !$contentSid) {
+        if (!$sid || !$token || !$messagingServiceSid || !$contentSid || !$from) {
             Log::error('Twilio config missing', [
                 'sid' => (bool) $sid,
                 'token' => (bool) $token,
+                'from' => $from,
                 'messagingServiceSid' => $messagingServiceSid,
                 'contentSid' => $contentSid,
             ]);
@@ -602,18 +621,20 @@ class AcolitoEscalaController extends Controller
             return;
         }
 
-        $acolitos = Acolito::with('user')->whereIn('id', $acolitoIds)->get();
+        $acolitos = Acolito::with(['register'])->whereIn('id', $acolitoIds)->get();
 
         foreach ($acolitos as $acolito) {
-            $user = $acolito->user;
+            $phone = $acolito->register->phone ?? null;
+            $userName = $acolito->register->name ?? 'Unknown';
 
-            if (!$user || empty($user->celular)) {
-                Log::warning("Acolito {$acolito->id} sem telefone.");
+            if (empty($phone)) {
+                Log::warning("Acolito {$acolito->id} ({$userName}) sem telefone no registro.");
+                Log::warning("Register details: " . json_encode($acolito->register));
                 continue;
             }
 
             // 🔹 Normaliza telefone
-            $cleanPhone = preg_replace('/[^0-9]/', '', $user->celular);
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
 
             // 🇧🇷 Aceita apenas padrões válidos
             if (strlen($cleanPhone) === 10 || strlen($cleanPhone) === 11) {
@@ -621,21 +642,22 @@ class AcolitoEscalaController extends Controller
             } elseif ((strlen($cleanPhone) === 12 || strlen($cleanPhone) === 13) && str_starts_with($cleanPhone, '55')) {
                 $to = 'whatsapp:+' . $cleanPhone;
             } else {
-                Log::warning("Telefone inválido para acolito {$acolito->id}: {$user->celular}");
+                Log::warning("Telefone inválido para acolito {$acolito->id}: {$phone}");
                 continue;
             }
 
             try {
-                $message = $twilio->messages->create($to, [
+                $messageOptions = [
+                    'from' => $from,
                     'messagingServiceSid' => $messagingServiceSid,
                     'contentSid' => $contentSid,
                     'contentVariables' => json_encode([
-                        "1" => $details['title'],
-                        "2" => $details['date'] . ' às ' . $details['time'],
-                        "3" => $details['local'],
-                        "4" => "https://central.sismatriz.online",
-                    ]),
-                ]);
+                        "1" => "SisMatriz para Android",
+                        "2" => "https://central.sismatriz.online"
+                    ])
+                ];
+
+                $message = $twilio->messages->create($to, $messageOptions);
 
                 Log::info('WhatsApp enviado', [
                     'acolito_id' => $acolito->id,
@@ -646,6 +668,7 @@ class AcolitoEscalaController extends Controller
 
             } catch (\Exception $e) {
                 Log::error("Erro ao enviar WhatsApp para {$to}: " . $e->getMessage());
+                Log::error($e->getTraceAsString());
             }
         }
 
