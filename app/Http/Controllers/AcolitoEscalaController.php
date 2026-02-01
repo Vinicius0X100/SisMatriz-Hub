@@ -154,6 +154,7 @@ class AcolitoEscalaController extends Controller
                                       ->get()
                                       ->map(function ($item) {
                                           $item->type = 'published';
+                                          $item->data = (int)$item->data;
                                           return $item;
                                       });
 
@@ -175,7 +176,7 @@ class AcolitoEscalaController extends Controller
                 return (object) [
                     'd_id' => 'draft_' . $draft->id,
                     'draft_id' => $draft->id,
-                    'data' => $payload['data'],
+                    'data' => (int)$payload['data'],
                     'dia' => $payload['dia'],
                     'hora' => $payload['hora'],
                     'celebration' => $draft->title,
@@ -211,11 +212,12 @@ class AcolitoEscalaController extends Controller
 
         // Calculate days in month
         $months = [
-            'Janeiro' => 1, 'Fevereiro' => 2, 'Março' => 3, 'Abril' => 4,
-            'Maio' => 5, 'Junho' => 6, 'Julho' => 7, 'Agosto' => 8,
-            'Setembro' => 9, 'Outubro' => 10, 'Novembro' => 11, 'Dezembro' => 12
+            'janeiro' => 1, 'fevereiro' => 2, 'março' => 3, 'abril' => 4,
+            'maio' => 5, 'junho' => 6, 'julho' => 7, 'agosto' => 8,
+            'setembro' => 9, 'outubro' => 10, 'novembro' => 11, 'dezembro' => 12
         ];
-        $monthNum = $months[$escala->month] ?? date('n');
+        $normalizedMonth = mb_strtolower(trim($escala->month), 'UTF-8');
+        $monthNum = $months[$normalizedMonth] ?? date('n');
         $year = $escala->year;
         $daysInMonth = Carbon::createFromDate($year, $monthNum, 1)->daysInMonth;
         
