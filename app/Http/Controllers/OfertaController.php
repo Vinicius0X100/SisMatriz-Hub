@@ -7,6 +7,7 @@ use App\Models\Entidade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OfertaController extends Controller
 {
@@ -187,6 +188,74 @@ class OfertaController extends Controller
         $oferta->delete();
 
         return redirect()->route('ofertas.index')->with('success', 'Lançamento excluído com sucesso!');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        
+        if (empty($ids)) {
+            return redirect()->route('ofertas.index')->with('error', 'Nenhum registro selecionado.');
+        }
+
+        Oferta::whereIn('id', $ids)
+            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->delete();
+
+        return redirect()->route('ofertas.index')->with('success', count($ids) . ' lançamentos excluídos com sucesso!');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $query = Oferta::where('paroquia_id', Auth::user()->paroquia_id)
+            ->with('entidade');
+
+        // Filtro por Comunidade
+        if ($request->filled('ent_id') && $request->ent_id != 'all') {
+            $query->where('ent_id', $request->ent_id);
+        }
+
+        // Filtro por Tipo de Lançamento (kind)
+        if ($request->filled('kind') && $request->kind != 'all') {
+            $query->where('kind', $request->kind);
+        }
+
+        // Filtro por Período
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('data', '>=', $request->data_inicio);
+        }
+        if ($request->filled('data_fim')) {
+            $query->whereDate('data', '<=', $request->data_fim);
+        }
+
+        $ofertas = $query->orderBy('data', 'asc')->get();
+
+        // Agrupamento por Comunidade
+        $groupedData = $ofertas->groupBy(function($item) {
+            return $item->entidade->ent_name;
+        });
+
+        // Totais por Tipo (Geral)
+        $totaisPorTipo = $ofertas->groupBy('kind')->map(function ($group) {
+            return $group->sum('valor_total');
+        });
+
+        // Tipos legíveis
+        $tiposNomes = [
+            1 => 'Dízimo',
+            2 => 'Oferta',
+            3 => 'Moedas',
+            4 => 'Doação em Cofre',
+            5 => 'Bazares',
+            6 => 'Vendas',
+        ];
+
+        $pdf = Pdf::loadView('modules.ofertas.pdf', compact('groupedData', 'totaisPorTipo', 'tiposNomes', 'request'));
+
+        // Configuração opcional do papel
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('relatorio_ofertas_' . date('YmdHis') . '.pdf');
     }
 
     private function parseCurrency($value)

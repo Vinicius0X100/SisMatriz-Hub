@@ -137,6 +137,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Ofertas e Dízimos
     Route::post('ofertas/bulk-store', [App\Http\Controllers\OfertaController::class, 'storeBulk'])->name('ofertas.bulk-store');
+    Route::post('ofertas/export-pdf', [App\Http\Controllers\OfertaController::class, 'exportPdf'])->name('ofertas.export-pdf');
+    Route::post('ofertas/bulk-delete', [App\Http\Controllers\OfertaController::class, 'bulkDestroy'])->name('ofertas.bulk-delete');
     Route::resource('ofertas', App\Http\Controllers\OfertaController::class);
 
     // Onboarding / Setup Routes
