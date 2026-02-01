@@ -336,7 +336,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const ajaxAlertContainer = document.getElementById('ajaxAlertContainer');
 
     // Modal elements
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    let deleteModal;
+    try {
+        const deleteModalEl = document.getElementById('deleteModal');
+        if (deleteModalEl) {
+            deleteModal = new bootstrap.Modal(deleteModalEl);
+        } else {
+            console.error('Modal element #deleteModal not found!');
+        }
+    } catch (e) {
+        console.error('Error initializing Delete Modal:', e);
+    }
+
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
     // Bulk Link Modal Elements
@@ -423,7 +434,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (globalSelectedIds.size === 0 && !selectAllMode) return;
         
         isBulkDelete = true;
-        deleteModal.show();
+        if (deleteModal) {
+            deleteModal.show();
+        } else {
+            if (confirm('Tem certeza que deseja excluir os registros selecionados?')) {
+                performBulkDelete();
+            }
+        }
     });
 
     bulkLinkBtn.addEventListener('click', function(e) {
@@ -617,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (currentDeleteId) {
             performSingleDelete(currentDeleteId);
         }
-        deleteModal.hide();
+        if (deleteModal) deleteModal.hide();
     });
 
     // Functions
@@ -907,9 +924,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.confirmDelete = function(id) {
+        console.log('Confirm Delete called for ID:', id);
         currentDeleteId = id;
         isBulkDelete = false;
-        deleteModal.show();
+        
+        if (deleteModal) {
+            deleteModal.show();
+        } else {
+            console.error('Delete modal is not initialized.');
+            // Fallback
+            if (confirm('Tem certeza que deseja excluir este registro?')) {
+                performSingleDelete(id);
+            }
+        }
     };
 
     function performSingleDelete(id) {
