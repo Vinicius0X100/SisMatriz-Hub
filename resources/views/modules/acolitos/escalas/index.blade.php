@@ -73,7 +73,7 @@
                             <td>{{ $escala->send_date ? $escala->send_date->format('d/m/Y') : '-' }}</td>
                             <td class="text-center">
                                 <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">
-                                    {{ $escala->qntd_acolitos ?? 0 }}
+                                    {{ $escala->total_participacoes ?? 0 }}
                                 </span>
                             </td>
                             <td class="text-center">
@@ -98,13 +98,11 @@
                                             title="Editar">
                                         <i class="bi bi-pencil me-1"></i> Editar
                                     </button>
-                                    <form action="{{ route('acolitos.escalas.destroy', $escala->es_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta escala?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-light text-danger rounded-pill px-3" title="Excluir">
-                                            <i class="bi bi-trash me-1"></i> Excluir
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-sm btn-light text-danger rounded-pill px-3" 
+                                            onclick="confirmDelete('{{ route('acolitos.escalas.destroy', $escala->es_id) }}')"
+                                            title="Excluir">
+                                        <i class="bi bi-trash me-1"></i> Excluir
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -223,4 +221,53 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Tem certeza?</h5>
+                    <p class="text-muted mb-0">Esta ação é <strong>irreversível</strong> e removerá permanentemente a escala do sistema.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Sim, Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteModalEl = document.getElementById('deleteModal');
+        let deleteModal;
+        
+        if (deleteModalEl) {
+            deleteModal = new bootstrap.Modal(deleteModalEl);
+        }
+
+        const deleteForm = document.getElementById('deleteForm');
+
+        window.confirmDelete = function(url) {
+            if (deleteForm && deleteModal) {
+                deleteForm.action = url;
+                deleteModal.show();
+            }
+        };
+    });
+</script>
 @endsection

@@ -37,7 +37,10 @@ class AcolitoEscalaController extends Controller
             });
         }
 
-        $escalas = $query->orderBy('year', 'desc')
+        $escalas = $query->withCount(['escalados as total_participacoes' => function ($query) {
+                             $query->select(DB::raw('count(distinct acolito_id)'));
+                         }])
+                         ->orderBy('year', 'desc')
                          ->orderBy('month', 'desc')
                          ->paginate(10);
         

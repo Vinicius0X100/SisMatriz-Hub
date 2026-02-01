@@ -30,4 +30,9 @@ class Escala extends Model
     {
         return $this->belongsTo(ParoquiaSuperadmin::class, 'paroquia_id');
     }
+
+    public function escalados()
+    {
+        return $this->hasMany(EscaladoData::class, 'escala_id', 'es_id');
+    }
 }
