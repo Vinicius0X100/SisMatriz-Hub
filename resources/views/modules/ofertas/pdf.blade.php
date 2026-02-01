@@ -50,7 +50,7 @@
                 </tbody>
                 <tfoot>
                     <tr style="background-color: #f9f9f9; font-weight: bold;">
-                        <td colspan="1" style="text-align: right;">Total {{ $entName }}:</td>
+                        <td colspan="1" style="text-align: right;">Subtotal da comunidade:</td>
                         <td colspan="3">R$ {{ number_format($ofertas->sum('valor_total'), 2, ',', '.') }}</td>
                     </tr>
                 </tfoot>

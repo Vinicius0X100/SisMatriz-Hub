@@ -236,9 +236,11 @@ class OfertaController extends Controller
         });
 
         // Totais por Tipo (Geral)
-        $totaisPorTipo = $ofertas->groupBy('kind')->map(function ($group) {
+        $totalsByType = $ofertas->groupBy('kind')->map(function ($group) {
             return $group->sum('valor_total');
         });
+
+        $grandTotal = $ofertas->sum('valor_total');
 
         // Tipos legíveis
         $tiposNomes = [
@@ -250,12 +252,30 @@ class OfertaController extends Controller
             6 => 'Vendas',
         ];
 
-        $pdf = Pdf::loadView('modules.ofertas.pdf', compact('groupedData', 'totaisPorTipo', 'tiposNomes', 'request'));
+        // Definir label do período
+        if ($request->filled('data_inicio') && $request->filled('data_fim')) {
+            $period = date('d/m/Y', strtotime($request->data_inicio)) . ' a ' . date('d/m/Y', strtotime($request->data_fim));
+        } elseif ($request->filled('data_inicio')) {
+            $period = 'A partir de ' . date('d/m/Y', strtotime($request->data_inicio));
+        } elseif ($request->filled('data_fim')) {
+            $period = 'Até ' . date('d/m/Y', strtotime($request->data_fim));
+        } else {
+            $period = 'Todo o período';
+        }
+
+        // Definir label dos tipos
+        if ($request->filled('kind') && $request->kind != 'all' && isset($tiposNomes[$request->kind])) {
+            $types_label = $tiposNomes[$request->kind];
+        } else {
+            $types_label = 'Todos';
+        }
+
+        $pdf = Pdf::loadView('modules.ofertas.pdf', compact('groupedData', 'totalsByType', 'grandTotal', 'period', 'types_label', 'tiposNomes', 'request'));
 
         // Configuração opcional do papel
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->stream('relatorio_ofertas_' . date('YmdHis') . '.pdf');
+        return $pdf->download('relatorio_ofertas_' . date('YmdHis') . '.pdf');
     }
 
     private function parseCurrency($value)
