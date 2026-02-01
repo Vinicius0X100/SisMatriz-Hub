@@ -215,7 +215,7 @@ class AcolitoEscalaController extends Controller
      */
     public function storeCelebration(Request $request, $id)
     {
-        Log::info('DEBUG: storeCelebration called', ['request_all' => $request->all(), 'escala_id' => $id]);
+        Log::info('DEBUG: storeCelebration hit', ['id' => $id, 'data' => $request->all()]);
 
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
@@ -582,6 +582,9 @@ class AcolitoEscalaController extends Controller
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
         $from = config('services.twilio.whatsapp_from');
+        if (!str_starts_with($from, 'whatsapp:')) {
+            $from = 'whatsapp:' . $from;
+        }
         
         // Messaging Service ID e Content SID via config
         $messagingServiceSid = config('services.twilio.messaging_service_sid');
@@ -612,6 +615,8 @@ class AcolitoEscalaController extends Controller
 
         foreach ($acolitos as $acolito) {
             $userPhone = $acolito->user->celular ?? null;
+            $userName = $acolito->user->name ?? 'Unknown';
+            Log::info("DEBUG: Processing acolito {$acolito->id} ({$userName}). Phone: {$userPhone}");
             
             if (!$userPhone) {
                 Log::warning("DEBUG: Acolito ID {$acolito->id} has no phone number.");
