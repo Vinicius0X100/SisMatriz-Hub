@@ -56,6 +56,10 @@ class AcolitoEscalaController extends Controller
      */
     public function store(Request $request)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
         $request->validate([
             'month' => 'required|string',
             'ent_id' => 'required|exists:entidades,ent_id',
@@ -101,6 +105,10 @@ class AcolitoEscalaController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
                         ->firstOrFail();
@@ -133,6 +141,13 @@ class AcolitoEscalaController extends Controller
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
                         ->firstOrFail();
+
+        $canEdit = Auth::user()->rule != 8;
+        $myAcolitoId = null;
+
+        if (!$canEdit) {
+            $myAcolitoId = Acolito::where('user_id', Auth::id())->value('id');
+        }
 
         $celebrations = EscalaDataHora::where('es_id', $id)
                                       ->with(['escalados.acolito.user', 'escalados.funcao', 'entidade'])
@@ -209,7 +224,8 @@ class AcolitoEscalaController extends Controller
 
         return view('modules.acolitos.escalas.manage', compact(
             'escala', 'celebrations', 'allCelebrations', 'celebrationsByDay', 'entidades', 
-            'defaultEntId', 'acolitos', 'funcoes', 'daysInMonth', 'monthNum', 'year'
+            'defaultEntId', 'acolitos', 'funcoes', 'daysInMonth', 'monthNum', 'year',
+            'canEdit', 'myAcolitoId'
         ));
     }
 
@@ -218,6 +234,10 @@ class AcolitoEscalaController extends Controller
      */
     public function storeCelebration(Request $request, $id)
     {
+        if (Auth::user()->rule == 8) {
+            return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+        }
+
         Log::info('DEBUG: storeCelebration hit', ['id' => $id, 'data' => $request->all()]);
 
         $escala = Escala::where('es_id', $id)
@@ -337,6 +357,10 @@ class AcolitoEscalaController extends Controller
      */
     public function updateCelebration(Request $request, $id, $celebrationId)
     {
+        if (Auth::user()->rule == 8) {
+            return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+        }
+
         Log::info('DEBUG: updateCelebration hit', ['id' => $id, 'celebrationId' => $celebrationId, 'data' => $request->all()]);
 
         $escala = Escala::where('es_id', $id)
@@ -423,8 +447,12 @@ class AcolitoEscalaController extends Controller
     /**
      * Delete a celebration.
      */
-    public function destroyCelebration($id, $celebrationId)
+    public function deleteCelebration($id, $celebrationId)
     {
+        if (Auth::user()->rule == 8) {
+            return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+        }
+
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
                         ->firstOrFail();
@@ -582,6 +610,10 @@ class AcolitoEscalaController extends Controller
      */
     public function destroy(string $id)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
                         ->firstOrFail();

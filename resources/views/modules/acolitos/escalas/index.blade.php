@@ -36,9 +36,11 @@
                     <button type="submit" class="btn btn-primary rounded-pill px-4">Filtrar</button>
                 </form>
                 
+                @if(Auth::user()->rule != 8)
                 <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createEscalaModal">
                     <i class="bi bi-plus-lg me-2"></i>Nova Escala
                 </button>
+                @endif
             </div>
 
             <div class="table-responsive">
@@ -90,8 +92,9 @@
                             <td class="pe-4 text-end">
                                 <div class="d-flex justify-content-end gap-2">
                                     <a href="{{ route('acolitos.escalas.manage', $escala->es_id) }}" class="btn btn-sm btn-light text-primary rounded-pill px-3" title="Gerenciar">
-                                        <i class="bi bi-gear me-1"></i> Gerenciar
+                                        <i class="bi bi-calendar-week me-1"></i> {{ Auth::user()->rule == 8 ? 'Visualizar' : 'Gerenciar' }}
                                     </a>
+                                    @if(Auth::user()->rule != 8)
                                     <button type="button" class="btn btn-sm btn-light text-secondary rounded-pill px-3" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#editEscalaModal{{ $escala->es_id }}"
@@ -103,6 +106,7 @@
                                             title="Excluir">
                                         <i class="bi bi-trash me-1"></i> Excluir
                                     </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

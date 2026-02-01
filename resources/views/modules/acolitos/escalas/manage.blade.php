@@ -44,66 +44,149 @@
             </div>
 
             <!-- Calendar Grid -->
-            <div class="calendar-grid">
-                <!-- Weekday Headers -->
-                @php
-                    $weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
-                @endphp
-                @foreach($weekdays as $day)
-                    <div class="text-center text-muted small fw-bold text-uppercase py-2">{{ $day }}</div>
-                @endforeach
+    <div class="calendar-grid">
+        <!-- Weekday Headers -->
+        @php
+            $weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+        @endphp
+        @foreach($weekdays as $day)
+            <div class="text-center text-muted small fw-bold text-uppercase py-2">{{ $day }}</div>
+        @endforeach
 
-                <!-- Empty Cells for start of month -->
-                @php
-                    $firstDayOfWeek = \Carbon\Carbon::createFromDate($year, $monthNum, 1)->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
-                    $emptyCells = $firstDayOfWeek - 1;
-                @endphp
-                @for($i = 0; $i < $emptyCells; $i++)
-                    <div class="calendar-day empty bg-light rounded-3"></div>
-                @endfor
+        <!-- Empty Cells for start of month -->
+        @php
+            $firstDayOfWeek = \Carbon\Carbon::createFromDate($year, $monthNum, 1)->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
+            $emptyCells = $firstDayOfWeek - 1;
+        @endphp
+        @for($i = 0; $i < $emptyCells; $i++)
+            <div class="calendar-day empty bg-light rounded-3"></div>
+        @endfor
 
-                <!-- Days of Month -->
-                @for($day = 1; $day <= $daysInMonth; $day++)
-                    @php
-                        $dateKey = $day;
-                        $dayCelebrations = $celebrationsByDay[$day] ?? collect();
-                        $isWeekend = \Carbon\Carbon::createFromDate($year, $monthNum, $day)->isWeekend();
-                    @endphp
-                    <div class="calendar-day {{ $isWeekend ? 'bg-light' : '' }} border rounded-3 p-2 position-relative" style="min-height: 120px;" onclick="openCreateModal({{ $day }})">
-                        <span class="day-number fw-bold {{ $isWeekend ? 'text-primary' : 'text-secondary' }}">{{ $day }}</span>
-                        
-                        <!-- Celebrations List -->
-                        <div class="mt-2 d-flex flex-column gap-1">
-                            @foreach($dayCelebrations as $cel)
-                                @php
-                                    $isDraft = isset($cel->type) && $cel->type === 'draft';
-                                    $badgeClass = $isDraft 
-                                        ? 'bg-warning bg-opacity-10 text-warning-emphasis border border-warning-subtle' 
-                                        : 'bg-primary bg-opacity-10 text-primary border border-primary-subtle';
-                                    $iconClass = $isDraft ? 'bi-file-earmark-text' : 'bi-clock';
-                                @endphp
-                                <div class="celebration-badge p-1 px-2 rounded-2 {{ $badgeClass }} d-flex align-items-center justify-content-between" 
-                                     onclick="event.stopPropagation(); openEditModal('{{ $cel->d_id }}')">
-                                    <div class="text-truncate small fw-medium" style="max-width: 85%;">
-                                        <i class="bi {{ $iconClass }} me-1"></i>{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }} - {{ $cel->celebration }}
-                                    </div>
-                                    @if(isset($cel->escalados) && $cel->escalados->count() > 0)
-                                        <span class="badge {{ $isDraft ? 'bg-warning text-dark' : 'bg-primary' }} rounded-pill" style="font-size: 0.6rem;">{{ $cel->escalados->count() }}</span>
-                                    @elseif(isset($cel->payload['acolitos']) && count($cel->payload['acolitos']) > 0)
-                                        <span class="badge {{ $isDraft ? 'bg-warning text-dark' : 'bg-primary' }} rounded-pill" style="font-size: 0.6rem;">{{ count($cel->payload['acolitos']) }}</span>
-                                    @else
-                                        <i class="bi bi-exclamation-circle-fill {{ $isDraft ? 'text-dark' : 'text-warning' }}" style="font-size: 0.7rem;"></i>
-                                    @endif
-                                </div>
-                            @endforeach
+        <!-- Days of Month -->
+        @for($day = 1; $day <= $daysInMonth; $day++)
+            @php
+                $dateKey = $day;
+                $dayCelebrations = $celebrationsByDay[$day] ?? collect();
+                $isWeekend = \Carbon\Carbon::createFromDate($year, $monthNum, $day)->isWeekend();
+                
+                $amIServingToday = false;
+                $myServingCelebrationId = null;
+                if (!$canEdit && $myAcolitoId) {
+                    foreach($dayCelebrations as $cel) {
+                        if ($cel->type !== 'draft' && isset($cel->escalados)) {
+                            foreach($cel->escalados as $escalado) {
+                                if ($escalado->acolito_id == $myAcolitoId) {
+                                    $amIServingToday = true;
+                                    $myServingCelebrationId = $cel->d_id;
+                                    break 2;
+                                }
+                            }
+                        }
+                    }
+                }
+            @endphp
+            <div class="calendar-day {{ $isWeekend ? 'bg-light' : '' }} border rounded-3 p-2 position-relative {{ $amIServingToday ? 'border-success bg-success bg-opacity-10' : '' }}" 
+                 style="min-height: 120px;" 
+                 @if($canEdit) onclick="openCreateModal({{ $day }})" @endif>
+                
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="day-number fw-bold {{ $isWeekend ? 'text-primary' : 'text-secondary' }}">{{ $day }}</span>
+                    @if($amIServingToday)
+                        <span class="badge bg-success rounded-pill shadow-sm animate__animated animate__pulse animate__infinite" 
+                              style="font-size: 0.65rem; cursor: pointer;"
+                              onclick="event.stopPropagation(); openViewModal('{{ $myServingCelebrationId }}')">
+                            <i class="bi bi-person-check-fill me-1"></i> Você servirá aqui
+                        </span>
+                    @endif
+                </div>
+                
+                <!-- Celebrations List -->
+                <div class="mt-2 d-flex flex-column gap-1">
+                    @foreach($dayCelebrations as $cel)
+                        @php
+                            $isDraft = isset($cel->type) && $cel->type === 'draft';
+                            $imInThisOne = false;
+                            
+                            if (!$canEdit && $myAcolitoId && !$isDraft && isset($cel->escalados)) {
+                                foreach($cel->escalados as $escalado) {
+                                    if ($escalado->acolito_id == $myAcolitoId) {
+                                        $imInThisOne = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Show celebration only if I'm in it OR I can edit OR show all for transparency? 
+                            // Request implies showing the badge on the day. Let's show all but highlight mine.
+                            // If user can't edit, they shouldn't see drafts probably? Let's hide drafts for rule 8.
+                            if (!$canEdit && $isDraft) continue;
+
+                            $badgeClass = $isDraft 
+                                ? 'bg-warning bg-opacity-10 text-warning-emphasis border border-warning-subtle' 
+                                : ($imInThisOne ? 'bg-success text-white shadow-sm border border-success' : 'bg-primary bg-opacity-10 text-primary border border-primary-subtle');
+                            
+                            $iconClass = $isDraft ? 'bi-file-earmark-text' : 'bi-clock';
+                        @endphp
+                        <div class="celebration-badge p-1 px-2 rounded-2 {{ $badgeClass }} d-flex align-items-center justify-content-between" 
+                             @if($canEdit) 
+                                onclick="event.stopPropagation(); openEditModal('{{ $cel->d_id }}')"
+                             @else
+                                onclick="event.stopPropagation(); openViewModal('{{ $cel->d_id }}')"
+                             @endif
+                             >
+                            <div class="text-truncate small fw-medium" style="max-width: 85%;">
+                                <i class="bi {{ $iconClass }} me-1"></i>{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }} - {{ $cel->celebration }}
+                            </div>
+                            @if($canEdit)
+                                @if(isset($cel->escalados) && $cel->escalados->count() > 0)
+                                    <span class="badge {{ $isDraft ? 'bg-warning text-dark' : 'bg-primary' }} rounded-pill" style="font-size: 0.6rem;">{{ $cel->escalados->count() }}</span>
+                                @elseif(isset($cel->payload['acolitos']) && count($cel->payload['acolitos']) > 0)
+                                    <span class="badge {{ $isDraft ? 'bg-warning text-dark' : 'bg-primary' }} rounded-pill" style="font-size: 0.6rem;">{{ count($cel->payload['acolitos']) }}</span>
+                                @else
+                                    <i class="bi bi-exclamation-circle-fill {{ $isDraft ? 'text-dark' : 'text-warning' }}" style="font-size: 0.7rem;"></i>
+                                @endif
+                            @elseif($imInThisOne)
+                                <i class="bi bi-eye-fill" style="font-size: 0.7rem;"></i>
+                            @endif
                         </div>
-                        
-                        <!-- Add Button (Visible on Hover) -->
-                        <div class="add-indicator position-absolute top-50 start-50 translate-middle opacity-0 transition-opacity">
-                            <i class="bi bi-plus-circle-fill fs-3 text-primary"></i>
-                        </div>
+                    @endforeach
+                </div>
+                
+                <!-- Add Button (Visible on Hover) -->
+                @if($canEdit)
+                <div class="add-indicator position-absolute top-50 start-50 translate-middle opacity-0 transition-opacity">
+                    <i class="bi bi-plus-circle-fill fs-3 text-primary"></i>
+                </div>
+                @endif
+            </div>
+        @endfor
+    </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold">Detalhes da Celebração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pb-4">
+                <div class="text-center mb-4">
+                    <div class="display-1 text-primary mb-2"><i class="bi bi-calendar-check"></i></div>
+                    <h4 class="fw-bold" id="viewCelebrationName"></h4>
+                    <p class="text-muted mb-0" id="viewCelebrationTime"></p>
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill mt-2" id="viewCelebrationEnt"></span>
+                </div>
+                
+                <div class="card bg-light border-0 rounded-4 p-3">
+                    <h6 class="fw-bold mb-3 text-secondary small text-uppercase">Sua Equipe</h6>
+                    <div class="d-flex flex-column gap-2" id="viewTeamList">
+                        <!-- Populated via JS -->
                     </div>
-                @endfor
+                </div>
             </div>
         </div>
     </div>
@@ -235,6 +318,8 @@
     const allAcolytes = @json($acolitos);
     const allFuncoes = @json($funcoes);
     const celebrations = @json($allCelebrations);
+    const allEntities = @json($entidades);
+    const myAcolitoId = @json($myAcolitoId);
     const defaultEntId = "{{ $defaultEntId }}";
     const monthNum = {{ $monthNum }};
     const year = {{ $year }};
@@ -251,6 +336,73 @@
         // Delete Button
         document.getElementById('btnDelete').addEventListener('click', deleteCelebration);
     });
+
+    function openViewModal(celebrationId) {
+        const celebration = celebrations.find(c => c.d_id == celebrationId);
+        if (!celebration) return;
+
+        document.getElementById('viewCelebrationName').textContent = celebration.celebration;
+        document.getElementById('viewCelebrationTime').textContent = celebration.hora.substring(0, 5); // HH:MM
+        
+        // Find entity name
+        const entity = allEntities.find(e => e.ent_id == celebration.ent_id);
+        document.getElementById('viewCelebrationEnt').textContent = entity ? entity.ent_name : 'Comunidade desconhecida';
+        
+        // Team list
+        const teamList = document.getElementById('viewTeamList');
+        teamList.innerHTML = '';
+
+        let teamMembers = [];
+        if (celebration.type === 'draft') {
+             teamMembers = (celebration.payload.acolitos || []).map(ac => {
+                 const originalAc = allAcolytes.find(a => a.id == ac.id);
+                 const funcao = allFuncoes.find(f => f.f_id == ac.funcao_id);
+                 return {
+                    id: ac.id,
+                    name: originalAc ? (originalAc.user_name || originalAc.name) : 'Desconhecido',
+                    avatar: originalAc ? originalAc.user_avatar : null,
+                    funcao_name: funcao ? funcao.title : 'Sem função'
+                 };
+             });
+        } else {
+            teamMembers = celebration.escalados.map(esc => {
+                const originalAc = allAcolytes.find(a => a.id === esc.acolito.id);
+                const funcao = allFuncoes.find(f => f.f_id === esc.funcao_id);
+                return {
+                    id: esc.acolito.id,
+                    name: originalAc ? (originalAc.user_name || originalAc.name) : (esc.acolito.user?.name || esc.acolito.name),
+                    avatar: originalAc ? originalAc.user_avatar : esc.acolito.user?.avatar,
+                    funcao_name: funcao ? funcao.title : 'Sem função'
+                };
+            });
+        }
+
+        if (teamMembers.length === 0) {
+            teamList.innerHTML = '<div class="text-center text-muted small py-3">Nenhum acólito escalado.</div>';
+        } else {
+            teamMembers.forEach(member => {
+                const isMe = myAcolitoId && member.id == myAcolitoId;
+                const avatarUrl = member.avatar 
+                    ? `/storage/uploads/avatars/${member.avatar}` 
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}`;
+
+                const div = document.createElement('div');
+                div.className = `d-flex align-items-center justify-content-between p-2 rounded-3 ${isMe ? 'bg-primary bg-opacity-10 border border-primary-subtle' : 'bg-white border'}`;
+                div.innerHTML = `
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="${avatarUrl}" class="rounded-circle" width="32" height="32" style="object-fit: cover;" alt="${member.name}">
+                        <div>
+                            <div class="fw-bold small ${isMe ? 'text-primary' : 'text-dark'}">${member.name} ${isMe ? '(Você)' : ''}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">${member.funcao_name}</div>
+                        </div>
+                    </div>
+                `;
+                teamList.appendChild(div);
+            });
+        }
+
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+    }
 
     function openCreateModal(day) {
         currentMode = 'create';
