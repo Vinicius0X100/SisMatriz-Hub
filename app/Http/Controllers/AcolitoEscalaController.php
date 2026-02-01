@@ -575,97 +575,81 @@ class AcolitoEscalaController extends Controller
     /**
      * Send WhatsApp notification directly (Inline)
      */
-    private function sendWhatsappNotification(array $acolitoIds, array $details)
+  private function sendWhatsappNotification(array $acolitoIds, array $details)
     {
-        Log::info('DEBUG: sendWhatsappNotification (Inline) started', ['acolitoIds' => $acolitoIds]);
+        Log::info('DEBUG: sendWhatsappNotification started', ['acolitoIds' => $acolitoIds]);
 
-        $sid = config('services.twilio.sid');
+        $sid  = config('services.twilio.sid');
         $token = config('services.twilio.token');
-        $from = config('services.twilio.whatsapp_from');
-        if (!str_starts_with($from, 'whatsapp:')) {
-            $from = 'whatsapp:' . $from;
-        }
-        
-        // Messaging Service ID e Content SID via config
         $messagingServiceSid = config('services.twilio.messaging_service_sid');
         $contentSid = config('services.twilio.content_sid_acolitos');
 
-        Log::info('DEBUG: Twilio Config', [
-            'sid_set' => !empty($sid),
-            'token_set' => !empty($token),
-            'from' => $from,
-            'messagingServiceSid' => $messagingServiceSid,
-            'contentSid' => $contentSid
-        ]);
-
-        if (!$sid || !$token) {
-            Log::error('DEBUG: Twilio credentials (SID/Token) not configured.');
+        // 🔒 Validação COMPLETA
+        if (!$sid || !$token || !$messagingServiceSid || !$contentSid) {
+            Log::error('Twilio config missing', [
+                'sid' => (bool) $sid,
+                'token' => (bool) $token,
+                'messagingServiceSid' => $messagingServiceSid,
+                'contentSid' => $contentSid,
+            ]);
             return;
         }
 
         try {
             $twilio = new Client($sid, $token);
-            Log::info('DEBUG: Twilio Client initialized successfully');
         } catch (\Exception $e) {
-            Log::error('DEBUG: Twilio Client init failed: ' . $e->getMessage());
+            Log::error('Twilio client init failed: ' . $e->getMessage());
             return;
         }
 
         $acolitos = Acolito::with('user')->whereIn('id', $acolitoIds)->get();
 
         foreach ($acolitos as $acolito) {
-            $userPhone = $acolito->user->celular ?? null;
-            $userName = $acolito->user->name ?? 'Unknown';
-            Log::info("DEBUG: Processing acolito {$acolito->id} ({$userName}). Phone: {$userPhone}");
-            
-            if (!$userPhone) {
-                Log::warning("DEBUG: Acolito ID {$acolito->id} has no phone number.");
+            $user = $acolito->user;
+
+            if (!$user || empty($user->celular)) {
+                Log::warning("Acolito {$acolito->id} sem telefone.");
                 continue;
             }
 
-            // Limpeza do número: remove tudo que não for dígito
-            $cleanPhone = preg_replace('/[^0-9]/', '', $userPhone);
+            // 🔹 Normaliza telefone
+            $cleanPhone = preg_replace('/[^0-9]/', '', $user->celular);
 
-            // Formatação para o padrão do Twilio: whatsapp:+55DDDNNNNNNNNN
-            // Assumindo que o número no banco já tem DDD (10 ou 11 dígitos) mas não tem DDI (55)
-            // Se tiver menos de 10 dígitos, provavelmente é inválido.
-            // Se tiver 12 ou 13 dígitos e começar com 55, talvez já tenha DDI.
-            
-            // Lógica simples: Se tiver 10 ou 11 dígitos, adiciona 55.
-            if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
-                $to = "whatsapp:+55" . $cleanPhone;
-            } elseif (strlen($cleanPhone) > 11 && str_starts_with($cleanPhone, '55')) {
-                 $to = "whatsapp:+" . $cleanPhone;
+            // 🇧🇷 Aceita apenas padrões válidos
+            if (strlen($cleanPhone) === 10 || strlen($cleanPhone) === 11) {
+                $to = 'whatsapp:+55' . $cleanPhone;
+            } elseif ((strlen($cleanPhone) === 12 || strlen($cleanPhone) === 13) && str_starts_with($cleanPhone, '55')) {
+                $to = 'whatsapp:+' . $cleanPhone;
             } else {
-                 // Fallback ou número já formatado estranhamente, tenta usar como está se tiver +
-                 $to = "whatsapp:+" . $cleanPhone;
+                Log::warning("Telefone inválido para acolito {$acolito->id}: {$user->celular}");
+                continue;
             }
 
-            Log::info("DEBUG: Preparing to send to {$to} (Original: {$userPhone})");
-
             try {
-                // Estrutura conforme solicitado pelo usuário: From + MessagingServiceSid + ContentSid
-                $messageOptions = [
-                    'from' => $from, 
+                $message = $twilio->messages->create($to, [
                     'messagingServiceSid' => $messagingServiceSid,
                     'contentSid' => $contentSid,
                     'contentVariables' => json_encode([
-                        "1" => $details['title'] . " - " . $details['date'] . " às " . $details['time'] . " (" . $details['local'] . ")",
-                        "2" => "https://central.sismatriz.online"
-                    ])
-                ];
+                        "1" => $details['title'],
+                        "2" => $details['date'] . ' às ' . $details['time'],
+                        "3" => $details['local'],
+                        "4" => "https://central.sismatriz.online",
+                    ]),
+                ]);
 
-                Log::info("DEBUG: Calling Twilio API create for {$to}", ['options' => $messageOptions]);
-
-                $message = $twilio->messages->create($to, $messageOptions);
-                
-                Log::info("DEBUG: Message sent successfully to {$to}. SID: " . $message->sid);
+                Log::info('WhatsApp enviado', [
+                    'acolito_id' => $acolito->id,
+                    'to' => $to,
+                    'sid' => $message->sid,
+                    'status' => $message->status,
+                ]);
 
             } catch (\Exception $e) {
-                Log::error("DEBUG: Failed to send WhatsApp to {$acolito->user->name} ({$to}): " . $e->getMessage());
+                Log::error("Erro ao enviar WhatsApp para {$to}: " . $e->getMessage());
             }
         }
-        
-        Log::info('DEBUG: sendWhatsappNotification (Inline) finished');
+
+        Log::info('DEBUG: sendWhatsappNotification finished');
     }
+
 }

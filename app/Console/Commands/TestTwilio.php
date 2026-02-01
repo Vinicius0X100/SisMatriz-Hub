@@ -32,16 +32,16 @@ class TestTwilio extends Command
 
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
-        $from = config('services.twilio.whatsapp_from');
-        if (!str_starts_with($from, 'whatsapp:')) {
-            $from = 'whatsapp:' . $from;
-        }
+        // $from = config('services.twilio.whatsapp_from');
+        // if (!str_starts_with($from, 'whatsapp:')) {
+        //     $from = 'whatsapp:' . $from;
+        // }
         $messagingServiceSid = config('services.twilio.messaging_service_sid');
         $contentSid = config('services.twilio.content_sid_acolitos');
 
         $this->info("Configurações carregadas:");
         $this->line("SID: " . substr($sid, 0, 5) . "...");
-        $this->line("From: {$from}");
+        // $this->line("From: {$from}");
         $this->line("MessagingServiceSid: {$messagingServiceSid}");
         $this->line("ContentSid: {$contentSid}");
 
@@ -62,7 +62,7 @@ class TestTwilio extends Command
             $twilio = new Client($sid, $token);
             
             $messageOptions = [
-                'from' => $from,
+                // 'from' => $from, // Removido conforme solicitado
                 'messagingServiceSid' => $messagingServiceSid,
                 'contentSid' => $contentSid,
                 'contentVariables' => json_encode([
