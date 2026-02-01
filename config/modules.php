@@ -35,5 +35,6 @@ return [
     ['name' => 'Turmas de Primeira Eucaristia', 'icon' => 'people-fill', 'url' => '/turmas-eucaristia', 'allowed_roles' => ['7', '12']],
     ['name' => 'Turmas de Crisma', 'icon' => 'people', 'url' => '/turmas-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Turmas de Catequese de Adultos', 'icon' => 'people', 'url' => '/turmas-adultos', 'allowed_roles' => ['17']],
+    ['name' => 'Ofertas e Dízimos', 'icon' => 'cash-coin', 'url' => '/ofertas', 'allowed_roles' => ['11', '14']],
     ['name' => 'Início', 'icon' => 'house', 'allowed_roles' => ['*']], // Everyone
 ];

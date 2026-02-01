@@ -329,17 +329,30 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // Search Filter
-        document.getElementById('searchAcolyte').addEventListener('input', function(e) {
-            renderAvailableList(e.target.value);
-        });
+        const searchInput = document.getElementById('searchAcolyte');
+        if(searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                renderAvailableList(e.target.value);
+            });
+        }
         
         // Delete Button
-        document.getElementById('btnDelete').addEventListener('click', deleteCelebration);
+        const deleteBtn = document.getElementById('btnDelete');
+        if(deleteBtn) {
+            deleteBtn.addEventListener('click', deleteCelebration);
+        }
     });
 
     function openViewModal(celebrationId) {
+        if (!celebrationId) return;
+
+        console.log('Opening modal for:', celebrationId); // Debug
         const celebration = celebrations.find(c => c.d_id == celebrationId);
-        if (!celebration) return;
+        
+        if (!celebration) {
+            console.error('Celebration not found:', celebrationId);
+            return;
+        }
 
         document.getElementById('viewCelebrationName').textContent = celebration.celebration;
         document.getElementById('viewCelebrationTime').textContent = celebration.hora.substring(0, 5); // HH:MM
@@ -353,8 +366,10 @@
         teamList.innerHTML = '';
 
         let teamMembers = [];
+        // Handle potential missing properties safely
         if (celebration.type === 'draft') {
-             teamMembers = (celebration.payload.acolitos || []).map(ac => {
+             const acolitosPayload = celebration.payload && celebration.payload.acolitos ? celebration.payload.acolitos : [];
+             teamMembers = acolitosPayload.map(ac => {
                  const originalAc = allAcolytes.find(a => a.id == ac.id);
                  const funcao = allFuncoes.find(f => f.f_id == ac.funcao_id);
                  return {
@@ -365,16 +380,20 @@
                  };
              });
         } else {
-            teamMembers = celebration.escalados.map(esc => {
-                const originalAc = allAcolytes.find(a => a.id === esc.acolito.id);
-                const funcao = allFuncoes.find(f => f.f_id === esc.funcao_id);
+            const escaladosList = celebration.escalados || [];
+            teamMembers = escaladosList.map(esc => {
+                const acId = esc.acolito ? esc.acolito.id : null;
+                if (!acId) return null; // Skip invalid entries
+
+                const originalAc = allAcolytes.find(a => a.id == acId);
+                const funcao = allFuncoes.find(f => f.f_id == esc.funcao_id);
                 return {
-                    id: esc.acolito.id,
+                    id: acId,
                     name: originalAc ? (originalAc.user_name || originalAc.name) : (esc.acolito.user?.name || esc.acolito.name),
                     avatar: originalAc ? originalAc.user_avatar : esc.acolito.user?.avatar,
                     funcao_name: funcao ? funcao.title : 'Sem função'
                 };
-            });
+            }).filter(m => m !== null);
         }
 
         if (teamMembers.length === 0) {
@@ -401,7 +420,17 @@
             });
         }
 
-        new bootstrap.Modal(document.getElementById('viewModal')).show();
+        try {
+            const modalEl = document.getElementById('viewModal');
+            if(modalEl) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            } else {
+                console.error('Modal element not found');
+            }
+        } catch(e) {
+            console.error('Bootstrap modal error:', e);
+        }
     }
 
     function openCreateModal(day) {

@@ -135,6 +135,10 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
 
 
+    // Ofertas e Dízimos
+    Route::post('ofertas/bulk-store', [App\Http\Controllers\OfertaController::class, 'storeBulk'])->name('ofertas.bulk-store');
+    Route::resource('ofertas', App\Http\Controllers\OfertaController::class);
+
     // Onboarding / Setup Routes
     Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
     Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
