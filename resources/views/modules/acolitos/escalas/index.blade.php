@@ -73,7 +73,7 @@
                             <td>{{ $escala->send_date ? $escala->send_date->format('d/m/Y') : '-' }}</td>
                             <td class="text-center">
                                 <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">
-                                    {{ $escala->qntd_acolitos }}
+                                    {{ $escala->qntd_acolitos ?? 0 }}
                                 </span>
                             </td>
                             <td class="text-center">
