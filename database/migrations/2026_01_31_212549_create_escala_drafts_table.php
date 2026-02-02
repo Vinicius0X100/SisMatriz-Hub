@@ -11,19 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('escalas_drafts', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('es_id');
-            $table->unsignedBigInteger('paroquia_id');
-            $table->unsignedBigInteger('user_id');
-            $table->string('title');
-            $table->text('payload'); // Stores the filename of the JSON draft
-            $table->string('status')->default('draft');
-            $table->timestamps();
+        if (!Schema::hasTable('escalas_drafts')) {
+            Schema::create('escalas_drafts', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('es_id');
+                $table->unsignedBigInteger('paroquia_id');
+                $table->unsignedBigInteger('user_id');
+                $table->string('title');
+                $table->text('payload'); // Stores the filename of the JSON draft
+                $table->string('status')->default('draft');
+                $table->timestamps();
 
-            $table->index(['es_id', 'paroquia_id']);
-            $table->index('user_id');
-        });
+                $table->index(['es_id', 'paroquia_id']);
+                $table->index('user_id');
+            });
+        }
     }
 
     /**

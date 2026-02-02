@@ -26,7 +26,7 @@ return [
     ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'allowed_roles' => []],
     ['name' => 'Comunicação em massa', 'icon' => 'broadcast', 'allowed_roles' => []],
     ['name' => 'Chat', 'icon' => 'chat-dots', 'url' => '/chat', 'allowed_roles' => ['3', '7', '17', '12', '13', '6', '8', '9', '10', '4', '16']],
-    ['name' => 'Excursões', 'icon' => 'bus-front', 'allowed_roles' => []],
+    ['name' => 'Excursões', 'icon' => 'bus-front', 'url' => '/excursoes', 'allowed_roles' => []],
     ['name' => 'Registros gerais', 'icon' => 'journal-text', 'url' => '/registers', 'allowed_roles' => ['3', '7', '6', '9', '4']],
     ['name' => 'Protocolos', 'icon' => 'shield-check', 'allowed_roles' => ['*']],
     ['name' => 'Catequistas de Primeira Eucaristia', 'icon' => 'person-badge', 'url' => '/catequistas-eucaristia', 'allowed_roles' => ['7', '12']],
@@ -35,6 +35,7 @@ return [
     ['name' => 'Turmas de Primeira Eucaristia', 'icon' => 'people-fill', 'url' => '/turmas-eucaristia', 'allowed_roles' => ['7', '12']],
     ['name' => 'Turmas de Crisma', 'icon' => 'people', 'url' => '/turmas-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Turmas de Catequese de Adultos', 'icon' => 'people', 'url' => '/turmas-adultos', 'allowed_roles' => ['17']],
+    ['name' => 'Notas Fiscais', 'icon' => 'receipt', 'url' => '/notas-fiscais', 'allowed_roles' => ['11', '14', '2']],
     ['name' => 'Ofertas e Dízimos', 'icon' => 'cash-coin', 'url' => '/ofertas', 'allowed_roles' => ['11', '14']],
     ['name' => 'Início', 'icon' => 'house', 'allowed_roles' => ['*']], // Everyone
 ];

@@ -135,6 +135,35 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
 
 
+    // Notas Fiscais
+    Route::resource('notas-fiscais', App\Http\Controllers\NotaFiscalController::class)->parameters([
+        'notas-fiscais' => 'notaFiscal'
+    ]);
+    Route::post('notas-fiscais/bulk-delete', [App\Http\Controllers\NotaFiscalController::class, 'bulkDestroy'])->name('notas-fiscais.bulk-delete');
+    Route::get('notas-fiscais/{notaFiscal}/download', [App\Http\Controllers\NotaFiscalController::class, 'download'])->name('notas-fiscais.download');
+
+    // Excursões
+    Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class)->parameters([
+        'excursoes' => 'excursao'
+    ]);
+    
+    Route::prefix('excursoes/{excursao}')->name('excursoes.')->group(function () {
+        Route::resource('onibus', App\Http\Controllers\OnibusController::class)->parameters([
+            'onibus' => 'onibus'
+        ]);
+        
+        Route::prefix('onibus/{onibus}')->name('onibus.')->group(function () {
+            // PDF Routes
+            Route::get('manifesto', [App\Http\Controllers\OnibusPdfController::class, 'downloadManifest'])->name('manifesto');
+            Route::get('passagens', [App\Http\Controllers\OnibusPdfController::class, 'downloadTickets'])->name('passagens');
+            Route::get('passagens/{assento}', [App\Http\Controllers\OnibusPdfController::class, 'downloadTicket'])->name('passagens.show');
+            Route::get('passagens-recorte', [App\Http\Controllers\OnibusPdfController::class, 'downloadTicketsPrintable'])->name('passagens-recorte');
+
+            Route::post('assentos', [App\Http\Controllers\AssentoVendidoController::class, 'store'])->name('assentos.store');
+            Route::delete('assentos/{assento}', [App\Http\Controllers\AssentoVendidoController::class, 'destroy'])->name('assentos.destroy');
+        });
+    });
+
     // Ofertas e Dízimos
     Route::post('ofertas/bulk-store', [App\Http\Controllers\OfertaController::class, 'storeBulk'])->name('ofertas.bulk-store');
     Route::post('ofertas/export-pdf', [App\Http\Controllers\OfertaController::class, 'exportPdf'])->name('ofertas.export-pdf');

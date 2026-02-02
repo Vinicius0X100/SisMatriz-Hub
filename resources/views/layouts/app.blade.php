@@ -226,7 +226,12 @@
 
             function checkReminders() {
                 fetch('/lembretes/check', { credentials: 'same-origin' })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.due) {
                             // Play sound
@@ -237,7 +242,13 @@
                             // ...
                         }
                     })
-                    .catch(error => console.error('Error checking reminders:', error));
+                    .catch(error => {
+                        // Silently ignore errors during page navigation/unload
+                        if (error.name === 'TypeError' && (error.message === 'Load failed' || error.message === 'NetworkError when attempting to fetch resource.')) {
+                            return;
+                        }
+                        console.error('Error checking reminders:', error);
+                    });
             }
 
             // Mega Menu Search

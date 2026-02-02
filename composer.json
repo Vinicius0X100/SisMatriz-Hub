@@ -12,6 +12,7 @@
         "laravel/tinker": "^2.10.1",
         "league/flysystem-ftp": "^3.31",
         "league/flysystem-sftp-v3": "^3.31",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "twilio/sdk": "^8.10"
     },
     "require-dev": {
