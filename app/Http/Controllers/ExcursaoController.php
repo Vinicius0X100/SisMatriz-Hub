@@ -47,7 +47,8 @@ class ExcursaoController extends Controller
 
     public function show(Excursao $excursao)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id) {
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -85,7 +86,8 @@ class ExcursaoController extends Controller
 
     public function destroy(Excursao $excursao)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id) {
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
