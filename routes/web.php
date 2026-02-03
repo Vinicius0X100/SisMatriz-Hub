@@ -133,6 +133,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     
     Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
+    // Vicentinos
+    Route::get('vicentinos/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('vicentinos.search-registers');
+    Route::post('vicentinos/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos.bulk-delete');
+    Route::resource('vicentinos', App\Http\Controllers\VicentinoController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
