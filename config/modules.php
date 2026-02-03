@@ -1,7 +1,7 @@
 <?php
 
 return [
-    ['name' => 'Reservas e calendário', 'icon' => 'calendar-event', 'allowed_roles' => ['16']],
+    ['name' => 'Reservas e calendário', 'icon' => 'calendar-event', 'url' => '/reservas-calendar', 'allowed_roles' => ['*']],
     ['name' => 'Documentação de Crisma', 'icon' => 'file-earmark-text', 'url' => '/docs-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Documentação de Eucaristia', 'icon' => 'file-earmark-text', 'url' => '/docs-eucaristia', 'allowed_roles' => ['7', '12']],
     ['name' => 'Estoque', 'icon' => 'box-seam', 'allowed_roles' => ['15', '4']],

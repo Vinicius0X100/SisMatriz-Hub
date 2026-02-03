@@ -76,7 +76,94 @@ footer {
     margin-top: auto;
 }
 
-.text-muted-small {
-    color: #a0aec0;
-    font-size: 0.8rem;
+/* React Big Calendar Overrides for Google-like Design */
+.rbc-calendar {
+    font-family: 'Inter', sans-serif;
+    border: none !important;
 }
+
+.rbc-header {
+    padding: 12px 0;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.rbc-month-view {
+    border: none !important;
+}
+
+.rbc-day-bg {
+    border-left: 1px solid #f1f5f9 !important;
+}
+
+.rbc-off-range-bg {
+    background-color: #f8fafc !important;
+}
+
+.rbc-today {
+    background-color: transparent !important;
+}
+
+/* Custom Today Cell Indicator */
+.rbc-date-cell.rbc-now {
+    font-weight: bold;
+}
+
+.rbc-date-cell.rbc-now > a {
+    background-color: #3b82f6;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    margin-right: 4px;
+}
+
+.rbc-date-cell {
+    padding-right: 8px;
+    padding-top: 8px;
+    font-size: 0.875rem;
+    color: #334155;
+}
+
+.rbc-event {
+    background-color: transparent !important;
+    padding: 0 !important;
+    border-radius: 4px !important;
+    border: none !important;
+}
+
+.rbc-event:focus {
+    outline: none !important;
+}
+
+.rbc-row-segment {
+    padding: 2px 4px;
+}
+
+.rbc-time-view {
+    border: none !important;
+}
+
+.rbc-time-header-content {
+    border-left: 1px solid #f1f5f9 !important;
+}
+
+.rbc-timeslot-group {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.rbc-time-content {
+    border-top: 1px solid #f1f5f9 !important;
+}
+
+.rbc-day-slot .rbc-time-slot {
+    border-top: 1px solid #f8fafc !important;
+}
+

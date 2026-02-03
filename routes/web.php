@@ -98,6 +98,16 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('turmas-adultos/bulk-delete', [App\Http\Controllers\TurmasAdultosController::class, 'bulkDestroy'])->name('turmas-adultos.bulk-delete');
     Route::resource('turmas-adultos', App\Http\Controllers\TurmasAdultosController::class);
 
+    // Reservas e Calendário (Page View)
+    Route::get('reservas-calendar', [App\Http\Controllers\ReservaCalendarController::class, 'view'])->name('reservas-calendar.view');
+
+    // Reservas e Calendário (API endpoints for React Component)
+    // Using 'api' prefix to match frontend requests, but kept in web.php to share Auth session
+    Route::prefix('api')->group(function () {
+        Route::get('reservas-calendar/locais', [App\Http\Controllers\ReservaCalendarController::class, 'getLocais']);
+        Route::resource('reservas-calendar', App\Http\Controllers\ReservaCalendarController::class)->except(['create', 'edit']);
+    });
+
     // Documentação
     Route::resource('docs-crisma', App\Http\Controllers\DocsCrismaController::class);
     Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);
@@ -172,6 +182,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Salas e Espaços
     Route::resource('reservas-locais', App\Http\Controllers\ReservasLocaisController::class);
+
+    // Reservas e Calendário (View)
+    Route::get('/reservas-calendar', function () {
+        return view('modules.reservas-calendar.index');
+    })->name('reservas-calendar.index-view');
 
     // Comunidades
     Route::resource('comunidades', App\Http\Controllers\ComunidadeController::class);
