@@ -90,9 +90,9 @@ class OfertaController extends Controller
     {
         $data = $request->all();
         if (isset($data['items']) && is_array($data['items'])) {
-            foreach ($data['items'] as &$item) {
+            foreach ($data['items'] as $key => $item) {
                 if (isset($item['valor_total'])) {
-                    $item['valor_total'] = $this->parseCurrency($item['valor_total']);
+                    $data['items'][$key]['valor_total'] = $this->parseCurrency($item['valor_total']);
                 }
             }
             $request->replace($data);
