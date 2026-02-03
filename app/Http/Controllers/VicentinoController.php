@@ -57,24 +57,30 @@ class VicentinoController extends Controller
     // Salvar
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'ent_id' => 'required|exists:entidades,ent_id',
-            'kind' => 'required|in:0,1',
-            'month_entire' => 'required|integer|min:1|max:12',
-            'address' => 'nullable|string',
-            'address_number' => 'nullable|string',
-            'description' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'ent_id' => 'required|exists:entidades,ent_id',
+                'kind' => 'required|in:0,1',
+                'month_entire' => 'required|integer|min:1|max:12',
+                'address' => 'nullable|string',
+                'address_number' => 'nullable|string',
+                'description' => 'nullable|string',
+            ]);
 
-        $data = $validated;
-        $data['sendby'] = Auth::user()->name;
-        $data['paroquia_id'] = Auth::user()->paroquia_id;
-        $data['created_at'] = now();
+            $data = $validated;
+            $data['sendby'] = Auth::user()->name;
+            $data['paroquia_id'] = Auth::user()->paroquia_id;
+            $data['created_at'] = now();
 
-        VinWatched::create($data);
+            VinWatched::create($data);
 
-        return redirect()->route('vicentinos.index')->with('success', 'Apuração registrada com sucesso!');
+            return redirect()->route('vicentinos.index')->with('success', 'Apuração registrada com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erro ao registrar apuração: ' . $e->getMessage());
+        }
     }
 
     // Formulário de Edição
@@ -92,23 +98,29 @@ class VicentinoController extends Controller
     // Atualizar
     public function update(Request $request, $id)
     {
-        $record = VinWatched::where('w_id', $id)
-            ->where('paroquia_id', Auth::user()->paroquia_id)
-            ->firstOrFail();
+        try {
+            $record = VinWatched::where('w_id', $id)
+                ->where('paroquia_id', Auth::user()->paroquia_id)
+                ->firstOrFail();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'ent_id' => 'required|exists:entidades,ent_id',
-            'kind' => 'required|in:0,1',
-            'month_entire' => 'required|integer|min:1|max:12',
-            'address' => 'nullable|string',
-            'address_number' => 'nullable|string',
-            'description' => 'nullable|string',
-        ]);
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'ent_id' => 'required|exists:entidades,ent_id',
+                'kind' => 'required|in:0,1',
+                'month_entire' => 'required|integer|min:1|max:12',
+                'address' => 'nullable|string',
+                'address_number' => 'nullable|string',
+                'description' => 'nullable|string',
+            ]);
 
-        $record->update($validated);
+            $record->update($validated);
 
-        return redirect()->route('vicentinos.index')->with('success', 'Apuração atualizada com sucesso!');
+            return redirect()->route('vicentinos.index')->with('success', 'Apuração atualizada com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erro ao atualizar apuração: ' . $e->getMessage());
+        }
     }
 
     // Excluir

@@ -138,6 +138,15 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('vicentinos/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos.bulk-delete');
     Route::resource('vicentinos', App\Http\Controllers\VicentinoController::class);
 
+    // Categorias Doacao (Estoque)
+    Route::post('categorias_doacao/bulk-delete', [App\Http\Controllers\CategoriaDoacaoController::class, 'bulkDestroy'])->name('categorias_doacao.bulk-delete');
+    Route::resource('categorias_doacao', App\Http\Controllers\CategoriaDoacaoController::class);
+
+    // Inventário
+    Route::post('inventory/bulk-delete', [App\Http\Controllers\InventoryController::class, 'bulkDestroy'])->name('inventory.bulk-delete');
+    Route::get('inventory/photo/{id}/delete', [App\Http\Controllers\InventoryController::class, 'destroyPhoto'])->name('inventory.photo.destroy');
+    Route::resource('inventory', App\Http\Controllers\InventoryController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');

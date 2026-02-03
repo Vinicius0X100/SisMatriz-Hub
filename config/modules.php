@@ -5,7 +5,7 @@ return [
     ['name' => 'Documentação de Crisma', 'icon' => 'file-earmark-text', 'url' => '/docs-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Documentação de Eucaristia', 'icon' => 'file-earmark-text', 'url' => '/docs-eucaristia', 'allowed_roles' => ['7', '12']],
     ['name' => 'Estoque', 'icon' => 'box-seam', 'allowed_roles' => ['15', '4']],
-    ['name' => 'Inventário', 'icon' => 'clipboard-data', 'allowed_roles' => ['15']],
+    ['name' => 'Inventário', 'icon' => 'clipboard-data', 'url' => '/inventory', 'allowed_roles' => ['15']],
     ['name' => 'Buckets de mídia', 'icon' => 'collection-play', 'allowed_roles' => ['*']],
     ['name' => 'Acessos de usuários', 'icon' => 'people', 'allowed_roles' => []], // Only Admins
     ['name' => 'Configurações', 'icon' => 'gear', 'url' => '/settings', 'allowed_roles' => []], // Only Admins
@@ -14,6 +14,7 @@ return [
     ['name' => 'Notas e Avisos de Acólitos e Coroinhas', 'icon' => 'journal-bookmark', 'url' => '/acolitos/notes', 'allowed_roles' => ['6', '8']],
     ['name' => 'Lista de Acólitos e Coroinhas', 'icon' => 'person-lines-fill', 'url' => '/acolitos', 'allowed_roles' => ['6']],
     ['name' => 'Vicentinos', 'icon' => 'heart', 'url' => '/vicentinos', 'allowed_roles' => ['4']],
+    ['name' => 'Categorias(Inventário/Estoque)', 'icon' => 'tags', 'url' => '/categorias_doacao', 'allowed_roles' => ['1', '111', '15']],
     // ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],
     ['name' => 'Comunidades', 'icon' => 'houses', 'url' => '/comunidades', 'allowed_roles' => ['15']],
     ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],
