@@ -173,6 +173,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Salas e Espaços
     Route::resource('reservas-locais', App\Http\Controllers\ReservasLocaisController::class);
 
+    // Comunidades
+    Route::resource('comunidades', App\Http\Controllers\ComunidadeController::class);
+
     // Onboarding / Setup Routes
     Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
     Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
