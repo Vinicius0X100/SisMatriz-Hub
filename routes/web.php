@@ -183,10 +183,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Salas e Espaços
     Route::resource('reservas-locais', App\Http\Controllers\ReservasLocaisController::class);
 
-    // Reservas e Calendário (View)
-    Route::get('/reservas-calendar', function () {
-        return view('modules.reservas-calendar.index');
-    })->name('reservas-calendar.index-view');
+    // Reservas e Calendário (View) - Consolidated to controller route above
+
 
     // Comunidades
     Route::resource('comunidades', App\Http\Controllers\ComunidadeController::class);
