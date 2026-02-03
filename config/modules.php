@@ -14,7 +14,7 @@ return [
     ['name' => 'Notas e Avisos de Acólitos e Coroinhas', 'icon' => 'journal-bookmark', 'url' => '/acolitos/notes', 'allowed_roles' => ['6', '8']],
     ['name' => 'Lista de Acólitos e Coroinhas', 'icon' => 'person-lines-fill', 'url' => '/acolitos', 'allowed_roles' => ['6']],
     ['name' => 'Vicentinos', 'icon' => 'heart', 'allowed_roles' => ['4']],
-    ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],
+    // ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],
     ['name' => 'Comunidades', 'icon' => 'houses', 'url' => '/comunidades', 'allowed_roles' => ['15']],
     ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],
     ['name' => 'Lembretes', 'icon' => 'bell', 'url' => '/lembretes', 'allowed_roles' => ['*']],
