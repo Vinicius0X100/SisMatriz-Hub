@@ -170,6 +170,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('ofertas/bulk-delete', [App\Http\Controllers\OfertaController::class, 'bulkDestroy'])->name('ofertas.bulk-delete');
     Route::resource('ofertas', App\Http\Controllers\OfertaController::class);
 
+    // Salas e Espaços
+    Route::resource('reservas-locais', App\Http\Controllers\ReservasLocaisController::class);
+
     // Onboarding / Setup Routes
     Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
     Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');

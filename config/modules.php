@@ -16,7 +16,7 @@ return [
     ['name' => 'Vicentinos', 'icon' => 'heart', 'allowed_roles' => ['4']],
     ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],
     ['name' => 'Comunidades', 'icon' => 'houses', 'allowed_roles' => []], // Only Admins
-    ['name' => 'Salas e espaços', 'icon' => 'door-open', 'allowed_roles' => ['15']],
+    ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],
     ['name' => 'Lembretes', 'icon' => 'bell', 'url' => '/lembretes', 'allowed_roles' => ['*']],
     ['name' => 'Pascom', 'icon' => 'camera', 'allowed_roles' => ['9', '10']],
     ['name' => 'Inscrições crisma', 'icon' => 'pencil-square', 'allowed_roles' => ['3']],
