@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer, Views, View, Components } from 'react-big-calendar';
+import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import axios from 'axios';
 import EventModal from './EventModal';
 import CustomToolbar from './CustomToolbar';
@@ -20,6 +22,8 @@ const localizer = dateFnsLocalizer({
     getDay,
     locales,
 });
+
+const DnDCalendar = withDragAndDrop(Calendar);
 
 const CalendarApp = () => {
     // Estados Principais
@@ -108,6 +112,13 @@ const CalendarApp = () => {
 
     // Handlers
     const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (start < today) {
+            return;
+        }
+
         setSelectedEvent({
             start,
             end,
@@ -162,6 +173,76 @@ const CalendarApp = () => {
             console.error("Erro ao excluir:", error);
             alert("Erro ao excluir reserva.");
         }
+    };
+
+    const handleEventDrop = async ({ event, start, end }: any) => {
+        if (event.isHoliday) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (start < today) {
+            alert("Não é possível mover eventos para datas passadas.");
+            return;
+        }
+
+        try {
+            // Optimistic update
+            const updatedEvents = events.map(evt => {
+                if (evt.id === event.id) {
+                    return { ...evt, start, end };
+                }
+                return evt;
+            });
+            setEvents(updatedEvents);
+
+            const payload = {
+                data: format(start, 'yyyy-MM-dd'),
+                hora_inicio: format(start, 'HH:mm'),
+                hora_fim: format(end, 'HH:mm'),
+                descricao: event.description || event.title,
+                local: event.local?.id || event.local,
+                responsavel: event.responsavel,
+                observacoes: event.observacoes,
+                color: event.color
+            };
+
+            await axios.put(`/api/reservas-calendar/${event.id}`, payload);
+        } catch (error) {
+            console.error("Erro ao mover evento:", error);
+            fetchEvents(); // Revert on error
+            alert("Erro ao mover evento. Tente novamente.");
+        }
+    };
+
+    const dayPropGetter = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (date < today) {
+            return {
+                style: {
+                    backgroundColor: '#f3f4f6',
+                    cursor: 'not-allowed',
+                    opacity: 0.6
+                }
+            };
+        }
+        return {};
+    };
+
+    const slotPropGetter = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (date < today) {
+            return {
+                style: {
+                    backgroundColor: '#f3f4f6',
+                    cursor: 'not-allowed',
+                    opacity: 0.6
+                }
+            };
+        }
+        return {};
     };
 
     // Estilos customizados para eventos
@@ -269,11 +350,9 @@ const CalendarApp = () => {
 
             {/* Área do Calendário */}
             <div className="flex-grow-1 p-4">
-                <Calendar
+                <DnDCalendar
                     localizer={localizer}
                     events={events}
-                    startAccessor="start"
-                    endAccessor="end"
                     style={{ height: 750 }}
                     views={['month', 'week', 'day', 'agenda']}
                     view={view}
@@ -283,7 +362,11 @@ const CalendarApp = () => {
                     selectable
                     onSelectSlot={handleSelectSlot}
                     onSelectEvent={handleSelectEvent}
+                    onEventDrop={handleEventDrop}
+                    dayPropGetter={dayPropGetter}
+                    slotPropGetter={slotPropGetter}
                     eventPropGetter={eventStyleGetter}
+                    resizable={false}
                     components={{
                         toolbar: CustomToolbar,
                         event: CustomEvent
