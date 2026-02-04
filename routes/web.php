@@ -140,6 +140,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('vicentinos/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos.bulk-delete');
     Route::resource('vicentinos', App\Http\Controllers\VicentinoController::class);
 
+    // Pascom
+    Route::resource('solicitacoes-pascom', App\Http\Controllers\SolicitacaoPascomController::class);
+
     // Categorias Doacao (Estoque)
     Route::post('categorias_doacao/bulk-delete', [App\Http\Controllers\CategoriaDoacaoController::class, 'bulkDestroy'])->name('categorias_doacao.bulk-delete');
     Route::resource('categorias_doacao', App\Http\Controllers\CategoriaDoacaoController::class);

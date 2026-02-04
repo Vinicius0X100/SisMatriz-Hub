@@ -20,7 +20,7 @@ return [
     ['name' => 'Comunidades', 'icon' => 'houses', 'url' => '/comunidades', 'allowed_roles' => ['15']],
     ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],
     ['name' => 'Lembretes', 'icon' => 'bell', 'url' => '/lembretes', 'allowed_roles' => ['*']],
-    ['name' => 'Pascom', 'icon' => 'camera', 'allowed_roles' => ['9', '10']],
+    ['name' => 'Solicitações à Pascom', 'icon' => 'camera', 'url' => '/solicitacoes-pascom', 'allowed_roles' => ['9', '10']],
     ['name' => 'Inscrições crisma', 'icon' => 'pencil-square', 'allowed_roles' => ['3']],
     ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'allowed_roles' => ['7']],
     ['name' => 'Inscrições de catequese de adultos', 'icon' => 'pencil-square', 'allowed_roles' => ['17']],
