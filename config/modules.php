@@ -15,6 +15,7 @@ return [
     ['name' => 'Lista de Acólitos e Coroinhas', 'icon' => 'person-lines-fill', 'url' => '/acolitos', 'allowed_roles' => ['6']],
     ['name' => 'Vicentinos', 'icon' => 'heart', 'url' => '/vicentinos', 'allowed_roles' => ['4']],
     ['name' => 'Categorias(Inventário/Estoque)', 'icon' => 'tags', 'url' => '/categorias_doacao', 'allowed_roles' => ['1', '111', '15']],
+    ['name' => 'Celebrações e Horários', 'icon' => 'clock', 'url' => '/celebration-schedules', 'allowed_roles' => ['15', '4']],
     // ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],
     ['name' => 'Comunidades', 'icon' => 'houses', 'url' => '/comunidades', 'allowed_roles' => ['15']],
     ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],

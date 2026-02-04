@@ -6,6 +6,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\CelebrationScheduleController;
 use App\Http\Middleware\CheckOnboarding;
 
 Route::get('/', function () {
@@ -146,6 +148,10 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('inventory/bulk-delete', [App\Http\Controllers\InventoryController::class, 'bulkDestroy'])->name('inventory.bulk-delete');
     Route::get('inventory/photo/{id}/delete', [App\Http\Controllers\InventoryController::class, 'destroyPhoto'])->name('inventory.photo.destroy');
     Route::resource('inventory', App\Http\Controllers\InventoryController::class);
+
+    // Celebrações e Horários
+    Route::post('celebration-schedules/bulk-delete', [App\Http\Controllers\CelebrationScheduleController::class, 'bulkDestroy'])->name('celebration-schedules.bulk-delete');
+    Route::resource('celebration-schedules', App\Http\Controllers\CelebrationScheduleController::class);
 
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
