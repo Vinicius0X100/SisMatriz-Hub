@@ -18,8 +18,17 @@ class SolicitacaoPascomController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('nome', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('pastoral', 'like', "%{$search}%");
+                  ->orWhere('pastoral', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
             });
+        }
+
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('created_at', '>=', $request->input('data_inicio'));
+        }
+
+        if ($request->filled('data_fim')) {
+            $query->whereDate('created_at', '<=', $request->input('data_fim'));
         }
 
         $records = $query->paginate(15);

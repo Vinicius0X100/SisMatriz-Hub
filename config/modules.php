@@ -24,7 +24,7 @@ return [
     ['name' => 'Inscrições crisma', 'icon' => 'pencil-square', 'allowed_roles' => ['3']],
     ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'allowed_roles' => ['7']],
     ['name' => 'Inscrições de catequese de adultos', 'icon' => 'pencil-square', 'allowed_roles' => ['17']],
-    ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus', 'allowed_roles' => []],
+    ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus', 'url' => '/solicitacoes-segunda-via', 'allowed_roles' => ['15']],
     ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'allowed_roles' => []],
     ['name' => 'Comunicação em massa', 'icon' => 'broadcast', 'allowed_roles' => []],
     ['name' => 'Chat', 'icon' => 'chat-dots', 'url' => '/chat', 'allowed_roles' => ['3', '7', '17', '12', '13', '6', '8', '9', '10', '4', '16']],

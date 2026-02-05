@@ -86,6 +86,12 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('catequese-adultos', App\Http\Controllers\CatequeseAdultosController::class);
     Route::resource('catequistas-adultos', App\Http\Controllers\CatequistasAdultosController::class);
 
+    // Solicitações de Segunda Via
+    Route::post('solicitacoes-segunda-via/bulk-action', [App\Http\Controllers\SacramentoRequestController::class, 'bulkAction'])->name('solicitacoes-segunda-via.bulk-action');
+    Route::get('solicitacoes-segunda-via/{id}/print-sheet', [App\Http\Controllers\SacramentoRequestController::class, 'printSheet'])->name('solicitacoes-segunda-via.print-sheet');
+    Route::post('solicitacoes-segunda-via/{id}/status', [App\Http\Controllers\SacramentoRequestController::class, 'updateStatus'])->name('solicitacoes-segunda-via.update-status');
+    Route::resource('solicitacoes-segunda-via', App\Http\Controllers\SacramentoRequestController::class);
+
     // Turmas Adultos
     Route::get('turmas-adultos/{id}/students', [App\Http\Controllers\TurmasAdultosController::class, 'getStudents'])->name('turmas-adultos.students');
     Route::get('turmas-adultos/export-bulk', [App\Http\Controllers\TurmasAdultosController::class, 'exportBulk'])->name('turmas-adultos.export-bulk');

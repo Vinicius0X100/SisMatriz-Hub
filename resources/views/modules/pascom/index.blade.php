@@ -36,8 +36,24 @@
                     <label for="search" class="form-label fw-bold text-muted small">Pesquisar</label>
                     <div class="position-relative">
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input type="text" name="search" id="search" value="{{ request('search') }}" class="form-control ps-5 rounded-pill" placeholder="Nome, pastoral ou descrição..." style="height: 45px;" oninput="debounceSearch()">
+                        <input type="text" name="search" id="search" value="{{ request('search') }}" class="form-control ps-5 rounded-pill" placeholder="Nome, pastoral, telefone..." style="height: 45px;" oninput="debounceSearch()">
                     </div>
+                </div>
+                <!-- Data Início -->
+                <div class="col-md-2">
+                    <label for="data_inicio" class="form-label fw-bold text-muted small">De</label>
+                    <input type="date" name="data_inicio" id="data_inicio" value="{{ request('data_inicio') }}" class="form-control rounded-pill" style="height: 45px;" onchange="document.getElementById('searchForm').submit()">
+                </div>
+                <!-- Data Fim -->
+                <div class="col-md-2">
+                    <label for="data_fim" class="form-label fw-bold text-muted small">Até</label>
+                    <input type="date" name="data_fim" id="data_fim" value="{{ request('data_fim') }}" class="form-control rounded-pill" style="height: 45px;" onchange="document.getElementById('searchForm').submit()">
+                </div>
+                <!-- Limpar -->
+                <div class="col-md-2">
+                    <a href="{{ route('solicitacoes-pascom.index') }}" class="btn btn-outline-secondary rounded-pill w-100 fw-bold" style="height: 45px; display: flex; align-items: center; justify-content: center;">
+                        Limpar
+                    </a>
                 </div>
             </form>
 
