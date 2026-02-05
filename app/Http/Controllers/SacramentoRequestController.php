@@ -19,7 +19,8 @@ class SacramentoRequestController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('nome_completo', 'like', "%{$search}%")
                   ->orWhere('telefone', 'like', "%{$search}%")
-                  ->orWhere('sacramento', 'like', "%{$search}%");
+                  ->orWhere('sacramento', 'like', "%{$search}%")
+                  ->orWhere('nome_conjuges', 'like', "%{$search}%");
             });
         }
 

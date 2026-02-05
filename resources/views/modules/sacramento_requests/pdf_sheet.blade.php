@@ -129,10 +129,18 @@
 
         <div class="section-title">Dados do Solicitante</div>
 
+        @if($record->sacramento === 'matrimonio')
+        <div class="field-row">
+            <span class="field-label">Nome dos Cônjuges:</span>
+            <span class="field-value">{{ $record->nome_conjuges }}</span>
+        </div>
+        @else
         <div class="field-row">
             <span class="field-label">Nome Completo:</span>
             <span class="field-value">{{ $record->nome_completo }}</span>
         </div>
+        @endif
+        
         <div class="field-row">
             <span class="field-label">Telefone:</span>
             <span class="field-value">{{ $record->telefone }}</span>
@@ -169,10 +177,6 @@
         @endif
 
         @if($record->sacramento == 'matrimonio')
-        <div class="field-row">
-            <span class="field-label">Nome dos Cônjuges:</span>
-            <span class="field-value">{{ $record->nome_conjuges ?? 'N/A' }}</span>
-        </div>
         <div class="field-row">
             <span class="field-label">Data Cerimônia:</span>
             <span class="field-value">{{ $record->data_cerimonia ? $record->data_cerimonia->format('d/m/Y') : 'N/A' }}</span>

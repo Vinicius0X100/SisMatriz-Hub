@@ -120,8 +120,12 @@
                 
                 @if(in_array('solicitante', $columns))
                 <td>
-                    <strong>{{ $record->nome_completo }}</strong><br>
-                    <span style="font-size: 8px; color: #666;">Mãe: {{ $record->nome_mae }}</span>
+                    @if($record->sacramento === 'matrimonio')
+                        <strong>{{ $record->nome_conjuges }}</strong>
+                    @else
+                        <strong>{{ $record->nome_completo }}</strong><br>
+                        <span style="font-size: 8px; color: #666;">Mãe: {{ $record->nome_mae }}</span>
+                    @endif
                 </td>
                 @endif
                 

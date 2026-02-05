@@ -104,7 +104,13 @@
                                     <input class="form-check-input row-checkbox" type="checkbox" value="{{ $record->id }}" onchange="updateSelection(this)">
                                 </div>
                             </td>
-                            <td class="fw-bold">{{ $record->nome_completo }}</td>
+                            <td class="fw-bold">
+                                @if($record->sacramento === 'matrimonio')
+                                    {{ $record->nome_conjuges }}
+                                @else
+                                    {{ $record->nome_completo }}
+                                @endif
+                            </td>
                             <td>{{ $record->telefone }}</td>
                             <td>
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill text-capitalize">
