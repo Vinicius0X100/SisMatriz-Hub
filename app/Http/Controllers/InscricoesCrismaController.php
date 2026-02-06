@@ -11,6 +11,8 @@ use Twilio\Rest\Client;
 
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Str;
 
 class InscricoesCrismaController extends Controller
 {
@@ -122,37 +124,110 @@ class InscricoesCrismaController extends Controller
             if ($request->has('date_to') && $request->date_to != '') {
                 $query->whereDate('criado_em', '<=', $request->date_to);
             }
-        } else {
-            // Scope: selected
-            $ids = json_decode($request->ids, true);
-            // Fallback for comma separated if logic changes or legacy
-            if (!is_array($ids)) {
-                 $ids = explode(',', $request->ids);
-            }
             
-            if (!$ids || empty($ids)) {
-                return redirect()->back()->with('warning', 'Nenhum registro selecionado para impressão.');
-            }
-            $query->whereIn('id', $ids);
-        }
+            $records = $query->orderBy('nome', 'asc')->get();
 
-        $records = $query->orderBy('nome', 'asc')->get();
+        } elseif ($request->scope == 'selected') {
+            $ids = json_decode($request->ids);
+            if (empty($ids)) {
+                return redirect()->back()->with('warning', 'Nenhum registro selecionado.');
+            }
+            $records = $query->whereIn('id', $ids)->orderBy('nome', 'asc')->get();
+        } else {
+            return redirect()->back()->with('warning', 'Opção de impressão inválida.');
+        }
 
         if ($records->isEmpty()) {
             return redirect()->back()->with('warning', 'Nenhum registro encontrado para impressão.');
         }
 
+        return $this->generatePdfForRecords($records);
+    }
+
+    public function printSingle($id)
+    {
+        $record = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
+            ->with('taxa')
+            ->findOrFail($id);
+            
+        return $this->generatePdfForRecords(collect([$record]), true);
+    }
+
+    private function generatePdfForRecords($records, $isSingle = false)
+    {
+        // Initialize FPDI
+        $pdf = new Fpdi();
+        // FPDF does not have setPrintHeader/Footer methods by default, so we remove them
+        
+        foreach ($records as $record) {
+            // Generate Ficha PDF using DomPDF
+            // We pass a collection of ONE record to the view because the view expects a loop
+            // We can reuse the same view 'modules.inscricoes-crisma.print'
+            $fichaPdf = Pdf::loadView('modules.inscricoes-crisma.print', ['records' => [$record]])->output();
+            
+            // Save to temp file
+            $tempFicha = tempnam(sys_get_temp_dir(), 'ficha_');
+            file_put_contents($tempFicha, $fichaPdf);
+            
+            // Import Ficha Pages
+            try {
+                $pageCount = $pdf->setSourceFile($tempFicha);
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $tplIdx = $pdf->importPage($i);
+                    $pdf->AddPage();
+                    $pdf->useTemplate($tplIdx, ['adjustPageSize' => true]);
+                }
+            } catch (\Exception $e) {
+                Log::error("Error processing ficha PDF: " . $e->getMessage());
+            }
+            
+            // Cleanup temp file
+            if (file_exists($tempFicha)) {
+                unlink($tempFicha);
+            }
+            
+            // Append PDF Attachments
+            $attachments = [
+                $record->certidao_batismo,
+                $record->certidao_primeira_comunhao
+            ];
+            
+            foreach ($attachments as $att) {
+                if ($att) {
+                    $fullPath = public_path('storage/uploads/certidoes/' . $att);
+                    if (file_exists($fullPath)) {
+                        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+                        if ($ext === 'pdf') {
+                             try {
+                                $pageCount = $pdf->setSourceFile($fullPath);
+                                for ($i = 1; $i <= $pageCount; $i++) {
+                                    $tplIdx = $pdf->importPage($i);
+                                    $pdf->AddPage();
+                                    $pdf->useTemplate($tplIdx, ['adjustPageSize' => true]);
+                                }
+                             } catch (\Exception $e) {
+                                 Log::error("Error merging PDF attachment {$att}: " . $e->getMessage());
+                                 // Continue without this attachment
+                             }
+                        }
+                    }
+                }
+            }
+        }
+
         // Determine filename
-        if ($records->count() === 1) {
-            $name = \Illuminate\Support\Str::slug($records->first()->nome, '-');
+        if ($isSingle) {
+            $name = Str::slug($records->first()->nome, '-');
             $filename = "ficha-crisma-{$name}.pdf";
         } else {
             $date = date('d-m-Y');
             $filename = "fichas-crisma-lote-{$date}.pdf";
         }
-
-        $pdf = Pdf::loadView('modules.inscricoes-crisma.print', compact('records'));
-        return $pdf->download($filename);
+        
+        // Output
+        return response($pdf->Output('S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     public function export(Request $request)
@@ -242,7 +317,7 @@ class InscricoesCrismaController extends Controller
                     $record->endereco,
                     $record->numero,
                     $record->cep,
-                    'Guarapuava',
+                    $record->cidade ?? 'Guarapuava',
                     $record->estado,
                     $record->certidao_batismo ? asset($record->certidao_batismo) : '',
                     $record->certidao_primeira_comunhao ? asset($record->certidao_primeira_comunhao) : '',
@@ -361,7 +436,7 @@ class InscricoesCrismaController extends Controller
                     $messageType = 'warning';
                 }
             } catch (\Exception $e) {
-                \Log::error('Twilio WhatsApp Error: ' . $e->getMessage());
+                Log::error('Twilio WhatsApp Error: ' . $e->getMessage());
                 $messages[] = 'Erro ao enviar WhatsApp.';
                 $messageType = 'warning';
             }

@@ -187,7 +187,13 @@
                 <tr>
                     <td style="width: 33%;">
                         <span class="label">CPF</span>
-                        <span class="value">{{ $record->cpf }}</span>
+                        <span class="value">
+                            @if($record->cpf)
+                                {{ preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $record->cpf) }}
+                            @else
+                                -
+                            @endif
+                        </span>
                     </td>
                     <td style="width: 33%;">
                         <span class="label">Sexo</span>
@@ -231,9 +237,13 @@
                         <span class="label">CEP</span>
                         <span class="value">{{ $record->cep }}</span>
                     </td>
-                    <td style="width: 70%;">
-                        <span class="label">Cidade/UF</span>
-                        <span class="value">Guarapuava - PR</span>
+                    <td style="width: 40%;">
+                        <span class="label">Cidade</span>
+                        <span class="value">{{ $record->cidade ?? 'Guarapuava' }}</span>
+                    </td>
+                    <td style="width: 30%;">
+                        <span class="label">Estado</span>
+                        <span class="value">{{ $record->estado }}</span>
                     </td>
                 </tr>
             </table>
@@ -253,20 +263,31 @@
                     <div class="section-title" style="margin-top: 0; background: none; padding-left: 0; border: none;">Documentos Anexos</div>
                     
                     @if($record->certidao_batismo)
+                        @php
+                            $ext = strtolower(pathinfo($record->certidao_batismo, PATHINFO_EXTENSION));
+                            $batismoPath = public_path('storage/uploads/certidoes/' . $record->certidao_batismo);
+                        @endphp
+                        @if(in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && file_exists($batismoPath))
                         <div class="attachment-item">
                             <span class="attachment-label">Certidão de Batismo</span>
                             <br>
-                            <!-- Check if file exists to avoid error, though asset usually returns path -->
-                            <img src="{{ public_path($record->certidao_batismo) }}" alt="Certidão de Batismo">
+                            <img src="{{ $batismoPath }}" alt="Certidão de Batismo">
                         </div>
+                        @endif
                     @endif
 
                     @if($record->certidao_primeira_comunhao)
+                        @php
+                            $ext = strtolower(pathinfo($record->certidao_primeira_comunhao, PATHINFO_EXTENSION));
+                            $eucaristiaPath = public_path('storage/uploads/certidoes/' . $record->certidao_primeira_comunhao);
+                        @endphp
+                        @if(in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && file_exists($eucaristiaPath))
                         <div class="attachment-item">
                             <span class="attachment-label">Certidão de Primeira Eucaristia</span>
                             <br>
-                            <img src="{{ public_path($record->certidao_primeira_comunhao) }}" alt="Certidão de Eucaristia">
+                            <img src="{{ $eucaristiaPath }}" alt="Certidão de Eucaristia">
                         </div>
+                        @endif
                     @endif
                 </div>
             @endif

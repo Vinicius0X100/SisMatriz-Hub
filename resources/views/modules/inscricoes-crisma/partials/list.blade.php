@@ -4,7 +4,7 @@
             <tr>
                 <th scope="col" width="50" class="text-center">
                     <div class="form-check d-flex justify-content-center">
-                        <input class="form-check-input" type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll()">
+                        <input class="form-check-input" type="checkbox" id="select-all-checkbox" onclick="handleSelectAll(this)">
                     </div>
                 </th>
                 <th scope="col">Situação</th>
@@ -47,7 +47,7 @@
                 <tr>
                     <td class="text-center">
                         <div class="form-check d-flex justify-content-center">
-                            <input class="form-check-input row-checkbox" type="checkbox" value="{{ $record->id }}" onchange="updateSelection(this)">
+                            <input class="form-check-input row-checkbox" type="checkbox" value="{{ $record->id }}" onchange="handleRowCheckbox(this)">
                         </div>
                     </td>
                     <td>
@@ -79,6 +79,9 @@
                         </span>
                     </td>
                     <td class="text-end pe-4">
+                        <a href="{{ route('inscricoes-crisma.print-single', $record->id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2" target="_blank" title="Imprimir Ficha Individual">
+                            <i class="bi bi-printer me-1"></i> PDF
+                        </a>
                         <button class="btn btn-sm btn-outline-info rounded-pill px-3 me-2" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $record->id }}">
                             <i class="bi bi-eye me-1"></i> Abrir ficha
                         </button>

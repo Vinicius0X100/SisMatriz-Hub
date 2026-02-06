@@ -326,6 +326,11 @@
     }
 
     // Selection Logic
+    // Fix for legacy function reference
+    window.updateSelection = function(checkbox) {
+        handleRowCheckbox(checkbox);
+    };
+
     function handleRowCheckbox(checkbox) {
         if (checkbox.checked) {
             state.selectedIds.add(checkbox.value);
