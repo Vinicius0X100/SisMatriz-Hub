@@ -244,56 +244,78 @@
                         <div class="col-12 mb-2">
                              <h6 class="fw-bold text-primary"><i class="bi bi-paperclip me-1"></i> Anexos e Comprovantes</h6>
                         </div>
-                        <!-- Certidão de Batismo -->
-                        <div class="col-md-4">
-                            <div class="card h-100 border bg-white rounded-3">
-                                <div class="card-body text-center p-3">
-                                    <i class="bi bi-droplet fs-2 text-primary mb-2"></i>
-                                    <h6 class="card-title small fw-bold mb-2">Certidão de Batismo</h6>
-                                    @if($record->certidao_batismo)
-                                        <a href="{{ asset('storage/uploads/certidoes/crisma/' . $record->certidao_batismo) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill w-100">
-                                            <i class="bi bi-eye me-1"></i> Visualizar
-                                        </a>
-                                    @else
-                                        <span class="badge bg-light text-muted border w-100">Não anexado</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Certidão 1ª Eucaristia -->
-                        <div class="col-md-4">
-                            <div class="card h-100 border bg-white rounded-3">
-                                <div class="card-body text-center p-3">
-                                    <i class="bi bi-book fs-2 text-info mb-2"></i>
-                                    <h6 class="card-title small fw-bold mb-2">Certidão 1ª Eucaristia</h6>
-                                    @if($record->certidao_primeira_comunhao)
-                                        <a href="{{ asset('storage/uploads/certidoes/crisma/' . $record->certidao_primeira_comunhao) }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill w-100">
-                                            <i class="bi bi-eye me-1"></i> Visualizar
-                                        </a>
-                                    @else
-                                        <span class="badge bg-light text-muted border w-100">Não anexado</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
+                        @php
+                            // Helper logic for attachments
+                            $attachments = [
+                                [
+                                    'title' => 'Certidão de Batismo',
+                                    'file' => $record->certidao_batismo,
+                                    'path' => 'storage/uploads/certidoes/crisma/',
+                                    'icon' => 'bi-droplet',
+                                    'color' => 'primary'
+                                ],
+                                [
+                                    'title' => 'Certidão 1ª Eucaristia',
+                                    'file' => $record->certidao_primeira_comunhao,
+                                    'path' => 'storage/uploads/certidoes/crisma/',
+                                    'icon' => 'bi-book',
+                                    'color' => 'info'
+                                ],
+                                [
+                                    'title' => 'Comprovante Pagamento',
+                                    'file' => $record->comprovante_pagamento,
+                                    'path' => 'storage/uploads/comprovantes/crisma/',
+                                    'icon' => 'bi-receipt',
+                                    'color' => 'success'
+                                ]
+                            ];
+                        @endphp
 
-                        <!-- Comprovante de Pagamento -->
-                        <div class="col-md-4">
-                            <div class="card h-100 border bg-white rounded-3">
-                                <div class="card-body text-center p-3">
-                                    <i class="bi bi-receipt fs-2 text-success mb-2"></i>
-                                    <h6 class="card-title small fw-bold mb-2">Comprovante Pagamento</h6>
-                                    @if($record->comprovante_pagamento)
-                                        <a href="{{ asset('storage/uploads/comprovantes/crisma/' . $record->comprovante_pagamento) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill w-100">
-                                            <i class="bi bi-eye me-1"></i> Visualizar
-                                        </a>
-                                    @else
-                                        <span class="badge bg-light text-muted border w-100">Não anexado</span>
-                                    @endif
+                        @foreach($attachments as $att)
+                            @php
+                                $url = $att['file'] ? asset($att['path'] . $att['file']) : null;
+                                $ext = $att['file'] ? strtolower(pathinfo($att['file'], PATHINFO_EXTENSION)) : '';
+                                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                                $isPdf = $ext === 'pdf';
+                            @endphp
+                            <div class="col-md-4">
+                                <div class="card h-100 border bg-white rounded-3 overflow-hidden">
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center position-relative" style="height: 200px;">
+                                        @if($url)
+                                            @if($isImage)
+                                                <img src="{{ $url }}" class="w-100 h-100" style="object-fit: contain;" alt="{{ $att['title'] }}">
+                                            @elseif($isPdf)
+                                                <embed src="{{ $url }}" type="application/pdf" width="100%" height="100%">
+                                            @else
+                                                <i class="bi {{ $att['icon'] }} fs-1 text-{{ $att['color'] }}"></i>
+                                            @endif
+                                            
+                                            <a href="{{ $url }}" target="_blank" class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 shadow-sm rounded-circle" title="Abrir em nova aba">
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                        @else
+                                            <div class="text-center text-muted">
+                                                <i class="bi {{ $att['icon'] }} fs-1 opacity-25 mb-2 d-block"></i>
+                                                <span class="small">Sem anexo</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="card-body text-center p-3 border-top">
+                                        <h6 class="card-title small fw-bold mb-0 text-truncate" title="{{ $att['title'] }}">{{ $att['title'] }}</h6>
+                                        @if($url)
+                                            <a href="{{ $url }}" download class="btn btn-sm btn-outline-{{ $att['color'] }} rounded-pill w-100 mt-2">
+                                                <i class="bi bi-download me-1"></i> Baixar
+                                            </a>
+                                        @else
+                                            <button class="btn btn-sm btn-light text-muted border w-100 mt-2" disabled>
+                                                Não anexado
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0 bg-light bg-opacity-10">
