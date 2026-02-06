@@ -164,6 +164,11 @@
                                         <i class="bi bi-printer me-2"></i> Imprimir fichas selecionadas
                                     </button>
                                 </li>
+                                <li>
+                                    <button class="dropdown-item text-info" onclick="openShareModal()">
+                                        <i class="bi bi-share me-2"></i> Compartilhar
+                                    </button>
+                                </li>
                             </ul>
                         </div>
                      </div>
@@ -235,9 +240,53 @@
     </div>
 </div>
 
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Compartilhar Fichas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">Compartilhe as fichas selecionadas com outros usuários do sistema via e-mail.</p>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold small">Buscar Usuário</label>
+                    <div class="position-relative">
+                        <input type="text" id="user-search-input" class="form-control rounded-pill bg-light border-0 ps-4" placeholder="Digite o nome do usuário...">
+                        <div id="user-search-results" class="position-absolute w-100 bg-white shadow rounded-3 mt-1 overflow-hidden" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small">Usuários Selecionados</label>
+                    <div id="selected-users-container" class="d-flex flex-wrap gap-2 p-3 bg-light rounded-3" style="min-height: 60px;">
+                        <span class="text-muted small w-100 text-center py-2" id="no-users-msg">Nenhum usuário selecionado</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small">Mensagem (Opcional)</label>
+                    <textarea id="share-message" class="form-control bg-light border-0 rounded-3" rows="3" placeholder="Escreva uma mensagem..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-light border rounded-pill me-2" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="sendShare()">
+                        <i class="bi bi-send me-2"></i> Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #64748b; border-bottom-width: 1px !important; }
     .table td { font-size: 0.9rem; color: #334155; }
+    .hover-bg-light:hover { background-color: #f8f9fa; }
+    .cursor-pointer { cursor: pointer; }
+    .hover-text-danger:hover { color: #dc3545 !important; }
 </style>
 
 <script>
@@ -436,31 +485,181 @@
         // Reset radio to Selected if items are selected, otherwise disable Selected option?
         // Actually, if nothing selected, we should probably only allow 'All'.
         // But the button is disabled if count === 0 anyway.
-        // So we can assume at least 1 item is selected if we are here.
-        document.getElementById('printScopeSelected').checked = true;
+        
+        if (ids.length > 0) {
+            document.getElementById('printScopeSelected').checked = true;
+            document.getElementById('printScopeSelected').disabled = false;
+        } else {
+            document.getElementById('printScopeAll').checked = true;
+            document.getElementById('printScopeSelected').disabled = true;
+        }
+        
+        togglePrintScope();
 
-        // Show Modal
         const modal = new bootstrap.Modal(document.getElementById('printOptionsModal'));
         modal.show();
     }
 
     function togglePrintScope() {
-        // Optional logic if needed
+        const scope = document.querySelector('input[name="scope"]:checked').value;
+        // Maybe change button text or something?
+    }
+
+    // Share Logic
+    let selectedShareUsers = new Map();
+
+    function openShareModal() {
+        if (state.selectedIds.size === 0) {
+            alert('Selecione pelo menos um registro para compartilhar.');
+            return;
+        }
+        const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+        modal.show();
+    }
+
+    // User Search
+    const userSearchInput = document.getElementById('user-search-input');
+    const userSearchResults = document.getElementById('user-search-results');
+    let userSearchTimeout;
+
+    userSearchInput.addEventListener('input', () => {
+        clearTimeout(userSearchTimeout);
+        const query = userSearchInput.value;
+        if (query.length < 2) {
+            userSearchResults.style.display = 'none';
+            return;
+        }
+        userSearchTimeout = setTimeout(() => searchUsers(query), 300);
+    });
+
+    function searchUsers(query) {
+        fetch(`{{ route('inscricoes-crisma.search-users') }}?q=${query}`)
+            .then(res => res.json())
+            .then(users => {
+                userSearchResults.innerHTML = '';
+                if (users.length === 0) {
+                    userSearchResults.innerHTML = '<div class="p-3 text-muted small text-center">Nenhum usuário encontrado</div>';
+                } else {
+                    users.forEach(user => {
+                        if (selectedShareUsers.has(user.id)) return; // Skip already selected
+                        
+                        const div = document.createElement('div');
+                        div.className = 'p-2 hover-bg-light cursor-pointer d-flex align-items-center border-bottom';
+                        div.innerHTML = `
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                                ${user.avatar ? `<img src="${user.avatar}" class="rounded-circle w-100 h-100 object-fit-cover">` : user.name.charAt(0)}
+                            </div>
+                            <span class="small fw-bold text-dark">${user.name}</span>
+                        `;
+                        div.onclick = () => selectUser(user);
+                        userSearchResults.appendChild(div);
+                    });
+                }
+                userSearchResults.style.display = 'block';
+            });
+    }
+
+    function selectUser(user) {
+        selectedShareUsers.set(user.id, user);
+        renderSelectedUsers();
+        userSearchInput.value = '';
+        userSearchResults.style.display = 'none';
+    }
+
+    function removeUser(userId) {
+        selectedShareUsers.delete(userId);
+        renderSelectedUsers();
+    }
+
+    function renderSelectedUsers() {
+        const container = document.getElementById('selected-users-container');
+        const msg = document.getElementById('no-users-msg');
+        
+        if (selectedShareUsers.size === 0) {
+            container.innerHTML = '';
+            container.appendChild(msg);
+            msg.style.display = 'block';
+            return;
+        }
+        
+        msg.style.display = 'none';
+        container.innerHTML = ''; 
+        container.appendChild(msg); // Keep it but hidden
+        
+        selectedShareUsers.forEach(user => {
+            const badge = document.createElement('div');
+            badge.className = 'badge bg-white text-dark border p-2 d-flex align-items-center gap-2 rounded-pill shadow-sm';
+            badge.innerHTML = `
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px;">
+                    ${user.avatar ? `<img src="${user.avatar}" class="rounded-circle w-100 h-100 object-fit-cover">` : user.name.charAt(0)}
+                </div>
+                <span>${user.name}</span>
+                <i class="bi bi-x-circle-fill text-muted cursor-pointer hover-text-danger" onclick="removeUser(${user.id})"></i>
+            `;
+            container.appendChild(badge);
+        });
+    }
+
+    function sendShare() {
+        if (selectedShareUsers.size === 0) {
+            alert('Selecione pelo menos um usuário para compartilhar.');
+            return;
+        }
+
+        const btn = document.querySelector('#shareModal button[onclick="sendShare()"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Enviando...';
+
+        const data = {
+            users: Array.from(selectedShareUsers.keys()),
+            ids: JSON.stringify(Array.from(state.selectedIds)),
+            message: document.getElementById('share-message').value
+        };
+
+        fetch(`{{ route('inscricoes-crisma.share') }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resp => {
+            if (resp.success) {
+                alert(resp.message);
+                bootstrap.Modal.getInstance(document.getElementById('shareModal')).hide();
+                selectedShareUsers.clear();
+                renderSelectedUsers();
+                document.getElementById('share-message').value = '';
+            } else {
+                alert('Erro: ' + resp.message);
+            }
+        })
+        .catch(err => alert('Erro ao compartilhar.'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
     }
 
     function exportExcel() {
-        const fetchUrl = new URL(`{{ route('inscricoes-crisma.export') }}`);
+        const url = new URL("{{ route('inscricoes-crisma.export') }}");
+        if(state.search) url.searchParams.set('search', state.search);
+        if(state.status) url.searchParams.set('status', state.status);
+        if(state.batismo) url.searchParams.set('batismo', state.batismo);
+        if(state.eucaristia) url.searchParams.set('eucaristia', state.eucaristia);
+        if(state.date_from) url.searchParams.set('date_from', state.date_from);
+        if(state.date_to) url.searchParams.set('date_to', state.date_to);
         
-        // Append current filters
-        if(state.search) fetchUrl.searchParams.set('search', state.search);
-        if(state.status) fetchUrl.searchParams.set('status', state.status);
-        if(state.batismo) fetchUrl.searchParams.set('batismo', state.batismo);
-        if(state.eucaristia) fetchUrl.searchParams.set('eucaristia', state.eucaristia);
-        if(state.date_from) fetchUrl.searchParams.set('date_from', state.date_from);
-        if(state.date_to) fetchUrl.searchParams.set('date_to', state.date_to);
+        // Pass selected IDs if any
+        if (state.selectedIds.size > 0) {
+            url.searchParams.set('ids', Array.from(state.selectedIds).join(','));
+        }
 
-        // Redirect to trigger download
-        window.location.href = fetchUrl.toString();
+        window.location.href = url.toString();
     }
 </script>
 @endsection

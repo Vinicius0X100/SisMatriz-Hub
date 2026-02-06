@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\InscricaoCrisma;
 use App\Models\Register;
+use App\Models\User;
+use App\Mail\ShareInscricoesCrisma;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Twilio\Rest\Client;
 
@@ -153,7 +156,70 @@ class InscricoesCrismaController extends Controller
         return $this->generatePdfForRecords(collect([$record]), true);
     }
 
-    private function generatePdfForRecords($records, $isSingle = false)
+    public function searchUsers(Request $request)
+    {
+        $search = $request->input('q');
+        $users = User::where('paroquia_id', Auth::user()->paroquia_id)
+            ->where('status', 1) // Only active users
+            ->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->select('id', 'name', 'avatar')
+            ->limit(10)
+            ->get();
+            
+        return response()->json($users);
+    }
+
+    public function share(Request $request)
+    {
+        $request->validate([
+            'users' => 'required|array',
+            'users.*' => 'exists:users,id',
+            'ids' => 'required', // can be array or json string depending on how sent
+        ]);
+
+        $ids = is_string($request->ids) ? json_decode($request->ids) : $request->ids;
+        
+        if (empty($ids)) {
+             return response()->json(['success' => false, 'message' => 'Nenhum registro selecionado.']);
+        }
+
+        $records = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
+            ->whereIn('id', $ids)
+            ->orderBy('nome', 'asc')
+            ->get();
+
+        if ($records->isEmpty()) {
+             return response()->json(['success' => false, 'message' => 'Nenhum registro encontrado.']);
+        }
+
+        // Generate PDF
+        $pdfData = $this->generatePdfForRecords($records, false, true); // true for raw return
+        
+        $inscritosNames = $records->pluck('nome')->toArray();
+        $senderName = Auth::user()->name;
+        $userMessage = $request->input('message');
+        
+        $filename = 'fichas-crisma-compartilhadas-' . date('d-m-Y') . '.pdf';
+
+        // Send Email
+        $users = User::whereIn('id', $request->users)->get();
+        foreach ($users as $user) {
+             Mail::to($user->email)->send(new ShareInscricoesCrisma(
+                 $senderName,
+                 $userMessage,
+                 $inscritosNames,
+                 $pdfData,
+                 $filename
+             ));
+        }
+
+        return response()->json(['success' => true, 'message' => 'Fichas compartilhadas com sucesso!']);
+    }
+
+    private function generatePdfForRecords($records, $isSingle = false, $returnRaw = false)
     {
         // Initialize FPDI
         $pdf = new Fpdi();
@@ -225,7 +291,13 @@ class InscricoesCrismaController extends Controller
         }
         
         // Output
-        return response($pdf->Output('S'))
+        $output = $pdf->Output('S');
+        
+        if ($returnRaw) {
+            return $output;
+        }
+
+        return response($output)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }

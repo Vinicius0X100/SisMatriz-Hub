@@ -118,6 +118,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Documentação
     Route::resource('docs-crisma', App\Http\Controllers\DocsCrismaController::class);
+    Route::get('inscricoes-crisma/search-users', [App\Http\Controllers\InscricoesCrismaController::class, 'searchUsers'])->name('inscricoes-crisma.search-users');
+    Route::post('inscricoes-crisma/share', [App\Http\Controllers\InscricoesCrismaController::class, 'share'])->name('inscricoes-crisma.share');
     Route::get('inscricoes-crisma/export', [App\Http\Controllers\InscricoesCrismaController::class, 'export'])->name('inscricoes-crisma.export');
     Route::get('inscricoes-crisma/{id}/print', [App\Http\Controllers\InscricoesCrismaController::class, 'printSingle'])->name('inscricoes-crisma.print-single');
     Route::post('inscricoes-crisma/bulk-destroy', [App\Http\Controllers\InscricoesCrismaController::class, 'bulkDestroy'])->name('inscricoes-crisma.bulk-destroy');
