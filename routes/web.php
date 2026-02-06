@@ -120,6 +120,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('docs-crisma', App\Http\Controllers\DocsCrismaController::class);
     Route::post('inscricoes-crisma/bulk-destroy', [App\Http\Controllers\InscricoesCrismaController::class, 'bulkDestroy'])->name('inscricoes-crisma.bulk-destroy');
     Route::post('inscricoes-crisma/bulk-print', [App\Http\Controllers\InscricoesCrismaController::class, 'bulkPrint'])->name('inscricoes-crisma.bulk-print');
+    Route::get('inscricoes-crisma/export', [App\Http\Controllers\InscricoesCrismaController::class, 'export'])->name('inscricoes-crisma.export');
     Route::put('inscricoes-crisma/{id}/status', [App\Http\Controllers\InscricoesCrismaController::class, 'updateStatus'])->name('inscricoes-crisma.update-status');
     Route::resource('inscricoes-crisma', App\Http\Controllers\InscricoesCrismaController::class);
     Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);

@@ -140,25 +140,33 @@
                 </div>
 
                 <!-- Mass Actions -->
-                <div class="ms-auto">
-                     <label class="form-label fw-bold text-muted small d-block">&nbsp;</label>
-                     <div class="dropdown d-inline-block">
-                        <button class="btn btn-light border rounded-pill dropdown-toggle" type="button" id="massActionsBtn" data-bs-toggle="dropdown" aria-expanded="false" disabled>
-                            Ações em Massa (<span id="selectedCount">0</span>)
+                <div class="ms-auto d-flex gap-2">
+                     <div>
+                        <label class="form-label fw-bold text-muted small d-block">&nbsp;</label>
+                        <button class="btn btn-success border rounded-pill" type="button" onclick="exportExcel()">
+                            <i class="bi bi-file-earmark-excel me-2"></i> Exportar
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                            <li>
-                                <button class="dropdown-item text-danger" onclick="confirmBulkDelete()">
-                                    <i class="bi bi-trash me-2"></i> Deletar selecionados
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item text-primary" onclick="bulkPrint()">
-                                    <i class="bi bi-printer me-2"></i> Imprimir fichas selecionadas
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
+                     </div>
+                     <div>
+                        <label class="form-label fw-bold text-muted small d-block">&nbsp;</label>
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-light border rounded-pill dropdown-toggle" type="button" id="massActionsBtn" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                                Ações em Massa (<span id="selectedCount">0</span>)
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                <li>
+                                    <button class="dropdown-item text-danger" onclick="confirmBulkDelete()">
+                                        <i class="bi bi-trash me-2"></i> Deletar selecionados
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item text-primary" onclick="bulkPrint()">
+                                        <i class="bi bi-printer me-2"></i> Imprimir fichas selecionadas
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                     </div>
                 </div>
             </div>
 
@@ -433,6 +441,21 @@
 
     function togglePrintScope() {
         // Optional logic if needed
+    }
+
+    function exportExcel() {
+        const fetchUrl = new URL(`{{ route('inscricoes-crisma.export') }}`);
+        
+        // Append current filters
+        if(state.search) fetchUrl.searchParams.set('search', state.search);
+        if(state.status) fetchUrl.searchParams.set('status', state.status);
+        if(state.batismo) fetchUrl.searchParams.set('batismo', state.batismo);
+        if(state.eucaristia) fetchUrl.searchParams.set('eucaristia', state.eucaristia);
+        if(state.date_from) fetchUrl.searchParams.set('date_from', state.date_from);
+        if(state.date_to) fetchUrl.searchParams.set('date_to', state.date_to);
+
+        // Redirect to trigger download
+        window.location.href = fetchUrl.toString();
     }
 </script>
 @endsection

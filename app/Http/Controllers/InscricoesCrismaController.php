@@ -155,6 +155,108 @@ class InscricoesCrismaController extends Controller
         return $pdf->download($filename);
     }
 
+    public function export(Request $request)
+    {
+        $query = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->with('taxa');
+
+        // Apply filters
+        if ($request->has('search') && $request->search != '') {
+            $query->where('nome', 'like', "%{$request->search}%");
+        }
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+        if ($request->has('batismo') && $request->batismo !== '') {
+            if ($request->batismo == '1') {
+                $query->whereNotNull('certidao_batismo')->where('certidao_batismo', '!=', '');
+            } else {
+                $query->where(function($q) {
+                    $q->whereNull('certidao_batismo')->orWhere('certidao_batismo', '');
+                });
+            }
+        }
+        if ($request->has('eucaristia') && $request->eucaristia !== '') {
+            if ($request->eucaristia == '1') {
+                $query->whereNotNull('certidao_primeira_comunhao')->where('certidao_primeira_comunhao', '!=', '');
+            } else {
+                $query->where(function($q) {
+                    $q->whereNull('certidao_primeira_comunhao')->orWhere('certidao_primeira_comunhao', '');
+                });
+            }
+        }
+        if ($request->has('date_from') && $request->date_from != '') {
+            $query->whereDate('criado_em', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to != '') {
+            $query->whereDate('criado_em', '<=', $request->date_to);
+        }
+
+        // Handle specific IDs if passed (optional, for future proofing or if called via mass action)
+        if ($request->has('ids') && !empty($request->ids)) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id', $ids);
+        }
+
+        $records = $query->orderBy('nome', 'asc')->get();
+
+        $headers = [
+            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=inscricoes_crisma_" . date('d-m-Y_H-i') . ".csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'ID', 'Status', 'Nome', 'CPF', 'Data Nascimento', 'Sexo', 
+            'Telefone 1', 'Telefone 2', 'Endereço', 'Número', 'CEP', 'Cidade', 'Estado',
+            'Certidão Batismo', 'Certidão Eucaristia', 'Comprovante Pagamento', 'Data Inscrição'
+        ];
+
+        $callback = function() use($records, $columns) {
+            $file = fopen('php://output', 'w');
+            fputs($file, "\xEF\xBB\xBF"); // BOM for Excel
+
+            fputcsv($file, $columns, ';');
+
+            foreach ($records as $record) {
+                $status = match($record->status) {
+                    0 => 'Pendente',
+                    1 => 'Aprovado',
+                    2 => 'Reprovado',
+                    default => 'Desconhecido'
+                };
+                
+                $dtNasc = $record->data_nascimento ? \Carbon\Carbon::parse($record->data_nascimento)->format('d/m/Y') : '';
+                $dtCriado = $record->criado_em ? \Carbon\Carbon::parse($record->criado_em)->format('d/m/Y H:i') : '';
+
+                fputcsv($file, [
+                    $record->id,
+                    $status,
+                    $record->nome,
+                    $record->cpf,
+                    $dtNasc,
+                    $record->sexo,
+                    $record->telefone1,
+                    $record->telefone2,
+                    $record->endereco,
+                    $record->numero,
+                    $record->cep,
+                    'Guarapuava',
+                    $record->estado,
+                    $record->certidao_batismo ? asset($record->certidao_batismo) : '',
+                    $record->certidao_primeira_comunhao ? asset($record->certidao_primeira_comunhao) : '',
+                    $record->comprovante_pagamento ? asset($record->comprovante_pagamento) : '',
+                    $dtCriado
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function show($id)
     {
         $record = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
