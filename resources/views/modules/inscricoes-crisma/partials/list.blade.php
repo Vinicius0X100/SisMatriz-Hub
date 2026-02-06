@@ -2,7 +2,12 @@
     <table class="table table-hover align-middle">
         <thead class="bg-light">
             <tr>
-                <th class="border-0 rounded-start ps-4">Situação</th>
+                <th class="border-0 rounded-start ps-4" style="width: 50px;">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll()">
+                    </div>
+                </th>
+                <th class="border-0">Situação</th>
                 <th class="border-0">Nome</th>
                 <th class="border-0">Sexo</th>
                 <th class="border-0">Cert. Batismo</th>
@@ -41,6 +46,11 @@
                 @endphp
                 <tr>
                     <td class="ps-4">
+                        <div class="form-check">
+                            <input class="form-check-input row-checkbox" type="checkbox" value="{{ $record->id }}" onchange="updateSelection(this)">
+                        </div>
+                    </td>
+                    <td>
                         <span class="badge bg-{{ $statusColor }} bg-opacity-10 text-{{ $statusColor }} rounded-pill px-3">
                             <i class="bi bi-circle-fill me-1 small"></i> {{ $statusLabel }}
                         </span>
@@ -70,7 +80,7 @@
                     </td>
                     <td class="text-end pe-4">
                         <button class="btn btn-sm btn-outline-info rounded-pill px-3 me-2" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $record->id }}">
-                            <i class="bi bi-eye me-1"></i> Detalhes
+                            <i class="bi bi-eye me-1"></i> Abrir ficha
                         </button>
                         <form action="{{ route('inscricoes-crisma.destroy', $record->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta inscrição?');">
                             @csrf
@@ -83,7 +93,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">Nenhuma inscrição encontrada.</td>
+                    <td colspan="10" class="text-center py-5 text-muted">Nenhuma inscrição encontrada.</td>
                 </tr>
             @endforelse
         </tbody>

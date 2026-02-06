@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Twilio\Rest\Client;
 
+use Illuminate\Support\Facades\Log;
+
 class InscricoesCrismaController extends Controller
 {
     public function index(Request $request)
@@ -20,6 +22,39 @@ class InscricoesCrismaController extends Controller
             $query->where('nome', 'like', "%{$search}%");
         }
 
+        // Filters
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('batismo') && $request->batismo !== '') {
+            if ($request->batismo == '1') {
+                $query->whereNotNull('certidao_batismo')->where('certidao_batismo', '!=', '');
+            } else {
+                $query->where(function($q) {
+                    $q->whereNull('certidao_batismo')->orWhere('certidao_batismo', '');
+                });
+            }
+        }
+
+        if ($request->has('eucaristia') && $request->eucaristia !== '') {
+            if ($request->eucaristia == '1') {
+                $query->whereNotNull('certidao_primeira_comunhao')->where('certidao_primeira_comunhao', '!=', '');
+            } else {
+                $query->where(function($q) {
+                    $q->whereNull('certidao_primeira_comunhao')->orWhere('certidao_primeira_comunhao', '');
+                });
+            }
+        }
+
+        if ($request->has('date_from') && $request->date_from != '') {
+            $query->whereDate('criado_em', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to != '') {
+            $query->whereDate('criado_em', '<=', $request->date_to);
+        }
+
         $records = $query->orderBy('criado_em', 'desc')->paginate(10);
 
         if ($request->ajax()) {
@@ -27,6 +62,37 @@ class InscricoesCrismaController extends Controller
         }
 
         return view('modules.inscricoes-crisma.index', compact('records'));
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:inscricoes_crisma,id'
+        ]);
+
+        $count = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
+            ->whereIn('id', $request->ids)
+            ->delete();
+
+        return response()->json(['success' => true, 'message' => "{$count} inscrições excluídas com sucesso."]);
+    }
+
+    public function bulkPrint(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|string', // comma separated or array, user said hidden input usually string
+        ]);
+        
+        $ids = explode(',', $request->ids);
+
+        $records = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
+            ->whereIn('id', $ids)
+            ->get();
+            
+        // Use a simple view for printing or PDF
+        // Since user didn't specify PDF engine, I'll return a print-friendly view
+        return view('modules.inscricoes-crisma.print', compact('records'));
     }
 
     public function show($id)
