@@ -19,10 +19,10 @@
                     // Status Badge Logic
                     $statusLabel = 'Pendente';
                     $statusColor = 'warning';
-                    if ($record->situacao == 1) {
+                    if ($record->status == 1) {
                         $statusLabel = 'Aprovado';
                         $statusColor = 'success';
-                    } elseif ($record->situacao == 2) {
+                    } elseif ($record->status == 2) {
                         $statusLabel = 'Reprovado';
                         $statusColor = 'danger';
                     }
@@ -251,21 +251,21 @@
                                 [
                                     'title' => 'Certidão de Batismo',
                                     'file' => $record->certidao_batismo,
-                                    'path' => 'storage/uploads/certidoes/crisma/',
+                                    'path' => 'storage/uploads/certidoes/',
                                     'icon' => 'bi-droplet',
                                     'color' => 'primary'
                                 ],
                                 [
                                     'title' => 'Certidão 1ª Eucaristia',
                                     'file' => $record->certidao_primeira_comunhao,
-                                    'path' => 'storage/uploads/certidoes/crisma/',
+                                    'path' => 'storage/uploads/certidoes/',
                                     'icon' => 'bi-book',
                                     'color' => 'info'
                                 ],
                                 [
                                     'title' => 'Comprovante Pagamento',
                                     'file' => $record->comprovante_pagamento,
-                                    'path' => 'storage/uploads/comprovantes/crisma/',
+                                    'path' => 'storage/uploads/comprovantes/',
                                     'icon' => 'bi-receipt',
                                     'color' => 'success'
                                 ]

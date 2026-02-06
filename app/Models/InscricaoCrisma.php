@@ -13,7 +13,7 @@ class InscricaoCrisma extends Model
     public $timestamps = false; // Assuming based on other models, or maybe it has created_at as 'inscrito_em'
 
     protected $fillable = [
-        'situacao',
+        'status',
         'nome',
         'sexo',
         'nacionalidade',
@@ -35,7 +35,7 @@ class InscricaoCrisma extends Model
     ];
 
     protected $casts = [
-        'situacao' => 'integer',
+        'status' => 'integer',
         'taxaPaga' => 'boolean',
         'data_nascimento' => 'date',
         'criado_em' => 'datetime',
