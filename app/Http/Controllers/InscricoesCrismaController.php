@@ -160,7 +160,7 @@ class InscricoesCrismaController extends Controller
     {
         $search = $request->input('q');
         $users = User::where('paroquia_id', Auth::user()->paroquia_id)
-            ->where('status', 1) // Only active users
+            ->where('status', 0) // Only active users (0 = active)
             ->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
@@ -169,6 +169,13 @@ class InscricoesCrismaController extends Controller
             ->limit(10)
             ->get();
             
+        $users->transform(function ($user) {
+            if ($user->avatar) {
+                $user->avatar = asset("uploads/avatars/{$user->id}/{$user->avatar}");
+            }
+            return $user;
+        });
+
         return response()->json($users);
     }
 

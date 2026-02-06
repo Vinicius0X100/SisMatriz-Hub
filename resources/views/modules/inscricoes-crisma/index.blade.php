@@ -533,7 +533,12 @@
     });
 
     function searchUsers(query) {
-        fetch(`{{ route('inscricoes-crisma.search-users') }}?q=${query}`)
+        fetch(`{{ route('inscricoes-crisma.search-users') }}?q=${query}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
             .then(res => res.json())
             .then(users => {
                 userSearchResults.innerHTML = '';
