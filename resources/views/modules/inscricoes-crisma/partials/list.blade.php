@@ -107,6 +107,40 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4 bg-light bg-opacity-10">
+                    <!-- Status Management -->
+                    <div class="mb-4">
+                         <!-- Hint Card -->
+                         <div class="alert alert-info border-0 bg-info bg-opacity-10 rounded-3 mb-4" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-info-circle-fill text-info fs-5 me-2 mt-1"></i>
+                                <div>
+                                    <h6 class="alert-heading fw-bold mb-2">Alteração de situação da inscrição</h6>
+                                    <ul class="list-unstyled mb-2 small text-dark">
+                                        <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-1"></i> <strong>Aprovar:</strong> Envia para registro geral.</li>
+                                        <li class="mb-1"><i class="bi bi-x-circle-fill text-danger me-1"></i> <strong>Reprovar:</strong> Notifica via WhatsApp.</li>
+                                        <li class="mb-1"><i class="bi bi-exclamation-circle-fill text-warning me-1"></i> <strong>Pendente:</strong> Aguarda decisão.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-center">
+                            <form action="{{ route('inscricoes-crisma.update-status', $record->id) }}" method="POST" class="d-flex align-items-center gap-2">
+                                @csrf
+                                @method('PUT')
+                                <select name="status" class="form-select rounded-pill" style="min-width: 150px;">
+                                    <option value="0" {{ $record->status == 0 ? 'selected' : '' }}>Pendente</option>
+                                    <option value="1" {{ $record->status == 1 ? 'selected' : '' }}>Aprovado</option>
+                                    <option value="2" {{ $record->status == 2 ? 'selected' : '' }}>Reprovado</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                    <i class="bi bi-save me-1"></i> Salvar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                     <!-- Section: Personal Info -->
                     <div class="row g-4 mb-4">
                         <div class="col-12">
@@ -317,6 +351,8 @@
                             </div>
                         @endforeach
                     </div>
+
+
                 </div>
                 <div class="modal-footer border-0 pt-0 bg-light bg-opacity-10">
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Fechar</button>
