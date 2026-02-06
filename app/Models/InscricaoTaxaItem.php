@@ -22,4 +22,9 @@ class InscricaoTaxaItem extends Model
         'valor' => 'decimal:2',
         'ativo' => 'boolean',
     ];
+
+    public function config()
+    {
+        return $this->belongsTo(InscricaoTaxaConfig::class, 'config_id');
+    }
 }

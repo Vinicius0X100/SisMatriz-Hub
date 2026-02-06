@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\InscricaoCrisma;
+use App\Models\PrazoInscricao;
+use App\Models\InscricaoTaxaConfig;
+use App\Models\InscricaoTaxaItem;
 use App\Models\Register;
 use App\Models\User;
 use App\Mail\ShareInscricoesCrisma;
@@ -75,7 +78,74 @@ class InscricoesCrismaController extends Controller
             'rejected' => InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->where('status', 2)->count(),
         ];
 
-        return view('modules.inscricoes-crisma.index', compact('records', 'stats'));
+        $deadline = PrazoInscricao::where('paroquia_id', Auth::user()->paroquia_id)
+            ->where('tipo_inscricao', 'crisma')
+            ->first();
+
+        $taxConfig = InscricaoTaxaConfig::where('paroquia_id', Auth::user()->paroquia_id)
+            ->where('tipo', 'crisma')
+            ->with('items')
+            ->first();
+
+        return view('modules.inscricoes-crisma.index', compact('records', 'stats', 'deadline', 'taxConfig'));
+    }
+
+    public function storeTaxConfig(Request $request)
+    {
+        $request->validate([
+            'inscricao_com_taxa' => 'required|boolean',
+            'metodo_pagamento_label' => 'nullable|string',
+            'metodo_pagamento_valor' => 'nullable|string',
+            'items' => 'nullable|array',
+            'items.*.nome' => 'required_with:items|string',
+            'items.*.valor' => 'required_with:items|string',
+        ]);
+
+        $taxConfig = InscricaoTaxaConfig::firstOrNew([
+            'paroquia_id' => Auth::user()->paroquia_id,
+            'tipo' => 'crisma'
+        ]);
+
+        $taxConfig->inscricao_com_taxa = $request->inscricao_com_taxa;
+        $taxConfig->metodo_pagamento_label = $request->metodo_pagamento_label;
+        $taxConfig->metodo_pagamento_valor = $request->metodo_pagamento_valor;
+        $taxConfig->save();
+
+        // Handle Items
+        $incomingItems = $request->input('items', []);
+        $incomingIds = collect($incomingItems)->pluck('id')->filter()->toArray();
+
+        // Delete items not in incoming list (if config exists)
+        if ($taxConfig->exists) {
+            $taxConfig->items()->whereNotIn('id', $incomingIds)->delete();
+        }
+
+        foreach ($incomingItems as $itemData) {
+            // Format value: "R$ 1.234,56" -> 1234.56
+            $valor = str_replace(['R$', '.', ' '], '', $itemData['valor']);
+            $valor = str_replace(',', '.', $valor);
+
+            if (isset($itemData['id']) && $itemData['id']) {
+                // Update
+                $item = InscricaoTaxaItem::find($itemData['id']);
+                if ($item && $item->config_id == $taxConfig->id) {
+                    $item->update([
+                        'nome' => $itemData['nome'],
+                        'valor' => $valor,
+                        'ativo' => 1
+                    ]);
+                }
+            } else {
+                // Create
+                $taxConfig->items()->create([
+                    'nome' => $itemData['nome'],
+                    'valor' => $valor,
+                    'ativo' => 1
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Configuração de taxas atualizada com sucesso!');
     }
 
     public function bulkDestroy(Request $request)
@@ -161,11 +231,8 @@ class InscricoesCrismaController extends Controller
         $search = $request->input('q');
         $users = User::where('paroquia_id', Auth::user()->paroquia_id)
             ->where('status', 0) // Only active users (0 = active)
-            ->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            })
-            ->select('id', 'name', 'avatar')
+            ->where('name', 'like', "%{$search}%")
+            ->select('id', 'name', 'email', 'avatar')
             ->limit(10)
             ->get();
             
@@ -537,5 +604,31 @@ class InscricoesCrismaController extends Controller
         $record->delete();
 
         return redirect()->back()->with('success', 'Inscrição excluída com sucesso!');
+    }
+
+    public function storeDeadline(Request $request)
+    {
+        $request->validate([
+            'data_inicio' => 'required|date',
+            'data_fim' => 'required|date|after_or_equal:data_inicio',
+            'ativo' => 'required|boolean',
+        ]);
+
+        $deadline = PrazoInscricao::firstOrNew([
+            'paroquia_id' => Auth::user()->paroquia_id,
+            'tipo_inscricao' => 'crisma'
+        ]);
+
+        $deadline->data_inicio = $request->data_inicio;
+        $deadline->data_fim = $request->data_fim;
+        $deadline->ativo = $request->ativo;
+        
+        if (!$deadline->exists) {
+            $deadline->criado_por = Auth::id();
+        }
+
+        $deadline->save();
+
+        return redirect()->back()->with('success', 'Prazo de inscrição atualizado com sucesso!');
     }
 }

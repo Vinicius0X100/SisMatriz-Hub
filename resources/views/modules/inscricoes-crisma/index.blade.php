@@ -29,6 +29,66 @@
         </div>
     @endif
 
+    @php
+        $deadlineActive = false;
+        $deadlineMessage = 'Prazo de inscrições não definido.';
+        $deadlineColor = 'secondary';
+        $daysRemaining = 0;
+        $deadlineIcon = 'bi-calendar-x';
+
+        if (isset($deadline)) {
+            $now = \Carbon\Carbon::now();
+            $start = \Carbon\Carbon::parse($deadline->data_inicio)->startOfDay();
+            $end = \Carbon\Carbon::parse($deadline->data_fim)->endOfDay();
+
+            if ($deadline->ativo) {
+                if ($now->between($start, $end)) {
+                    $deadlineActive = true;
+                    $daysRemaining = ceil($now->floatDiffInDays($end, false));
+                    $deadlineMessage = "Inscrições abertas! Restam {$daysRemaining} dias.";
+                    $deadlineColor = 'success';
+                    $deadlineIcon = 'bi-calendar-check';
+                } elseif ($now->lt($start)) {
+                    $deadlineMessage = "Inscrições abrirão em " . $start->format('d/m/Y');
+                    $deadlineColor = 'info';
+                    $deadlineIcon = 'bi-calendar-plus';
+                } else {
+                    $deadlineMessage = "Inscrições encerradas em " . $end->format('d/m/Y');
+                    $deadlineColor = 'danger';
+                    $deadlineIcon = 'bi-calendar-x';
+                }
+            } else {
+                $deadlineMessage = "Inscrições pausadas/inativas.";
+                $deadlineColor = 'danger';
+                $deadlineIcon = 'bi-pause-circle';
+            }
+        }
+    @endphp
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-{{ $deadlineColor }} bg-opacity-10">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center p-4">
+            <div class="d-flex align-items-center mb-3 mb-md-0">
+                <div class="rounded-circle bg-{{ $deadlineColor }} text-white p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi {{ $deadlineIcon }} fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-{{ $deadlineColor }} mb-1">{{ $deadlineMessage }}</h5>
+                    @if(isset($deadline))
+                        <p class="mb-0 text-{{ $deadlineColor }} small opacity-75">
+                            Período: {{ $deadline->data_inicio->format('d/m/Y') }} até {{ $deadline->data_fim->format('d/m/Y') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+            <button class="btn btn-{{ $deadlineColor }} rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#deadlineModal">
+                <i class="bi bi-gear me-2"></i> Configurar Prazos
+            </button>
+            <button class="btn btn-light border rounded-pill px-4 fw-bold shadow-sm ms-2" data-bs-toggle="modal" data-bs-target="#taxModal">
+                <i class="bi bi-currency-dollar me-2"></i> Configurar Taxas
+            </button>
+        </div>
+    </div>
+
     <div class="row g-4 mb-4">
         <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-4 h-100">
@@ -183,11 +243,34 @@
     </div>
 </div>
 
-<!-- Bulk Forms -->
-<form id="bulkDeleteForm" action="{{ route('inscricoes-crisma.bulk-destroy') }}" method="POST" class="d-none">
-    @csrf
-    @method('DELETE')
-</form>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 p-3 d-inline-block mb-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Tem certeza?</h5>
+                <p class="text-muted mb-0" id="deleteModalMessage">Você está prestes a excluir este registro. Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    @csrf
+                    <input type="hidden" name="_method" id="deleteFormMethod" value="DELETE">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">
+                        <i class="bi bi-trash me-2"></i> Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal de Opções de Impressão -->
 <div class="modal fade" id="printOptionsModal" tabindex="-1" aria-labelledby="printOptionsModalLabel" aria-hidden="true">
@@ -280,6 +363,178 @@
         </div>
     </div>
 </div>
+
+<!-- Deadline Modal -->
+<div class="modal fade" id="deadlineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Configurar Prazos de Inscrição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ route('inscricoes-crisma.store-deadline') }}" method="POST">
+                    @csrf
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Status da Inscrição</label>
+                        <select name="ativo" class="form-select rounded-pill bg-light border-0">
+                            <option value="1" {{ (isset($deadline) && $deadline->ativo) ? 'selected' : '' }}>Ativo (Aberto)</option>
+                            <option value="0" {{ (isset($deadline) && !$deadline->ativo) ? 'selected' : '' }}>Inativo (Fechado/Pausado)</option>
+                        </select>
+                        <div class="form-text small">Se definido como inativo, as inscrições estarão fechadas independente das datas.</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Data Início</label>
+                            <input type="date" name="data_inicio" class="form-control rounded-pill bg-light border-0" value="{{ isset($deadline) ? $deadline->data_inicio->format('Y-m-d') : '' }}" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Data Fim</label>
+                            <input type="date" name="data_fim" class="form-control rounded-pill bg-light border-0" value="{{ isset($deadline) ? $deadline->data_fim->format('Y-m-d') : '' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill py-2 fw-bold">
+                            <i class="bi bi-check-lg me-2"></i> Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tax Config Modal -->
+<div class="modal fade" id="taxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Configurar Taxas de Inscrição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ route('inscricoes-crisma.store-tax-config') }}" method="POST">
+                    @csrf
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small d-block">Cobrança de Taxa</label>
+                        <div class="form-check form-switch p-0 m-0 d-flex align-items-center gap-2">
+                            <input class="form-check-input m-0" type="checkbox" role="switch" id="inscricao_com_taxa" name="inscricao_com_taxa" value="1" {{ (isset($taxConfig) && $taxConfig->inscricao_com_taxa) ? 'checked' : '' }} style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label" for="inscricao_com_taxa">Habilitar cobrança de taxa na inscrição</label>
+                        </div>
+                        <div class="form-text small mt-2">Se habilitado, o usuário verá as instruções de pagamento ao se inscrever.</div>
+                        <input type="hidden" name="inscricao_com_taxa" value="0" id="inscricao_com_taxa_hidden">
+                    </div>
+
+                    <div id="payment-details-section" class="{{ (isset($taxConfig) && $taxConfig->inscricao_com_taxa) ? '' : 'd-none' }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Rótulo do Pagamento</label>
+                            <input type="text" name="metodo_pagamento_label" class="form-control rounded-pill bg-light border-0" placeholder="Ex: Chave PIX" value="{{ isset($taxConfig) ? $taxConfig->metodo_pagamento_label : '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Valor/Chave/Link</label>
+                            <input type="text" name="metodo_pagamento_valor" class="form-control rounded-pill bg-light border-0" placeholder="Ex: email@paroquia.com ou Link PagSeguro" value="{{ isset($taxConfig) ? $taxConfig->metodo_pagamento_valor : '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small d-block">Itens da Taxa</label>
+                            <div id="tax-items-container">
+                                @if(isset($taxConfig) && $taxConfig->items->count() > 0)
+                                    @foreach($taxConfig->items as $index => $item)
+                                        <div class="row g-2 mb-2 tax-item-row align-items-center">
+                                            <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id }}">
+                                            <div class="col-7">
+                                                <input type="text" name="items[{{ $index }}][nome]" class="form-control rounded-pill bg-light border-0" placeholder="Nome da Taxa" value="{{ $item->nome }}" required>
+                                            </div>
+                                            <div class="col-4">
+                                                <input type="text" name="items[{{ $index }}][valor]" class="form-control rounded-pill bg-light border-0 currency-input" placeholder="R$ 0,00" value="R$ {{ number_format($item->valor, 2, ',', '.') }}" required oninput="maskCurrency(this)">
+                                            </div>
+                                            <div class="col-1 text-end">
+                                                <button type="button" class="btn btn-danger btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px;" onclick="removeTaxItem(this)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                            <button type="button" class="btn btn-outline-primary rounded-pill btn-sm mt-2" onclick="addTaxItem()">
+                                <i class="bi bi-plus-lg me-1"></i> Adicionar Taxa
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill py-2 fw-bold">
+                            <i class="bi bi-check-lg me-2"></i> Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taxSwitch = document.getElementById('inscricao_com_taxa');
+        const paymentSection = document.getElementById('payment-details-section');
+        const hiddenInput = document.getElementById('inscricao_com_taxa_hidden');
+
+        taxSwitch.addEventListener('change', function() {
+            hiddenInput.disabled = this.checked;
+            if (this.checked) {
+                paymentSection.classList.remove('d-none');
+            } else {
+                paymentSection.classList.add('d-none');
+            }
+        });
+        
+        // Initial state check
+        hiddenInput.disabled = taxSwitch.checked;
+    });
+
+    function maskCurrency(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value === '') {
+            input.value = '';
+            return;
+        }
+        value = (parseInt(value) / 100).toFixed(2) + '';
+        value = value.replace('.', ',');
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        input.value = 'R$ ' + value;
+    }
+
+    function addTaxItem() {
+        const container = document.getElementById('tax-items-container');
+        const index = new Date().getTime(); // Unique index
+        
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 tax-item-row align-items-center';
+        row.innerHTML = `
+            <div class="col-7">
+                <input type="text" name="items[${index}][nome]" class="form-control rounded-pill bg-light border-0" placeholder="Nome da Taxa" required>
+            </div>
+            <div class="col-4">
+                <input type="text" name="items[${index}][valor]" class="form-control rounded-pill bg-light border-0 currency-input" placeholder="R$ 0,00" required oninput="maskCurrency(this)">
+            </div>
+            <div class="col-1 text-end">
+                <button type="button" class="btn btn-danger btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px;" onclick="removeTaxItem(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(row);
+    }
+
+    function removeTaxItem(btn) {
+        btn.closest('.tax-item-row').remove();
+    }
+</script>
 
 <style>
     .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #64748b; border-bottom-width: 1px !important; }
@@ -428,43 +683,46 @@
     }
 
     // Actions
-    function confirmBulkDelete() {
-        if (!confirm('Tem certeza que deseja excluir os ' + state.selectedIds.size + ' registros selecionados?')) return;
+    function openDeleteModal(actionUrl) {
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+        const form = document.getElementById('deleteForm');
+        
+        form.action = actionUrl;
+        document.getElementById('deleteFormMethod').value = 'DELETE';
+        
+        // Clear any bulk IDs if present
+        const existingHidden = form.querySelectorAll('input[name="ids[]"]');
+        existingHidden.forEach(el => el.remove());
 
-        const form = document.getElementById('bulkDeleteForm');
+        document.getElementById('deleteModalMessage').innerText = 'Você está prestes a excluir este registro. Esta ação não pode ser desfeita.';
+        
+        modal.show();
+    }
+
+    function confirmBulkDelete() {
+        if (state.selectedIds.size === 0) return;
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+        const form = document.getElementById('deleteForm');
+        
+        form.action = "{{ route('inscricoes-crisma.bulk-destroy') }}";
+        document.getElementById('deleteFormMethod').value = 'POST';
         
         // Append IDs to form
-        const container = document.createElement('div');
+        const existingHidden = form.querySelectorAll('input[name="ids[]"]');
+        existingHidden.forEach(el => el.remove());
+        
         state.selectedIds.forEach(id => {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'ids[]';
             input.value = id;
-            container.appendChild(input);
+            form.appendChild(input);
         });
-        form.appendChild(container);
 
-        // Submit via fetch to handle JSON response or redirect
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: {
-                 'X-Requested-With': 'XMLHttpRequest',
-                 'Accept': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                alert(data.message);
-                state.selectedIds.clear();
-                updateMassActionsUI();
-                fetchResults(); // Reload table
-            } else {
-                alert('Erro ao excluir registros.');
-            }
-        })
-        .catch(err => alert('Erro ao processar requisição.'));
+        document.getElementById('deleteModalMessage').innerText = 'Você está prestes a excluir ' + state.selectedIds.size + ' registros selecionados. Esta ação não pode ser desfeita.';
+        
+        modal.show();
     }
 
     function bulkPrint() {
@@ -554,7 +812,10 @@
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
                                 ${user.avatar ? `<img src="${user.avatar}" class="rounded-circle w-100 h-100 object-fit-cover">` : user.name.charAt(0)}
                             </div>
-                            <span class="small fw-bold text-dark">${user.name}</span>
+                            <div class="d-flex flex-column">
+                                <span class="small fw-bold text-dark lh-1">${user.name}</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">${user.email}</span>
+                            </div>
                         `;
                         div.onclick = () => selectUser(user);
                         userSearchResults.appendChild(div);
@@ -598,8 +859,11 @@
                 <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px;">
                     ${user.avatar ? `<img src="${user.avatar}" class="rounded-circle w-100 h-100 object-fit-cover">` : user.name.charAt(0)}
                 </div>
-                <span>${user.name}</span>
-                <i class="bi bi-x-circle-fill text-muted cursor-pointer hover-text-danger" onclick="removeUser(${user.id})"></i>
+                <div class="d-flex flex-column ms-1" style="line-height: 1.1;">
+                    <span class="fw-bold" style="font-size: 0.8rem;">${user.name}</span>
+                    <span class="text-muted" style="font-size: 0.7rem;">${user.email}</span>
+                </div>
+                <i class="bi bi-x-circle-fill text-muted cursor-pointer hover-text-danger ms-2" onclick="removeUser(${user.id})"></i>
             `;
             container.appendChild(badge);
         });

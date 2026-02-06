@@ -85,13 +85,9 @@
                         <button class="btn btn-sm btn-outline-info rounded-pill px-3 me-2" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $record->id }}">
                             <i class="bi bi-eye me-1"></i> Abrir ficha
                         </button>
-                        <form action="{{ route('inscricoes-crisma.destroy', $record->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta inscrição?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openDeleteModal('{{ route('inscricoes-crisma.destroy', $record->id) }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
             @empty
