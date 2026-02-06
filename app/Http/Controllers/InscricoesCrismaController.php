@@ -96,6 +96,7 @@ class InscricoesCrismaController extends Controller
                 $sid = config('services.twilio.sid');
                 $token = config('services.twilio.token');
                 $messagingServiceSid = config('services.twilio.messaging_service_sid');
+                $from = config('services.twilio.whatsapp_from');
                 
                 if ($sid && $token && $messagingServiceSid) {
                     $twilio = new Client($sid, $token);
@@ -114,6 +115,7 @@ class InscricoesCrismaController extends Controller
                         $to = 'whatsapp:+' . $phone;
                         
                         $twilio->messages->create($to, [
+                            'from' => $from,
                             'messagingServiceSid' => $messagingServiceSid,
                             'contentSid' => 'HX93133072f99753b94b6781427c6c7a30',
                             'contentVariables' => json_encode([
