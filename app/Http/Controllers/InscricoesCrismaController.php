@@ -171,7 +171,7 @@ class InscricoesCrismaController extends Controller
             
         $users->transform(function ($user) {
             if ($user->avatar) {
-                $user->avatar = asset("uploads/avatars/{$user->id}/{$user->avatar}");
+                $user->avatar = asset("storage/uploads/avatars/{$user->id}.png");
             }
             return $user;
         });
