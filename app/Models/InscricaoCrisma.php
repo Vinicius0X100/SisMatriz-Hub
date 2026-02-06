@@ -29,14 +29,14 @@ class InscricaoCrisma extends Model
         'certidao_primeira_comunhao',
         'data_nascimento',
         'criado_em',
-        'inscricao_taxa_item_id',
+        'taxa_item_id',
         'comprovante_pagamento',
-        'taxa_paga',
+        'taxaPaga',
     ];
 
     protected $casts = [
         'situacao' => 'integer',
-        'taxa_paga' => 'boolean',
+        'taxaPaga' => 'boolean',
         'data_nascimento' => 'date',
         'criado_em' => 'datetime',
         // Assuming certidao_batismo and certidao_primeira_comunhao store file paths or boolean-like strings
@@ -44,6 +44,6 @@ class InscricaoCrisma extends Model
 
     public function taxa()
     {
-        return $this->belongsTo(InscricaoTaxaItem::class, 'inscricao_taxa_item_id');
+        return $this->belongsTo(InscricaoTaxaItem::class, 'taxa_item_id');
     }
 }

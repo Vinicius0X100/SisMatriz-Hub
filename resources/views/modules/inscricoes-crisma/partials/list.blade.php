@@ -30,7 +30,7 @@
                     // Payment Status Logic
                     $paymentLabel = 'Pendente';
                     $paymentColor = 'warning';
-                    if ($record->taxa_paga) {
+                    if ($record->taxaPaga) {
                         $paymentLabel = 'Pago';
                         $paymentColor = 'success';
                     }
@@ -217,8 +217,17 @@
                                 @if($record->taxa)
                                     <div class="mb-2 fw-medium text-dark">{{ $record->taxa->nome }} - R$ {{ number_format($record->taxa->valor, 2, ',', '.') }}</div>
                                     <div>
-                                        @if($record->taxa_paga)
-                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 border border-success">Pago</span>
+                                        @if($record->taxaPaga)
+                                            @if(empty($record->comprovante_pagamento))
+                                                <div class="alert alert-warning d-flex align-items-center mb-0 p-2 small" role="alert">
+                                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                    <div>
+                                                        Consta como pago mas não foi anexado, validar o pagamento falando com a pessoa que se inscreveu.
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 border border-success">Pago</span>
+                                            @endif
                                         @else
                                             <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 border border-warning">Pendente</span>
                                         @endif
@@ -276,7 +285,7 @@
                                     <i class="bi bi-receipt fs-2 text-success mb-2"></i>
                                     <h6 class="card-title small fw-bold mb-2">Comprovante Pagamento</h6>
                                     @if($record->comprovante_pagamento)
-                                        <a href="{{ asset('storage/comprovantes/crisma/' . $record->comprovante_pagamento) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill w-100">
+                                        <a href="{{ asset('storage/uploads/comprovantes/crisma/' . $record->comprovante_pagamento) }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill w-100">
                                             <i class="bi bi-eye me-1"></i> Visualizar
                                         </a>
                                     @else
