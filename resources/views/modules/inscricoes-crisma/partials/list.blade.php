@@ -2,20 +2,20 @@
     <table class="table table-hover align-middle">
         <thead class="bg-light">
             <tr>
-                <th class="border-0 rounded-start ps-4" style="width: 50px;">
-                    <div class="form-check">
+                <th scope="col" width="50" class="text-center">
+                    <div class="form-check d-flex justify-content-center">
                         <input class="form-check-input" type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll()">
                     </div>
                 </th>
-                <th class="border-0">Situação</th>
-                <th class="border-0">Nome</th>
-                <th class="border-0">Sexo</th>
-                <th class="border-0">Cert. Batismo</th>
-                <th class="border-0">Cert. 1ª Comunhão</th>
-                <th class="border-0">Nascimento</th>
-                <th class="border-0">Inscrito em</th>
-                <th class="border-0">Pagamento</th>
-                <th class="border-0 rounded-end text-end pe-4">Ações</th>
+                <th scope="col">Situação</th>
+                <th scope="col">Nome</th>
+                <th scope="col">Sexo</th>
+                <th scope="col">Cert. Batismo</th>
+                <th scope="col">Cert. 1ª Comunhão</th>
+                <th scope="col">Nascimento</th>
+                <th scope="col">Inscrito em</th>
+                <th scope="col">Pagamento</th>
+                <th scope="col" class="text-end pe-4">Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -45,8 +45,8 @@
                     $hasEucaristia = !empty($record->certidao_primeira_comunhao);
                 @endphp
                 <tr>
-                    <td class="ps-4">
-                        <div class="form-check">
+                    <td class="text-center">
+                        <div class="form-check d-flex justify-content-center">
                             <input class="form-check-input row-checkbox" type="checkbox" value="{{ $record->id }}" onchange="updateSelection(this)">
                         </div>
                     </td>

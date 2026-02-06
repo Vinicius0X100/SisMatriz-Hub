@@ -125,6 +125,11 @@
     <input type="hidden" name="ids" id="bulkPrintIds">
 </form>
 
+<style>
+    .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #64748b; border-bottom-width: 1px !important; }
+    .table td { font-size: 0.9rem; color: #334155; }
+</style>
+
 <script>
     let searchTimeout;
     const state = {
