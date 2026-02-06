@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Twilio\Rest\Client;
 
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InscricoesCrismaController extends Controller
 {
@@ -61,7 +62,15 @@ class InscricoesCrismaController extends Controller
             return view('modules.inscricoes-crisma.partials.list', compact('records'))->render();
         }
 
-        return view('modules.inscricoes-crisma.index', compact('records'));
+        // Stats for cards
+        $stats = [
+            'total' => InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->count(),
+            'pending' => InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->where('status', 0)->count(),
+            'approved' => InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->where('status', 1)->count(),
+            'rejected' => InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->where('status', 2)->count(),
+        ];
+
+        return view('modules.inscricoes-crisma.index', compact('records', 'stats'));
     }
 
     public function bulkDestroy(Request $request)
@@ -80,19 +89,70 @@ class InscricoesCrismaController extends Controller
 
     public function bulkPrint(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|string', // comma separated or array, user said hidden input usually string
-        ]);
-        
-        $ids = explode(',', $request->ids);
+        $query = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->with('taxa');
 
-        $records = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
-            ->whereIn('id', $ids)
-            ->get();
+        if ($request->scope == 'all') {
+            if ($request->has('search') && $request->search != '') {
+                $query->where('nome', 'like', "%{$request->search}%");
+            }
+            if ($request->has('status') && $request->status !== '') {
+                $query->where('status', $request->status);
+            }
+            if ($request->has('batismo') && $request->batismo !== '') {
+                if ($request->batismo == '1') {
+                    $query->whereNotNull('certidao_batismo')->where('certidao_batismo', '!=', '');
+                } else {
+                    $query->where(function($q) {
+                        $q->whereNull('certidao_batismo')->orWhere('certidao_batismo', '');
+                    });
+                }
+            }
+            if ($request->has('eucaristia') && $request->eucaristia !== '') {
+                if ($request->eucaristia == '1') {
+                    $query->whereNotNull('certidao_primeira_comunhao')->where('certidao_primeira_comunhao', '!=', '');
+                } else {
+                    $query->where(function($q) {
+                        $q->whereNull('certidao_primeira_comunhao')->orWhere('certidao_primeira_comunhao', '');
+                    });
+                }
+            }
+            if ($request->has('date_from') && $request->date_from != '') {
+                $query->whereDate('criado_em', '>=', $request->date_from);
+            }
+            if ($request->has('date_to') && $request->date_to != '') {
+                $query->whereDate('criado_em', '<=', $request->date_to);
+            }
+        } else {
+            // Scope: selected
+            $ids = json_decode($request->ids, true);
+            // Fallback for comma separated if logic changes or legacy
+            if (!is_array($ids)) {
+                 $ids = explode(',', $request->ids);
+            }
             
-        // Use a simple view for printing or PDF
-        // Since user didn't specify PDF engine, I'll return a print-friendly view
-        return view('modules.inscricoes-crisma.print', compact('records'));
+            if (!$ids || empty($ids)) {
+                return redirect()->back()->with('warning', 'Nenhum registro selecionado para impressão.');
+            }
+            $query->whereIn('id', $ids);
+        }
+
+        $records = $query->orderBy('nome', 'asc')->get();
+
+        if ($records->isEmpty()) {
+            return redirect()->back()->with('warning', 'Nenhum registro encontrado para impressão.');
+        }
+
+        // Determine filename
+        if ($records->count() === 1) {
+            $name = \Illuminate\Support\Str::slug($records->first()->nome, '-');
+            $filename = "ficha-crisma-{$name}.pdf";
+        } else {
+            $date = date('d-m-Y');
+            $filename = "fichas-crisma-lote-{$date}.pdf";
+        }
+
+        $pdf = Pdf::loadView('modules.inscricoes-crisma.print', compact('records'));
+        return $pdf->download($filename);
     }
 
     public function show($id)

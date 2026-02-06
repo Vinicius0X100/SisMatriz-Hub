@@ -29,6 +29,61 @@
         </div>
     @endif
 
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-people fs-3 text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Total de Inscrições</h6>
+                        <h3 class="mb-0 fw-bold">{{ $stats['total'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-check-circle fs-3 text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Aprovados</h6>
+                        <h3 class="mb-0 fw-bold">{{ $stats['approved'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-clock-history fs-3 text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Pendentes</h6>
+                        <h3 class="mb-0 fw-bold">{{ $stats['pending'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                        <i class="bi bi-x-circle fs-3 text-danger"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Reprovados</h6>
+                        <h3 class="mb-0 fw-bold">{{ $stats['rejected'] ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             
@@ -120,10 +175,57 @@
     @csrf
     @method('DELETE')
 </form>
-<form id="bulkPrintForm" action="{{ route('inscricoes-crisma.bulk-print') }}" method="POST" target="_blank" class="d-none">
-    @csrf
-    <input type="hidden" name="ids" id="bulkPrintIds">
-</form>
+
+<!-- Modal de Opções de Impressão -->
+<div class="modal fade" id="printOptionsModal" tabindex="-1" aria-labelledby="printOptionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="printOptionsModalLabel">Imprimir Fichas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Selecione quais fichas deseja imprimir.</p>
+                <form id="printOptionsForm" action="{{ route('inscricoes-crisma.bulk-print') }}" method="POST" target="_blank">
+                    @csrf
+                    <!-- Hidden inputs for filters -->
+                    <input type="hidden" name="search" id="print-search">
+                    <input type="hidden" name="status" id="print-status">
+                    <input type="hidden" name="batismo" id="print-batismo">
+                    <input type="hidden" name="eucaristia" id="print-eucaristia">
+                    <input type="hidden" name="date_from" id="print-date-from">
+                    <input type="hidden" name="date_to" id="print-date-to">
+                    
+                    <input type="hidden" name="ids" id="print-ids">
+
+                    <div class="d-grid gap-2">
+                        <div class="form-check p-3 border rounded-3 hover-bg-light cursor-pointer">
+                            <input class="form-check-input" type="radio" name="scope" id="printScopeSelected" value="selected" checked onchange="togglePrintScope()">
+                            <label class="form-check-label w-100 cursor-pointer" for="printScopeSelected">
+                                <span class="d-block fw-bold text-dark">Fichas Individuais (Selecionados)</span>
+                                <span class="d-block text-muted small">Imprime apenas os <span id="modalSelectedCount">0</span> itens marcados na lista.</span>
+                            </label>
+                        </div>
+                        <div class="form-check p-3 border rounded-3 hover-bg-light cursor-pointer">
+                            <input class="form-check-input" type="radio" name="scope" id="printScopeAll" value="all" onchange="togglePrintScope()">
+                            <label class="form-check-label w-100 cursor-pointer" for="printScopeAll">
+                                <span class="d-block fw-bold text-dark">Todas as Fichas (Filtradas)</span>
+                                <span class="d-block text-muted small">Imprime todos os resultados da busca atual.</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-light border rounded-pill me-2" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4" onclick="setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('printOptionsModal')).hide(), 500)">
+                            <i class="bi bi-printer me-2"></i> Imprimir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #64748b; border-bottom-width: 1px !important; }
@@ -304,9 +406,33 @@
     }
 
     function bulkPrint() {
-        const form = document.getElementById('bulkPrintForm');
-        document.getElementById('bulkPrintIds').value = Array.from(state.selectedIds).join(',');
-        form.submit();
+        const ids = Array.from(state.selectedIds);
+        
+        // Populate Modal Data
+        document.getElementById('modalSelectedCount').innerText = ids.length;
+        document.getElementById('print-ids').value = JSON.stringify(ids);
+        
+        // Populate Filters
+        document.getElementById('print-search').value = state.search;
+        document.getElementById('print-status').value = state.status;
+        document.getElementById('print-batismo').value = state.batismo;
+        document.getElementById('print-eucaristia').value = state.eucaristia;
+        document.getElementById('print-date-from').value = state.date_from;
+        document.getElementById('print-date-to').value = state.date_to;
+
+        // Reset radio to Selected if items are selected, otherwise disable Selected option?
+        // Actually, if nothing selected, we should probably only allow 'All'.
+        // But the button is disabled if count === 0 anyway.
+        // So we can assume at least 1 item is selected if we are here.
+        document.getElementById('printScopeSelected').checked = true;
+
+        // Show Modal
+        const modal = new bootstrap.Modal(document.getElementById('printOptionsModal'));
+        modal.show();
+    }
+
+    function togglePrintScope() {
+        // Optional logic if needed
     }
 </script>
 @endsection
