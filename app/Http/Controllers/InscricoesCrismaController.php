@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InscricaoCrisma;
 use App\Models\Register;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Twilio\Rest\Client;
 
@@ -12,7 +13,7 @@ class InscricoesCrismaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InscricaoCrisma::with('taxa');
+        $query = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->with('taxa');
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
@@ -30,7 +31,9 @@ class InscricoesCrismaController extends Controller
 
     public function show($id)
     {
-        $record = InscricaoCrisma::with('taxa')->findOrFail($id);
+        $record = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)
+            ->with('taxa')
+            ->findOrFail($id);
         return response()->json($record);
     }
 
@@ -40,7 +43,7 @@ class InscricoesCrismaController extends Controller
             'status' => 'required|integer|in:0,1,2',
         ]);
 
-        $record = InscricaoCrisma::findOrFail($id);
+        $record = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->findOrFail($id);
         $messages = ['Situação atualizada com sucesso!'];
         $messageType = 'success';
         
@@ -75,6 +78,7 @@ class InscricoesCrismaController extends Controller
                         'state' => $record->estado,
                         'cep' => $record->cep,
                         'civil_status' => 1, // Default Solteiro
+                        'paroquia_id' => Auth::user()->paroquia_id,
                     ]);
                     $messages[] = 'Registro Geral criado com sucesso.';
                 } catch (\Exception $e) {
@@ -140,7 +144,7 @@ class InscricoesCrismaController extends Controller
 
     public function destroy($id)
     {
-        $record = InscricaoCrisma::findOrFail($id);
+        $record = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->findOrFail($id);
         // We might want to delete files too, but user didn't explicitly ask. 
         // I'll just delete the record for now to be safe, or check if I should delete files.
         // User said "uploads/certidoes/crisma" and "/comprovantes/crisma/".
