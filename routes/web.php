@@ -118,6 +118,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Documentação
     Route::resource('docs-crisma', App\Http\Controllers\DocsCrismaController::class);
+    Route::resource('inscricoes-crisma', App\Http\Controllers\InscricoesCrismaController::class);
     Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);
 
     // Acólitos e Coroinhas

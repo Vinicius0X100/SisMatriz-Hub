@@ -21,7 +21,7 @@ return [
     ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],
     ['name' => 'Lembretes', 'icon' => 'bell', 'url' => '/lembretes', 'allowed_roles' => ['*']],
     ['name' => 'Solicitações à Pascom', 'icon' => 'camera', 'url' => '/solicitacoes-pascom', 'allowed_roles' => ['9', '10']],
-    ['name' => 'Inscrições crisma', 'icon' => 'pencil-square', 'allowed_roles' => ['3']],
+    ['name' => 'Inscrições de Crisma', 'icon' => 'pencil-square', 'url' => '/inscricoes-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'allowed_roles' => ['7']],
     ['name' => 'Inscrições de catequese de adultos', 'icon' => 'pencil-square', 'allowed_roles' => ['17']],
     ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus', 'url' => '/solicitacoes-segunda-via', 'allowed_roles' => ['15']],
