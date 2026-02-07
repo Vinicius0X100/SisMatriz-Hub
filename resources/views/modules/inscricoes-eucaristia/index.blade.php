@@ -374,6 +374,7 @@
                         <input type="date" name="data_fim" class="form-control rounded-pill bg-light border-0" value="{{ isset($deadline) ? $deadline->data_fim->format('Y-m-d') : '' }}" required>
                     </div>
                     <div class="form-check form-switch mb-3">
+                        <input type="hidden" name="ativo" value="0">
                         <input class="form-check-input" type="checkbox" id="deadlineActive" name="ativo" value="1" {{ isset($deadline) && $deadline->ativo ? 'checked' : '' }}>
                         <label class="form-check-label" for="deadlineActive">Prazo Ativo</label>
                     </div>
