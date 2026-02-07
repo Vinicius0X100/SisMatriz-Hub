@@ -129,6 +129,18 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('inscricoes-crisma/tax-config', [App\Http\Controllers\InscricoesCrismaController::class, 'storeTaxConfig'])->name('inscricoes-crisma.store-tax-config');
     Route::resource('inscricoes-crisma', App\Http\Controllers\InscricoesCrismaController::class);
 
+    // Inscrições Catequese Adultos
+    Route::get('inscricoes-catequese-adultos/search-users', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'searchUsers'])->name('inscricoes-catequese-adultos.search-users');
+    Route::post('inscricoes-catequese-adultos/share', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'share'])->name('inscricoes-catequese-adultos.share');
+    Route::get('inscricoes-catequese-adultos/export', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'export'])->name('inscricoes-catequese-adultos.export');
+    Route::get('inscricoes-catequese-adultos/{id}/print', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'printSingle'])->name('inscricoes-catequese-adultos.print-single');
+    Route::post('inscricoes-catequese-adultos/bulk-destroy', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'bulkDestroy'])->name('inscricoes-catequese-adultos.bulk-destroy');
+    Route::post('inscricoes-catequese-adultos/bulk-print', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'bulkPrint'])->name('inscricoes-catequese-adultos.bulk-print');
+    Route::put('inscricoes-catequese-adultos/{id}/status', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'updateStatus'])->name('inscricoes-catequese-adultos.update-status');
+    Route::post('inscricoes-catequese-adultos/deadline', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'storeDeadline'])->name('inscricoes-catequese-adultos.store-deadline');
+    Route::post('inscricoes-catequese-adultos/tax-config', [App\Http\Controllers\InscricoesCatequeseAdultosController::class, 'storeTaxConfig'])->name('inscricoes-catequese-adultos.store-tax-config');
+    Route::resource('inscricoes-catequese-adultos', App\Http\Controllers\InscricoesCatequeseAdultosController::class);
+
     // Inscrições Eucaristia
     Route::get('inscricoes-eucaristia/search-users', [App\Http\Controllers\InscricoesEucaristiaController::class, 'searchUsers'])->name('inscricoes-eucaristia.search-users');
     Route::post('inscricoes-eucaristia/share', [App\Http\Controllers\InscricoesEucaristiaController::class, 'share'])->name('inscricoes-eucaristia.share');

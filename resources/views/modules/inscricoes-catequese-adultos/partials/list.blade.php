@@ -11,9 +11,10 @@
                 <th scope="col">Nome</th>
                 <th scope="col">Sexo</th>
                 <th scope="col">Cert. Batismo</th>
+                <th scope="col">Cert. 1ª Comunhão</th>
+                <th scope="col">Cert. Matrimônio</th>
                 <th scope="col">Nascimento</th>
                 <th scope="col">Inscrito em</th>
-    
                 <th scope="col" class="text-end pe-4">Ações</th>
             </tr>
         </thead>
@@ -41,6 +42,8 @@
 
                     // Attachments Logic
                     $hasBatismo = !empty($record->certidao_batismo);
+                    $hasEucaristia = !empty($record->certidao_primeira_comunhao);
+                    $hasMatrimonio = !empty($record->certidao_matrimonio);
                 @endphp
                 <tr>
                     <td class="text-center">
@@ -62,24 +65,38 @@
                             <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">Não Anexado</span>
                         @endif
                     </td>
+                    <td>
+                        @if($hasEucaristia)
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2">Sim/Anexado</span>
+                        @else
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">Não Anexado</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($hasMatrimonio)
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2">Sim/Anexado</span>
+                        @else
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">Não Anexado</span>
+                        @endif
+                    </td>
                     <td class="text-muted">{{ $record->data_nascimento ? \Carbon\Carbon::parse($record->data_nascimento)->format('d/m/Y') : '-' }}</td>
-                    <td class="text-muted">{{ $record->criado_em ? \Carbon\Carbon::parse($record->criado_em)->format('d/m/Y H:i') : '-' }}</td>
-        
+                    <td class="text-muted">{{ $record->data_inscricao ? \Carbon\Carbon::parse($record->data_inscricao)->format('d/m/Y H:i') : '-' }}</td>
+                    
                     <td class="text-end pe-4">
-                        <a href="{{ route('inscricoes-eucaristia.print-single', $record->id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2" target="_blank" title="Imprimir Ficha Individual">
+                        <a href="{{ route('inscricoes-catequese-adultos.print-single', $record->id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2" target="_blank" title="Imprimir Ficha Individual">
                             <i class="bi bi-printer me-1"></i> PDF
                         </a>
                         <button class="btn btn-sm btn-outline-info rounded-pill px-3 me-2" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $record->id }}">
                             <i class="bi bi-eye me-1"></i> Abrir ficha
                         </button>
-                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openDeleteModal('{{ route('inscricoes-eucaristia.destroy', $record->id) }}')">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openDeleteModal('{{ route('inscricoes-catequese-adultos.destroy', $record->id) }}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center py-5 text-muted">Nenhuma inscrição encontrada.</td>
+                    <td colspan="11" class="text-center py-5 text-muted">Nenhuma inscrição encontrada.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -122,7 +139,7 @@
 
                         <!-- Action Buttons -->
                         <div class="d-flex justify-content-center">
-                            <form action="{{ route('inscricoes-eucaristia.update-status', $record->id) }}" method="POST" class="d-flex align-items-center gap-2">
+                            <form action="{{ route('inscricoes-catequese-adultos.update-status', $record->id) }}" method="POST" class="d-flex align-items-center gap-2">
                                 @csrf
                                 @method('PUT')
                                 <select name="status" class="form-select rounded-pill" style="min-width: 150px;">
@@ -168,6 +185,10 @@
                                 <div class="col-md-3">
                                     <label class="text-muted small fw-bold text-uppercase">CEP</label>
                                     <div class="fw-medium text-dark">{{ $record->cep ?? '-' }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small fw-bold text-uppercase">Estado Civil</label>
+                                    <div class="fw-medium text-dark">{{ $record->estado_civil ?? '-' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -217,7 +238,7 @@
 
                     <!-- Section: Religious Info & Status -->
                     <div class="row g-4 mb-4 border-top pt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="text-muted small fw-bold text-uppercase d-block mb-1">Possui Batismo:</label>
                                 @if(!empty($record->certidao_batismo))
@@ -226,14 +247,28 @@
                                     <span class="badge bg-secondary rounded-pill px-3">Não/Não Anexado</span>
                                 @endif
                             </div>
-                            <div>
-                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Situação:</label>
-                                <span class="badge bg-{{ $statusColor }} text-{{ $statusColor }} bg-opacity-10 rounded-pill px-3 border border-{{ $statusColor }}">
-                                    <i class="bi bi-circle-fill me-1 small"></i> {{ $statusLabel }}
-                                </span>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Possui Primeira Comunhão:</label>
+                                @if(!empty($record->certidao_primeira_comunhao))
+                                    <span class="badge bg-success rounded-pill px-3">Sim</span>
+                                @else
+                                    <span class="badge bg-secondary rounded-pill px-3">Não/Não Anexado</span>
+                                @endif
                             </div>
                         </div>
-                        <div class="col-md-6">
+                         <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Possui Matrimônio:</label>
+                                @if(!empty($record->certidao_matrimonio))
+                                    <span class="badge bg-success rounded-pill px-3">Sim</span>
+                                @else
+                                    <span class="badge bg-secondary rounded-pill px-3">Não/Não Anexado</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-12">
                             <div>
                                 <label class="text-muted small fw-bold text-uppercase d-block mb-1">Taxa escolhida:</label>
                                 @if($record->taxa)
@@ -278,55 +313,77 @@
                                     'color' => 'primary'
                                 ],
                                 [
-                                    'title' => 'Comprovante Pagamento',
-                                    'file' => $record->comprovante_pagamento,
-                                    'path' => 'storage/uploads/comprovantes/eucaristia/',
-                                    'icon' => 'bi-receipt',
+                                    'title' => 'Certidão de 1ª Comunhão',
+                                    'file' => $record->certidao_primeira_comunhao,
+                                    'path' => 'storage/uploads/certidoes/',
+                                    'icon' => 'bi-book',
                                     'color' => 'success'
+                                ],
+                                [
+                                    'title' => 'Certidão de Matrimônio',
+                                    'file' => $record->certidao_matrimonio,
+                                    'path' => 'storage/uploads/certidoes/',
+                                    'icon' => 'bi-heart',
+                                    'color' => 'danger'
+                                ],
+                                [
+                                    'title' => 'Comprovante de Pagamento',
+                                    'file' => $record->comprovante_pagamento,
+                                    'path' => 'storage/uploads/comprovantes/',
+                                    'icon' => 'bi-cash-coin',
+                                    'color' => 'warning'
                                 ]
                             ];
                         @endphp
 
-                        @foreach($attachments as $att)
-                            @php
-                                $url = $att['file'] ? asset($att['path'] . $att['file']) : null;
-                                $ext = $att['file'] ? strtolower(pathinfo($att['file'], PATHINFO_EXTENSION)) : '';
-                                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                                $isPdf = $ext === 'pdf';
-                            @endphp
-                            <div class="col-md-4">
-                                <div class="card h-100 border bg-white rounded-3 overflow-hidden">
-                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center position-relative" style="height: 200px;">
-                                        @if($url)
-                                            @if($isImage)
-                                                <img src="{{ $url }}" class="w-100 h-100" style="object-fit: contain;" alt="{{ $att['title'] }}">
-                                            @elseif($isPdf)
-                                                <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 4rem;"></i>
-                                            @else
-                                                <i class="bi {{ $att['icon'] }} text-muted" style="font-size: 4rem;"></i>
-                                            @endif
-                                        @else
-                                            <div class="text-center text-muted">
-                                                <i class="bi bi-cloud-slash fs-1 d-block mb-2"></i>
-                                                <small>Não anexado</small>
+                        @foreach($attachments as $attach)
+                            @if(!empty($attach['file']))
+                                @php
+                                    // Handle full path in database vs relative path logic
+                                    // User said: columns already have prefix like catequese_adultos/
+                                    // And we should go to /certidoes/
+                                    // So full URL: asset('storage/uploads/certidoes/' . $attach['file'])
+                                    // Or 'storage/uploads/comprovantes/' . $attach['file']
+                                    
+                                    // Let's ensure the path is correct based on what user said.
+                                    // "na table na coluna certidao_batismo ja tem o catequese_adultos/"
+                                    // "ele só precia ir ate /certidoes/ igual nos demais modulos"
+                                    
+                                    // So if DB has "catequese_adultos/file.pdf", and we use 'storage/uploads/certidoes/', result is 'storage/uploads/certidoes/catequese_adultos/file.pdf'.
+                                    // This matches the requirement "as pastas desse modulo ficam em uploads/certidoes/catequese_adultos".
+                                    
+                                    $fileUrl = asset($attach['path'] . $attach['file']);
+                                    $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $attach['file']);
+                                @endphp
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden group-hover-effect">
+                                        <div class="card-body p-3 d-flex align-items-center gap-3">
+                                            <div class="rounded-circle bg-{{ $attach['color'] }} bg-opacity-10 p-3 text-{{ $attach['color'] }}">
+                                                <i class="bi {{ $attach['icon'] }} fs-4"></i>
                                             </div>
-                                        @endif
-                                    </div>
-                                    <div class="card-body p-3 text-center">
-                                        <h6 class="card-title fw-bold text-dark small mb-2">{{ $att['title'] }}</h6>
-                                        @if($url)
-                                            <a href="{{ $url }}" target="_blank" class="btn btn-sm btn-outline-{{ $att['color'] }} rounded-pill px-3 w-100">
-                                                <i class="bi bi-download me-1"></i> Baixar
-                                            </a>
-                                        @else
-                                            <button class="btn btn-sm btn-light text-muted rounded-pill px-3 w-100" disabled>
-                                                Indisponível
-                                            </button>
-                                        @endif
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="card-title fw-bold mb-1 text-truncate" title="{{ $attach['title'] }}">{{ $attach['title'] }}</h6>
+                                                <div class="d-flex gap-2 mt-2">
+                                                    <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                        <i class="bi bi-eye me-1"></i> Visualizar
+                                                    </a>
+                                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            @endif
                         @endforeach
+                        
+                        @if(empty($record->certidao_batismo) && empty($record->certidao_primeira_comunhao) && empty($record->certidao_matrimonio) && empty($record->comprovante_pagamento))
+                            <div class="col-12 text-center py-4 text-muted">
+                                <i class="bi bi-folder-x fs-3 d-block mb-2 opacity-50"></i>
+                                Nenhum documento anexado.
+                            </div>
+                        @endif
                      </div>
                 </div>
             </div>

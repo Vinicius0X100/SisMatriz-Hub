@@ -14,7 +14,6 @@
                 <th scope="col">Cert. 1ª Comunhão</th>
                 <th scope="col">Nascimento</th>
                 <th scope="col">Inscrito em</th>
-                <th scope="col">Pagamento</th>
                 <th scope="col" class="text-end pe-4">Ações</th>
             </tr>
         </thead>
@@ -73,11 +72,7 @@
                     </td>
                     <td class="text-muted">{{ $record->data_nascimento ? \Carbon\Carbon::parse($record->data_nascimento)->format('d/m/Y') : '-' }}</td>
                     <td class="text-muted">{{ $record->criado_em ? \Carbon\Carbon::parse($record->criado_em)->format('d/m/Y H:i') : '-' }}</td>
-                    <td>
-                        <span class="badge bg-{{ $paymentColor }} bg-opacity-10 text-{{ $paymentColor }} rounded-pill px-2">
-                            {{ $paymentLabel }}
-                        </span>
-                    </td>
+                   
                     <td class="text-end pe-4">
                         <a href="{{ route('inscricoes-crisma.print-single', $record->id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2" target="_blank" title="Imprimir Ficha Individual">
                             <i class="bi bi-printer me-1"></i> PDF
