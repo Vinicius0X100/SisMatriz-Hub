@@ -314,7 +314,7 @@ class InscricoesEucaristiaController extends Controller
             
             foreach ($attachments as $att) {
                 if ($att) {
-                    $fullPath = public_path('storage/uploads/certidoes/eucaristia/' . $att); // Changed path
+                    $fullPath = public_path('storage/uploads/certidoes/' . $att); // Changed path
                     if (file_exists($fullPath)) {
                         $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
                         if ($ext === 'pdf') {
@@ -435,7 +435,7 @@ class InscricoesEucaristiaController extends Controller
                     $record->cep,
                     $record->cidade ?? 'Guarapuava',
                     $record->estado,
-                    $record->certidao_batismo ? asset('storage/uploads/certidoes/eucaristia/' . $record->certidao_batismo) : '',
+                    $record->certidao_batismo ? asset('storage/uploads/certidoes/' . $record->certidao_batismo) : '',
                     $record->comprovante_pagamento ? asset('storage/uploads/comprovantes/eucaristia/' . $record->comprovante_pagamento) : '',
                     $dtCriado
                 ], ';');

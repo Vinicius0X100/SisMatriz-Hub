@@ -277,7 +277,7 @@
                                 [
                                     'title' => 'Certidão de Batismo',
                                     'file' => $record->certidao_batismo,
-                                    'path' => 'storage/uploads/certidoes/eucaristia/',
+                                    'path' => 'storage/uploads/certidoes/',
                                     'icon' => 'bi-droplet',
                                     'color' => 'primary'
                                 ],
