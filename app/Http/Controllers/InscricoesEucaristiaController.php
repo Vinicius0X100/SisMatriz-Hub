@@ -314,9 +314,16 @@ class InscricoesEucaristiaController extends Controller
             
             foreach ($attachments as $att) {
                 if ($att) {
-                    $fullPath = public_path('storage/uploads/certidoes/' . $att); // Changed path
+                    // Use storage_path directly to avoid symlink issues
+                    $fullPath = storage_path('app/public/uploads/certidoes/' . $att);
+                    
+                    Log::info("Processing attachment: {$att}");
+                    Log::info("Full path: {$fullPath}");
+                    Log::info("File exists: " . (file_exists($fullPath) ? 'Yes' : 'No'));
+                    
                     if (file_exists($fullPath)) {
                         $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+                        Log::info("Extension: {$ext}");
                         if ($ext === 'pdf') {
                              try {
                                 $pageCount = $pdf->setSourceFile($fullPath);
@@ -329,7 +336,9 @@ class InscricoesEucaristiaController extends Controller
                                  Log::error("Error merging PDF attachment {$att}: " . $e->getMessage());
                                  // Continue without this attachment
                              }
-                        }
+                        } 
+                        // Image attachments (jpg, png, etc) are already rendered in the Blade view
+                        // so we don't need to append them here to avoid duplication.
                     }
                 }
             }
