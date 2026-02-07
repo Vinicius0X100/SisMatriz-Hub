@@ -108,6 +108,17 @@
 </div>
 
 @foreach($records as $record)
+    @php
+        $estadoCivilMap = [
+            1 => 'Amasiado(a)',
+            2 => 'Casado(a)',
+            3 => 'Divorciado(a)',
+            4 => 'Separado(a)',
+            5 => 'Solteiro(a)',
+            6 => 'Viuvo(a)',
+        ];
+        $estadoCivilLabel = $estadoCivilMap[$record->estado_civil] ?? $record->estado_civil ?? '-';
+    @endphp
     <!-- Details Modal -->
     <div class="modal fade" id="detailsModal{{ $record->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -188,7 +199,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="text-muted small fw-bold text-uppercase">Estado Civil</label>
-                                    <div class="fw-medium text-dark">{{ $record->estado_civil ?? '-' }}</div>
+                                    <div class="fw-medium text-dark">{{ $estadoCivilLabel }}</div>
                                 </div>
                             </div>
                         </div>
@@ -339,39 +350,37 @@
                         @foreach($attachments as $attach)
                             @if(!empty($attach['file']))
                                 @php
-                                    // Handle full path in database vs relative path logic
-                                    // User said: columns already have prefix like catequese_adultos/
-                                    // And we should go to /certidoes/
-                                    // So full URL: asset('storage/uploads/certidoes/' . $attach['file'])
-                                    // Or 'storage/uploads/comprovantes/' . $attach['file']
-                                    
-                                    // Let's ensure the path is correct based on what user said.
-                                    // "na table na coluna certidao_batismo ja tem o catequese_adultos/"
-                                    // "ele só precia ir ate /certidoes/ igual nos demais modulos"
-                                    
-                                    // So if DB has "catequese_adultos/file.pdf", and we use 'storage/uploads/certidoes/', result is 'storage/uploads/certidoes/catequese_adultos/file.pdf'.
-                                    // This matches the requirement "as pastas desse modulo ficam em uploads/certidoes/catequese_adultos".
-                                    
                                     $fileUrl = asset($attach['path'] . $attach['file']);
                                     $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $attach['file']);
+                                    $isPdf = preg_match('/\.(pdf)$/i', $attach['file']);
                                 @endphp
-                                <div class="col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden group-hover-effect">
-                                        <div class="card-body p-3 d-flex align-items-center gap-3">
-                                            <div class="rounded-circle bg-{{ $attach['color'] }} bg-opacity-10 p-3 text-{{ $attach['color'] }}">
-                                                <i class="bi {{ $attach['icon'] }} fs-4"></i>
-                                            </div>
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h6 class="card-title fw-bold mb-1 text-truncate" title="{{ $attach['title'] }}">{{ $attach['title'] }}</h6>
-                                                <div class="d-flex gap-2 mt-2">
-                                                    <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                        <i class="bi bi-eye me-1"></i> Visualizar
-                                                    </a>
-                                                    <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                                        <i class="bi bi-download"></i>
-                                                    </a>
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
+                                        <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="rounded-circle bg-{{ $attach['color'] }} bg-opacity-10 p-2 text-{{ $attach['color'] }}">
+                                                    <i class="bi {{ $attach['icon'] }}"></i>
                                                 </div>
+                                                <h6 class="fw-bold mb-0 text-dark">{{ $attach['title'] }}</h6>
                                             </div>
+                                            <a href="{{ $fileUrl }}" download class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                                <i class="bi bi-download me-1"></i> Baixar
+                                            </a>
+                                        </div>
+                                        <div class="card-body p-0 text-center bg-dark bg-opacity-10">
+                                            @if($isImage)
+                                                <div class="p-3">
+                                                    <img src="{{ $fileUrl }}" class="img-fluid rounded shadow-sm" style="max-height: 500px; width: auto;" alt="{{ $attach['title'] }}">
+                                                </div>
+                                            @elseif($isPdf)
+                                                <iframe src="{{ $fileUrl }}" class="w-100" style="height: 500px; border: none;"></iframe>
+                                            @else
+                                                <div class="py-5 text-muted">
+                                                    <i class="bi bi-file-earmark-text fs-1 opacity-50"></i>
+                                                    <p class="mb-0 mt-2">Visualização não disponível para este formato.</p>
+                                                    <small>Utilize o botão baixar para visualizar o arquivo.</small>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

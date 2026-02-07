@@ -164,6 +164,17 @@
     </div>
 
     @foreach($records as $record)
+        @php
+            $estadoCivilMap = [
+                1 => 'Amasiado(a)',
+                2 => 'Casado(a)',
+                3 => 'Divorciado(a)',
+                4 => 'Separado(a)',
+                5 => 'Solteiro(a)',
+                6 => 'Viuvo(a)',
+            ];
+            $estadoCivilLabel = $estadoCivilMap[$record->estado_civil] ?? $record->estado_civil ?? '-';
+        @endphp
         <div class="container {{ !$loop->last ? 'page-break' : '' }}">
             <!-- Content Header (Specific to Record) -->
             <div style="text-align: right; font-size: 10px; color: #64748b; margin-bottom: 10px;">
@@ -207,7 +218,7 @@
                 <tr>
                     <td style="width: 33%;">
                         <span class="label">Estado Civil</span>
-                        <span class="value">{{ $record->estado_civil }}</span>
+                        <span class="value">{{ $estadoCivilLabel }}</span>
                     </td>
                     <td colspan="2"></td>
                 </tr>
