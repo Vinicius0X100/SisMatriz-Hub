@@ -128,6 +128,18 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('inscricoes-crisma/deadline', [App\Http\Controllers\InscricoesCrismaController::class, 'storeDeadline'])->name('inscricoes-crisma.store-deadline');
     Route::post('inscricoes-crisma/tax-config', [App\Http\Controllers\InscricoesCrismaController::class, 'storeTaxConfig'])->name('inscricoes-crisma.store-tax-config');
     Route::resource('inscricoes-crisma', App\Http\Controllers\InscricoesCrismaController::class);
+
+    // Inscrições Eucaristia
+    Route::get('inscricoes-eucaristia/search-users', [App\Http\Controllers\InscricoesEucaristiaController::class, 'searchUsers'])->name('inscricoes-eucaristia.search-users');
+    Route::post('inscricoes-eucaristia/share', [App\Http\Controllers\InscricoesEucaristiaController::class, 'share'])->name('inscricoes-eucaristia.share');
+    Route::get('inscricoes-eucaristia/export', [App\Http\Controllers\InscricoesEucaristiaController::class, 'export'])->name('inscricoes-eucaristia.export');
+    Route::get('inscricoes-eucaristia/{id}/print', [App\Http\Controllers\InscricoesEucaristiaController::class, 'printSingle'])->name('inscricoes-eucaristia.print-single');
+    Route::post('inscricoes-eucaristia/bulk-destroy', [App\Http\Controllers\InscricoesEucaristiaController::class, 'bulkDestroy'])->name('inscricoes-eucaristia.bulk-destroy');
+    Route::post('inscricoes-eucaristia/bulk-print', [App\Http\Controllers\InscricoesEucaristiaController::class, 'bulkPrint'])->name('inscricoes-eucaristia.bulk-print');
+    Route::put('inscricoes-eucaristia/{id}/status', [App\Http\Controllers\InscricoesEucaristiaController::class, 'updateStatus'])->name('inscricoes-eucaristia.update-status');
+    Route::post('inscricoes-eucaristia/deadline', [App\Http\Controllers\InscricoesEucaristiaController::class, 'storeDeadline'])->name('inscricoes-eucaristia.store-deadline');
+    Route::post('inscricoes-eucaristia/tax-config', [App\Http\Controllers\InscricoesEucaristiaController::class, 'storeTaxConfig'])->name('inscricoes-eucaristia.store-tax-config');
+    Route::resource('inscricoes-eucaristia', App\Http\Controllers\InscricoesEucaristiaController::class);
     Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);
 
     // Acólitos e Coroinhas

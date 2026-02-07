@@ -22,7 +22,7 @@ return [
     ['name' => 'Lembretes', 'icon' => 'bell', 'url' => '/lembretes', 'allowed_roles' => ['*']],
     ['name' => 'Solicitações à Pascom', 'icon' => 'camera', 'url' => '/solicitacoes-pascom', 'allowed_roles' => ['9', '10']],
     ['name' => 'Inscrições de Crisma', 'icon' => 'pencil-square', 'url' => '/inscricoes-crisma', 'allowed_roles' => ['3', '13']],
-    ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'allowed_roles' => ['7']],
+    ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'url' => '/inscricoes-eucaristia', 'allowed_roles' => ['7', '12']],
     ['name' => 'Inscrições de catequese de adultos', 'icon' => 'pencil-square', 'allowed_roles' => ['17']],
     ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus', 'url' => '/solicitacoes-segunda-via', 'allowed_roles' => ['15']],
     ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'allowed_roles' => []],
