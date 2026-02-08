@@ -197,6 +197,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('celebration-schedules', App\Http\Controllers\CelebrationScheduleController::class);
 
     // Protocols
+    Route::get('protocols/notification/{id}/read', [App\Http\Controllers\ProtocolController::class, 'markNotificationAsRead'])->name('protocols.notification.read');
     Route::resource('protocols', App\Http\Controllers\ProtocolController::class);
     
     // Admin Protocols

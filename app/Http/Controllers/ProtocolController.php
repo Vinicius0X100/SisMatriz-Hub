@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Protocol;
 use App\Models\ProtocolFile;
+use App\Models\ProtocolStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -51,5 +52,15 @@ class ProtocolController extends Controller
         }
 
         return redirect()->route('protocols.index')->with('success', 'Protocolo criado com sucesso!');
+    }
+
+    public function markNotificationAsRead($id)
+    {
+        $notification = ProtocolStatusNotification::where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        $notification->update(['is_read' => true]);
+
+        return redirect()->route('protocols.index')->with('info', 'Notificação marcada como lida. Verifique o status do seu protocolo.');
     }
 }

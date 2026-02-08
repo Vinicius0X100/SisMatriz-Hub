@@ -40,8 +40,14 @@
                                 ->with('sender')
                                 ->orderBy('created_at', 'desc')
                                 ->get();
+
+                            $protocolNotifications = \App\Models\ProtocolStatusNotification::where('user_id', Auth::id())
+                                ->where('is_read', false)
+                                ->with('protocol')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
                                 
-                            $totalNotifications = $reminders->count() + $messages->count();
+                            $totalNotifications = $reminders->count() + $messages->count() + $protocolNotifications->count();
                         @endphp
                         @if($totalNotifications > 0)
                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
@@ -57,6 +63,23 @@
                             @endif
                         </div>
                         <div class="list-group list-group-flush" id="notificationList">
+                            <!-- Protocol Notifications -->
+                            @foreach($protocolNotifications as $notification)
+                                <a href="{{ route('protocols.notification.read', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="position-relative">
+                                            <i class="bi bi-file-earmark-text text-primary mt-1 fs-5"></i>
+                                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ $notification->title }}</div>
+                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $notification->message }}</div>
+                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+
                             <!-- Messages -->
                             @php
                                 $groupedMessages = $messages->groupBy('sender_id');
