@@ -196,6 +196,13 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('celebration-schedules/bulk-delete', [App\Http\Controllers\CelebrationScheduleController::class, 'bulkDestroy'])->name('celebration-schedules.bulk-delete');
     Route::resource('celebration-schedules', App\Http\Controllers\CelebrationScheduleController::class);
 
+    // Protocols
+    Route::resource('protocols', App\Http\Controllers\ProtocolController::class);
+    
+    // Admin Protocols
+    Route::get('admin/protocols', [App\Http\Controllers\AdminProtocolController::class, 'index'])->name('admin.protocols.index');
+    Route::put('admin/protocols/{id}', [App\Http\Controllers\AdminProtocolController::class, 'update'])->name('admin.protocols.update');
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
