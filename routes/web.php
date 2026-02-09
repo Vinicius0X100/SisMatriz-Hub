@@ -223,7 +223,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('notas-fiscais', App\Http\Controllers\NotaFiscalController::class)->parameters([
         'notas-fiscais' => 'notaFiscal'
     ]);
-    Route::post('notas-fiscais/bulk-delete', [App\Http\Controllers\NotaFiscalController::class, 'bulkDestroy'])->name('notas-fiscais.bulk-delete');
+    Route::post('notas-fiscais/bulk-destroy', [App\Http\Controllers\NotaFiscalController::class, 'bulkDestroy'])->name('notas-fiscais.bulk-destroy');
     Route::get('notas-fiscais/{notaFiscal}/download', [App\Http\Controllers\NotaFiscalController::class, 'download'])->name('notas-fiscais.download');
 
     // Excursões
