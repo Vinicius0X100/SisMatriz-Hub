@@ -204,6 +204,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('admin/protocols', [App\Http\Controllers\AdminProtocolController::class, 'index'])->name('admin.protocols.index');
     Route::put('admin/protocols/{id}', [App\Http\Controllers\AdminProtocolController::class, 'update'])->name('admin.protocols.update');
 
+    // Acessos e Usuários (Controle de Acesso)
+    Route::resource('access-control', App\Http\Controllers\AccessControlController::class);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');

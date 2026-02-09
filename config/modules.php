@@ -7,7 +7,7 @@ return [
     ['name' => 'Estoque', 'icon' => 'box-seam', 'allowed_roles' => ['15', '4']],
     ['name' => 'Inventário', 'icon' => 'clipboard-data', 'url' => '/inventory', 'allowed_roles' => ['15']],
     ['name' => 'Buckets de mídia', 'icon' => 'collection-play', 'allowed_roles' => ['*']],
-    ['name' => 'Acessos de usuários', 'icon' => 'people', 'allowed_roles' => []], // Only Admins
+    ['name' => 'Acessos e Usuários', 'icon' => 'people', 'url' => '/access-control', 'allowed_roles' => ['1', '111']],
     ['name' => 'Configurações', 'icon' => 'gear', 'url' => '/settings', 'allowed_roles' => []], // Only Admins
     ['name' => 'Escalas de Acólitos e Coroinhas', 'icon' => 'calendar-check', 'url' => '/acolitos/escalas', 'allowed_roles' => ['6', '8']],
     ['name' => 'Funções de Acólitos e Coroinhas', 'icon' => 'list-task', 'url' => '/acolitos/funcoes', 'allowed_roles' => ['6', '8']],
