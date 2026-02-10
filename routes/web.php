@@ -187,6 +187,15 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('categorias_doacao/bulk-delete', [App\Http\Controllers\CategoriaDoacaoController::class, 'bulkDestroy'])->name('categorias_doacao.bulk-delete');
     Route::resource('categorias_doacao', App\Http\Controllers\CategoriaDoacaoController::class);
 
+    // Estoque (Social Assistant)
+    Route::post('estoque/bulk-delete', [App\Http\Controllers\EstoqueController::class, 'bulkDestroy'])->name('estoque.bulk-delete');
+    Route::any('estoque/pdf', [App\Http\Controllers\EstoqueController::class, 'generatePdf'])->name('estoque.pdf');
+    Route::delete('estoque/image/{id}', [App\Http\Controllers\EstoqueController::class, 'deleteImage'])->name('estoque.image.delete');
+    Route::resource('estoque', App\Http\Controllers\EstoqueController::class);
+
+    // Saída de Estoque
+    Route::resource('estoque-saida', App\Http\Controllers\EstoqueSaidaController::class);
+
     // Inventário
     Route::post('inventory/bulk-delete', [App\Http\Controllers\InventoryController::class, 'bulkDestroy'])->name('inventory.bulk-delete');
     Route::get('inventory/photo/{id}/delete', [App\Http\Controllers\InventoryController::class, 'destroyPhoto'])->name('inventory.photo.destroy');
@@ -224,6 +233,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         'notas-fiscais' => 'notaFiscal'
     ]);
     Route::post('notas-fiscais/bulk-destroy', [App\Http\Controllers\NotaFiscalController::class, 'bulkDestroy'])->name('notas-fiscais.bulk-destroy');
+
+    // Estoque Routes
+    Route::resource('estoque', App\Http\Controllers\EstoqueController::class);
+    Route::post('estoque/bulk-destroy', [App\Http\Controllers\EstoqueController::class, 'bulkDestroy'])->name('estoque.bulk-destroy');
+    Route::delete('estoque/image/{id}', [App\Http\Controllers\EstoqueController::class, 'deleteImage'])->name('estoque.image.delete');
     Route::get('notas-fiscais/{notaFiscal}/download', [App\Http\Controllers\NotaFiscalController::class, 'download'])->name('notas-fiscais.download');
 
     // Excursões
