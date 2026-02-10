@@ -175,6 +175,7 @@ class RegisterController extends Controller
             'father_name' => 'nullable|string|max:255',
             'familly_qntd' => 'nullable|integer',
             'photo' => 'nullable|image|max:2048',
+            'observations' => 'nullable|string',
         ]);
 
         $validated['paroquia_id'] = Auth::user()->paroquia_id;
@@ -233,6 +234,7 @@ class RegisterController extends Controller
             'status' => 'required|boolean',
             'photo' => 'nullable|image|max:2048',
             'attachments.*' => 'nullable|file|max:20480|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,rtf,jpg,jpeg,png,gif,zip,rar,7z',
+            'observations' => 'nullable|string',
         ]);
 
         if (!empty($validated['born_date'])) {

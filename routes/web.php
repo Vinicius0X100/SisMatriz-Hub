@@ -211,77 +211,16 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     
     // Admin Protocols
     Route::get('admin/protocols', [App\Http\Controllers\AdminProtocolController::class, 'index'])->name('admin.protocols.index');
-    Route::put('admin/protocols/{id}', [App\Http\Controllers\AdminProtocolController::class, 'update'])->name('admin.protocols.update');
-
-    // Acessos e Usuários (Controle de Acesso)
-    Route::resource('access-control', App\Http\Controllers\AccessControlController::class);
-
-    // Chat
-    Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
-    Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
-    Route::get('/chat/messages/{userId}', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
-    Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
-    Route::get('/chat/unread', [App\Http\Controllers\ChatController::class, 'getUnreadCount'])->name('chat.unread');
-    Route::post('/chat/toggle-pin', [App\Http\Controllers\ChatController::class, 'toggleUserPin'])->name('chat.toggle-pin');
-    Route::post('/chat/block', [App\Http\Controllers\ChatController::class, 'blockUser'])->name('chat.block');
-    Route::post('/chat/unblock', [App\Http\Controllers\ChatController::class, 'unblockUser'])->name('chat.unblock');
-    Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
-
-
-    // Notas Fiscais
-    Route::resource('notas-fiscais', App\Http\Controllers\NotaFiscalController::class)->parameters([
-        'notas-fiscais' => 'notaFiscal'
-    ]);
-    Route::post('notas-fiscais/bulk-destroy', [App\Http\Controllers\NotaFiscalController::class, 'bulkDestroy'])->name('notas-fiscais.bulk-destroy');
-
-    // Estoque Routes
-    Route::resource('estoque', App\Http\Controllers\EstoqueController::class);
-    Route::post('estoque/bulk-destroy', [App\Http\Controllers\EstoqueController::class, 'bulkDestroy'])->name('estoque.bulk-destroy');
-    Route::delete('estoque/image/{id}', [App\Http\Controllers\EstoqueController::class, 'deleteImage'])->name('estoque.image.delete');
-    Route::get('notas-fiscais/{notaFiscal}/download', [App\Http\Controllers\NotaFiscalController::class, 'download'])->name('notas-fiscais.download');
-
-    // Excursões
-    Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class)->parameters([
-        'excursoes' => 'excursao'
-    ]);
-    
-    Route::prefix('excursoes/{excursao}')->name('excursoes.')->group(function () {
-        Route::resource('onibus', App\Http\Controllers\OnibusController::class)->parameters([
-            'onibus' => 'onibus'
-        ]);
-        
-        Route::prefix('onibus/{onibus}')->name('onibus.')->group(function () {
-            // PDF Routes
-            Route::get('manifesto', [App\Http\Controllers\OnibusPdfController::class, 'downloadManifest'])->name('manifesto');
-            Route::get('passagens', [App\Http\Controllers\OnibusPdfController::class, 'downloadTickets'])->name('passagens');
-            Route::get('passagens/{assento}', [App\Http\Controllers\OnibusPdfController::class, 'downloadTicket'])->name('passagens.show');
-            Route::get('passagens-recorte', [App\Http\Controllers\OnibusPdfController::class, 'downloadTicketsPrintable'])->name('passagens-recorte');
-
-            Route::post('assentos', [App\Http\Controllers\AssentoVendidoController::class, 'store'])->name('assentos.store');
-            Route::delete('assentos/{assento}', [App\Http\Controllers\AssentoVendidoController::class, 'destroy'])->name('assentos.destroy');
-        });
-    });
-
-    // Ofertas e Dízimos
-    Route::post('ofertas/bulk-store', [App\Http\Controllers\OfertaController::class, 'storeBulk'])->name('ofertas.bulk-store');
-    Route::post('ofertas/export-pdf', [App\Http\Controllers\OfertaController::class, 'exportPdf'])->name('ofertas.export-pdf');
-    Route::post('ofertas/bulk-delete', [App\Http\Controllers\OfertaController::class, 'bulkDestroy'])->name('ofertas.bulk-delete');
-    Route::resource('ofertas', App\Http\Controllers\OfertaController::class);
-
-    // Salas e Espaços
-    Route::resource('reservas-locais', App\Http\Controllers\ReservasLocaisController::class);
-
-    // Reservas e Calendário (View) - Consolidated to controller route above
-
+    Route::get('admin/protocols/{id}', [App\Http\Controllers\AdminProtocolController::class, 'show'])->name('admin.protocols.show');
+    Route::post('admin/protocols/{id}/status', [App\Http\Controllers\AdminProtocolController::class, 'updateStatus'])->name('admin.protocols.update-status');
 
     // Comunidades
     Route::resource('comunidades', App\Http\Controllers\ComunidadeController::class);
 
-    // Onboarding / Setup Routes
-    Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
-    Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
-    
-    Route::get('/setup/welcome', [OnboardingController::class, 'showWelcome'])->name('setup.welcome');
-    Route::post('/setup/welcome', [OnboardingController::class, 'updateWelcome'])->name('setup.welcome.update');
-    Route::post('/setup/welcome/skip', [OnboardingController::class, 'skipWelcome'])->name('setup.welcome.skip');
+    // Salas e Espaços
+    Route::resource('reservas-locais', App\Http\Controllers\ReservaLocalController::class);
+
+    // Comunicação em Massa
+    Route::get('mass-communication', [App\Http\Controllers\MassCommunicationController::class, 'index'])->name('mass-communication.index');
+    Route::post('mass-communication/send', [App\Http\Controllers\MassCommunicationController::class, 'send'])->name('mass-communication.send');
 });

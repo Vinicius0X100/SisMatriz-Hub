@@ -866,6 +866,12 @@
                                             ${[data.address, data.address_number, data.home_situation, data.city, data.state, data.cep].filter(Boolean).join(', ') || '-'}
                                         </div>
                                     </div>
+                                    <div class="col-12">
+                                        <label class="small text-muted fw-bold text-uppercase">Observações</label>
+                                        <div class="fw-medium text-dark">
+                                            ${(data.observations && data.observations != 0 && data.observations.trim() !== '') ? data.observations : '-'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

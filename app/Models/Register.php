@@ -39,6 +39,7 @@ class Register extends Model
         'status',
         'photo',
         'paroquia_id',
+        'observations',
     ];
 
     protected $casts = [

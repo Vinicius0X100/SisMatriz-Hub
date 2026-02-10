@@ -208,7 +208,15 @@
                     </div>
                 </div>
 
-                <!-- Row 7: Foto Drag & Drop -->
+                <!-- Row 7: Observações -->
+                <div class="row g-4 mb-4">
+                    <div class="col-12">
+                        <label for="observations" class="form-label fw-bold small text-muted">Observação <span class="text-primary fw-bold small">(opcional)</span></label>
+                        <textarea class="form-control rounded-4 bg-light border-0 px-4 py-3" id="observations" name="observations" rows="3" placeholder="Insira observações adicionais aqui..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Row 8: Foto Drag & Drop -->
                 <div class="row g-4 mb-4">
                     <div class="col-12">
                         <label class="form-label fw-bold small text-muted">Foto</label>
