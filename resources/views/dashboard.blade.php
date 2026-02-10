@@ -5,53 +5,243 @@
     <div class="row">
         <!-- Main Content (Modules) -->
         <div class="col-md-9 col-lg-10">
-            <!-- Widgets de Tempo e Clima -->
-            <div class="row mb-4 g-3">
-                <!-- Horário -->
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-primary text-white h-100 rounded-4">
-                        <div class="card-body d-flex align-items-center justify-content-between p-3">
-                            <div>
-                                <h6 class="text-white-50 mb-1 small text-uppercase fw-bold">Horário Atual</h6>
-                                <h2 class="fw-bold mb-0 display-6" id="clockTime">--:--</h2>
-                            </div>
-                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-clock fs-3"></i>
-                            </div>
-                        </div>
+            
+            <!-- Header Info (Simples) -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold text-dark mb-1">Dashboard</h4>
+                    <p class="text-muted small mb-0">Visão geral da paróquia</p>
+                </div>
+                <div class="d-flex gap-4">
+                    <div class="d-flex align-items-center text-muted">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        <span id="clockDate" class="fw-medium">--/--/----</span>
+                    </div>
+                    <div class="d-flex align-items-center text-muted">
+                        <i class="bi bi-clock me-2"></i>
+                        <span id="clockTime" class="fw-medium">--:--</span>
+                    </div>
+                    <div class="d-flex align-items-center text-muted">
+                        <i id="weatherIcon" class="bi bi-cloud me-2"></i>
+                        <span id="weatherTemp" class="fw-medium">--°C</span>
                     </div>
                 </div>
-                <!-- Data -->
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-success text-white h-100 rounded-4">
-                        <div class="card-body d-flex align-items-center justify-content-between p-3">
-                            <div>
-                                <h6 class="text-white-50 mb-1 small text-uppercase fw-bold">Data de Hoje</h6>
-                                <h5 class="fw-bold mb-0" id="clockDate">--/--/----</h5>
-                            </div>
-                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-calendar-event fs-3"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Clima -->
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-info text-white h-100 rounded-4">
-                        <div class="card-body d-flex align-items-center justify-content-between p-3">
-                            <div>
-                                <h6 class="text-white-50 mb-1 small text-uppercase fw-bold" id="locationName">Localizando...</h6>
-                                <div class="d-flex align-items-center">
-                                    <h2 class="fw-bold mb-0 display-6 me-2" id="weatherTemp">--°C</h2>
+            </div>
+
+            <!-- Quantitative Cards -->
+            @if(isset($stats))
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-people fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Registros</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['registers'] }}</h3>
                                 </div>
                             </div>
-                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i id="weatherIcon" class="bi bi-cloud fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-person-badge fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Usuários</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['users'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-easel fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Turmas</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['classes'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-card-checklist fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Inscrições</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['enrollments'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-tags fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Categorias</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['categories'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-building fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Comunidades</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['communities'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-file-text fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Protocolos</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['protocols'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-heart fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Vicentinos</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['vicentinos'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-file-earmark-x fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Docs Pendentes</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['docs_pending'] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-file-earmark-check fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Docs Entregues</h6>
+                                    <h3 class="fw-bold text-dark mb-0">{{ $stats['docs_delivered'] }}</h3>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            @endif
+
+            <!-- Filters -->
+            @if(isset($chartData) || isset($accessChartData))
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <form action="{{ route('dashboard') }}" method="GET" class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-muted small">Data Início</label>
+                                    <input type="date" name="start_date" class="form-control rounded-pill" value="{{ request('start_date') }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-muted small">Data Fim</label>
+                                    <input type="date" name="end_date" class="form-control rounded-pill" value="{{ request('end_date') }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold">
+                                        <i class="bi bi-filter me-2"></i> Filtrar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Financial Charts -->
+            @if(isset($chartData))
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold text-dark mb-0">Análise Financeira</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <canvas id="financialChart" style="max-height: 300px; width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Access Chart -->
+            @if(isset($accessChartData))
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold text-dark mb-0">Acessos por Dispositivo</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <canvas id="accessChart" style="max-height: 300px; width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- Barra de Pesquisa de Módulos -->
             <div class="row mb-4">
@@ -223,8 +413,154 @@
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Financial Chart
+        const chartCanvas = document.getElementById('financialChart');
+        if (chartCanvas) {
+            const ctx = chartCanvas.getContext('2d');
+            const chartData = @json($chartData);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Ofertas',
+                            data: chartData.ofertas,
+                            borderColor: '#0d6efd', // Primary
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Dízimos',
+                            data: chartData.dizimos,
+                            borderColor: '#198754', // Success
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Notas Fiscais',
+                            data: chartData.notas,
+                            borderColor: '#ffc107', // Warning
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumSignificantDigits: 3 }).format(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Access Chart
+        @if(isset($accessChartData))
+        const ctxAccess = document.getElementById('accessChart');
+        if (ctxAccess) {
+            new Chart(ctxAccess, {
+                type: 'line',
+                data: {
+                    labels: @json($accessChartData['labels']),
+                    datasets: [
+                        {
+                            label: 'Web (Portal)',
+                            data: @json($accessChartData['web']),
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Android',
+                            data: @json($accessChartData['android']),
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'iOS',
+                            data: @json($accessChartData['ios']),
+                            borderColor: '#212529',
+                            backgroundColor: 'rgba(33, 37, 41, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        @endif
+
         // Drag and Drop (Sortable)
         const pinnedContainer = document.querySelector('#pinnedSection .row');
         if (pinnedContainer) {
@@ -442,27 +778,13 @@
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // Reverse Geocoding (Nominatim OpenStreetMap - Free, No Key)
-                    // Note: Use responsibly. For high traffic, cache results or use a paid service.
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            let city = data.address.city || data.address.town || data.address.village || data.address.municipality || 'Local desconhecido';
-                            // Shorten city name if too long
-                            if (city.length > 15) city = city.substring(0, 15) + '...';
-                            document.getElementById('locationName').textContent = city;
-                        })
-                        .catch(err => {
-                            console.error('Geo error:', err);
-                            document.getElementById('locationName').textContent = 'Brasil';
-                        });
-
                     // Weather (Open-Meteo - Free, No Key)
                     fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`)
                         .then(res => res.json())
                         .then(data => {
                             const temp = Math.round(data.current.temperature_2m);
-                            document.getElementById('weatherTemp').textContent = `${temp}°C`;
+                            const tempEl = document.getElementById('weatherTemp');
+                            if(tempEl) tempEl.textContent = `${temp}°C`;
                             
                             // Map WMO codes to Bootstrap Icons
                             const code = data.current.weather_code;
@@ -479,17 +801,17 @@
                             const hour = new Date().getHours();
                             if ((hour >= 18 || hour < 6) && code === 0) icon = 'bi-moon-stars';
                             
-                            document.getElementById('weatherIcon').className = `bi ${icon}`;
+                            const iconEl = document.getElementById('weatherIcon');
+                            if(iconEl) iconEl.className = `bi ${icon} me-2`;
                         })
                         .catch(err => console.error('Weather error:', err));
 
                 }, error => {
                     console.log('Geolocation denied or failed:', error);
-                    document.getElementById('locationName').textContent = 'Brasil';
-                    document.getElementById('weatherTemp').textContent = '--';
+                    // No UI update needed for error in simple mode, or maybe specific placeholder
                 });
             } else {
-                document.getElementById('locationName').textContent = 'Navegador incompatível';
+                console.log('Navegador incompatível');
             }
         }
         fetchWeather(); // Call once on load

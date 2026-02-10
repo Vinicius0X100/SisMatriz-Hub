@@ -8,16 +8,198 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\PinnedModule;
 use App\Models\UserAccess;
 use Carbon\Carbon;
+use App\Models\Register;
+use App\Models\User;
+use App\Models\TurmaEucaristia;
+use App\Models\TurmaCrisma;
+use App\Models\TurmaAdultos;
+use App\Models\InscricaoEucaristia;
+use App\Models\InscricaoCrisma;
+use App\Models\InscricaoCatequeseAdultos;
+use App\Models\Oferta;
+use App\Models\NotaFiscal;
+use App\Models\CategoriaDoacao;
+use App\Models\Entidade;
+use App\Models\Protocol;
+use App\Models\VinWatched;
+use App\Models\DocsEucaristia;
+use App\Models\DocsCrisma;
+use Illuminate\Support\Facades\DB;
+
+use Carbon\CarbonPeriod;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $paroquiaId = $user->paroquia_id; // Assuming user has this field or relation
 
+        // Date Filter
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : Carbon::now()->subMonths(11)->startOfMonth();
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : Carbon::now()->endOfMonth();
+        
+        // Ensure valid range
+        if ($startDate->gt($endDate)) {
+            $startDate = Carbon::now()->subMonths(11)->startOfMonth();
+            $endDate = Carbon::now()->endOfMonth();
+        }
+
         // Fetch modules based on permissions
         $modules = $user->getAccessibleModules();
+
+        // Check Permissions
+        $isSuperAdmin = $user->hasAnyRole(['1', '111']);
+        $isTreasurer = $user->hasRole('11');
+
+        $stats = null;
+        $chartData = null;
+        $accessChartData = null;
+
+        // --- Quantitative Stats (Only Roles 1 and 111) ---
+        if ($isSuperAdmin) {
+            // Calculate Docs Stats
+            $docsEucaristiaPending = DocsEucaristia::whereHas('register', function($q) use ($paroquiaId) {
+                $q->where('paroquia_id', $paroquiaId);
+            })->where(function($q) {
+                $q->where('rg', false)
+                  ->orWhere('comprovante_residencia', false)
+                  ->orWhere('certidao_batismo', false);
+            })->count();
+
+            $docsCrismaPending = DocsCrisma::whereHas('register', function($q) use ($paroquiaId) {
+                $q->where('paroquia_id', $paroquiaId);
+            })->where(function($q) {
+                $q->where('rg', false)
+                  ->orWhere('comprovante_residencia', false)
+                  ->orWhere('certidao_batismo', false)
+                  ->orWhere('certidao_eucaristia', false)
+                  ->orWhere('rg_padrinho', false)
+                  ->orWhere('certidao_casamento_padrinho', false)
+                  ->orWhere('certidao_crisma_padrinho', false);
+            })->count();
+
+            $docsEucaristiaDelivered = DocsEucaristia::whereHas('register', function($q) use ($paroquiaId) {
+                $q->where('paroquia_id', $paroquiaId);
+            })->where('rg', true)
+              ->where('comprovante_residencia', true)
+              ->where('certidao_batismo', true)
+              ->count();
+
+            $docsCrismaDelivered = DocsCrisma::whereHas('register', function($q) use ($paroquiaId) {
+                $q->where('paroquia_id', $paroquiaId);
+            })->where('rg', true)
+              ->where('comprovante_residencia', true)
+              ->where('certidao_batismo', true)
+              ->where('certidao_eucaristia', true)
+              ->where('rg_padrinho', true)
+              ->where('certidao_casamento_padrinho', true)
+              ->where('certidao_crisma_padrinho', true)
+              ->count();
+
+            $stats = [
+                'registers' => Register::where('paroquia_id', $paroquiaId)->count(),
+                'users' => User::where('paroquia_id', $paroquiaId)->count(),
+                'classes' => TurmaEucaristia::where('paroquia_id', $paroquiaId)->count() +
+                             TurmaCrisma::where('paroquia_id', $paroquiaId)->count() +
+                             TurmaAdultos::where('paroquia_id', $paroquiaId)->count(),
+                'enrollments' => InscricaoEucaristia::where('paroquia_id', $paroquiaId)->count() +
+                                 InscricaoCrisma::where('paroquia_id', $paroquiaId)->count() +
+                                 InscricaoCatequeseAdultos::where('paroquia_id', $paroquiaId)->count(),
+                'categories' => CategoriaDoacao::where('paroquia_id', $paroquiaId)->count(),
+                'communities' => Entidade::where('paroquia_id', $paroquiaId)->count(),
+                'vicentinos' => VinWatched::where('paroquia_id', $paroquiaId)->count(),
+                'protocols' => Protocol::where('paroquia_id', $paroquiaId)->count(),
+                'docs_pending' => $docsEucaristiaPending + $docsCrismaPending,
+                'docs_delivered' => $docsEucaristiaDelivered + $docsCrismaDelivered,
+            ];
+        }
+
+        // --- Financial Charts Data (Last 12 months) (Roles 1, 111 AND 11) ---
+        if ($isSuperAdmin || $isTreasurer) {
+            $months = [];
+            $ofertasData = [];
+            $dizimosData = [];
+            $notasData = [];
+            
+            // Access Chart Data
+            $webAccessData = [];
+            $androidAccessData = [];
+            $iosAccessData = [];
+
+            $period = CarbonPeriod::create($startDate, '1 month', $endDate);
+
+            foreach ($period as $date) {
+                $monthLabel = $date->format('m/Y'); 
+                $year = $date->year;
+                $month = $date->month;
+    
+                $months[] = $monthLabel;
+    
+                // Ofertas (Kind != 1)
+                $ofertasData[] = Oferta::where('paroquia_id', $paroquiaId)
+                    ->whereYear('data', $year)
+                    ->whereMonth('data', $month)
+                    ->where('kind', '!=', 1) 
+                    ->sum('valor_total');
+    
+                // Dízimos (Kind == 1)
+                $dizimosData[] = Oferta::where('paroquia_id', $paroquiaId)
+                    ->whereYear('data', $year)
+                    ->whereMonth('data', $month)
+                    ->where('kind', 1) 
+                    ->sum('valor_total');
+    
+                // Notas Fiscais
+                $notasData[] = NotaFiscal::where('paroquia_id', $paroquiaId)
+                    ->whereYear('data_emissao', $year)
+                    ->whereMonth('data_emissao', $month)
+                    ->sum('valor_total');
+
+                // Access Data (Only for SuperAdmin)
+                if ($isSuperAdmin) {
+                    // Web (1)
+                    $webAccessData[] = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
+                        $q->where('paroquia_id', $paroquiaId);
+                    })->whereYear('access_date', $year)
+                      ->whereMonth('access_date', $month)
+                      ->where('device_type', 1)
+                      ->count();
+
+                    // Android (2)
+                    $androidAccessData[] = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
+                        $q->where('paroquia_id', $paroquiaId);
+                    })->whereYear('access_date', $year)
+                      ->whereMonth('access_date', $month)
+                      ->where('device_type', 2)
+                      ->count();
+
+                    // iOS (3)
+                    $iosAccessData[] = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
+                        $q->where('paroquia_id', $paroquiaId);
+                    })->whereYear('access_date', $year)
+                      ->whereMonth('access_date', $month)
+                      ->where('device_type', 3)
+                      ->count();
+                }
+            }
+    
+            $chartData = [
+                'labels' => $months,
+                'ofertas' => $ofertasData,
+                'dizimos' => $dizimosData,
+                'notas' => $notasData,
+            ];
+
+            if ($isSuperAdmin) {
+                $accessChartData = [
+                    'labels' => $months,
+                    'web' => $webAccessData,
+                    'android' => $androidAccessData,
+                    'ios' => $iosAccessData,
+                ];
+            }
+        }
 
         // Fetch pinned modules (records)
         $pinnedRecords = PinnedModule::where('user_id', $user->id)
@@ -60,7 +242,7 @@ class DashboardController extends Controller
             return strtoupper(substr($item['name'], 0, 1));
         });
 
-        return view('dashboard', compact('pinnedModules', 'groupedModules'));
+        return view('dashboard', compact('pinnedModules', 'groupedModules', 'stats', 'chartData', 'accessChartData'));
     }
 
     public function togglePin(Request $request)
