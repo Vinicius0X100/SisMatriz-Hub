@@ -144,7 +144,7 @@
                                     <i class="bi bi-heart fs-4"></i>
                                 </div>
                                 <div>
-                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Vicentinos</h6>
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Apurações dos Vicentinos</h6>
                                     <h3 class="fw-bold text-dark mb-0">{{ $stats['vicentinos'] }}</h3>
                                 </div>
                             </div>
@@ -184,59 +184,50 @@
             </div>
             @endif
 
-            <!-- Filters -->
+            <!-- Charts & Filters Section -->
             @if(isset($chartData) || isset($accessChartData))
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-body p-4">
-                            <form action="{{ route('dashboard') }}" method="GET" class="row g-3 align-items-end">
-                                <div class="col-md-4">
-                                    <label class="form-label fw-bold text-muted small">Data Início</label>
-                                    <input type="date" name="start_date" class="form-control rounded-pill" value="{{ request('start_date') }}">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-bold text-muted small">Data Fim</label>
-                                    <input type="date" name="end_date" class="form-control rounded-pill" value="{{ request('end_date') }}">
-                                </div>
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold">
-                                        <i class="bi bi-filter me-2"></i> Filtrar
+                        <div class="card-header bg-transparent border-0 pt-4 px-4">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                                <h5 class="fw-bold text-dark mb-0">Análise de Dados</h5>
+                                <form action="{{ route('dashboard') }}" method="GET" class="d-flex align-items-center gap-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light border-0"><i class="bi bi-calendar"></i></span>
+                                        <input type="date" name="start_date" class="form-control border-0 bg-light" value="{{ request('start_date') }}" title="Data Início">
+                                    </div>
+                                    <span class="text-muted">-</span>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light border-0"><i class="bi bi-calendar"></i></span>
+                                        <input type="date" name="end_date" class="form-control border-0 bg-light" value="{{ request('end_date') }}" title="Data Fim">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+                                        <i class="bi bi-filter"></i>
                                     </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-4">
+                                @if(isset($chartData))
+                                <div class="{{ isset($accessChartData) ? 'col-lg-6' : 'col-12' }}">
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-3">Análise Financeira</h6>
+                                    <div style="height: 300px;">
+                                        <canvas id="financialChart"></canvas>
+                                    </div>
                                 </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- Financial Charts -->
-            @if(isset($chartData))
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold text-dark mb-0">Análise Financeira</h5>
-                        </div>
-                        <div class="card-body p-4">
-                            <canvas id="financialChart" style="max-height: 300px; width: 100%;"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- Access Chart -->
-            @if(isset($accessChartData))
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold text-dark mb-0">Acessos por Dispositivo</h5>
-                        </div>
-                        <div class="card-body p-4">
-                            <canvas id="accessChart" style="max-height: 300px; width: 100%;"></canvas>
+                                @endif
+                                
+                                @if(isset($accessChartData))
+                                <div class="{{ isset($chartData) ? 'col-lg-6' : 'col-12' }}">
+                                    <h6 class="text-muted small text-uppercase fw-bold mb-3">Acessos por Dispositivo</h6>
+                                    <div style="height: 300px;">
+                                        <canvas id="accessChart"></canvas>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>

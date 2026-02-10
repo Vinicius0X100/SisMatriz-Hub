@@ -117,6 +117,30 @@ class DashboardController extends Controller
 
         // --- Financial Charts Data (Last 12 months) (Roles 1, 111 AND 11) ---
         if ($isSuperAdmin || $isTreasurer) {
+            // Optimized Queries: Fetch all data grouped by month/year
+            $ofertasRaw = Oferta::where('paroquia_id', $paroquiaId)
+                ->whereBetween('data', [$startDate, $endDate])
+                ->selectRaw('YEAR(data) as year, MONTH(data) as month, kind, SUM(valor_total) as total')
+                ->groupBy('year', 'month', 'kind')
+                ->get();
+
+            $notasRaw = NotaFiscal::where('paroquia_id', $paroquiaId)
+                ->whereBetween('data_emissao', [$startDate, $endDate])
+                ->selectRaw('YEAR(data_emissao) as year, MONTH(data_emissao) as month, SUM(valor_total) as total')
+                ->groupBy('year', 'month')
+                ->get();
+
+            $accessRaw = collect();
+            if ($isSuperAdmin) {
+                $accessRaw = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
+                        $q->where('paroquia_id', $paroquiaId);
+                    })
+                    ->whereBetween('access_date', [$startDate, $endDate])
+                    ->selectRaw('YEAR(access_date) as year, MONTH(access_date) as month, device_type, COUNT(*) as total')
+                    ->groupBy('year', 'month', 'device_type')
+                    ->get();
+            }
+
             $months = [];
             $ofertasData = [];
             $dizimosData = [];
@@ -137,50 +161,41 @@ class DashboardController extends Controller
                 $months[] = $monthLabel;
     
                 // Ofertas (Kind != 1)
-                $ofertasData[] = Oferta::where('paroquia_id', $paroquiaId)
-                    ->whereYear('data', $year)
-                    ->whereMonth('data', $month)
-                    ->where('kind', '!=', 1) 
-                    ->sum('valor_total');
+                $ofertasData[] = $ofertasRaw->where('year', $year)
+                    ->where('month', $month)
+                    ->where('kind', '!=', 1)
+                    ->sum('total');
     
                 // Dízimos (Kind == 1)
-                $dizimosData[] = Oferta::where('paroquia_id', $paroquiaId)
-                    ->whereYear('data', $year)
-                    ->whereMonth('data', $month)
-                    ->where('kind', 1) 
-                    ->sum('valor_total');
+                $dizimosData[] = $ofertasRaw->where('year', $year)
+                    ->where('month', $month)
+                    ->where('kind', 1)
+                    ->sum('total');
     
                 // Notas Fiscais
-                $notasData[] = NotaFiscal::where('paroquia_id', $paroquiaId)
-                    ->whereYear('data_emissao', $year)
-                    ->whereMonth('data_emissao', $month)
-                    ->sum('valor_total');
+                $notasData[] = $notasRaw->where('year', $year)
+                    ->where('month', $month)
+                    ->sum('total');
 
                 // Access Data (Only for SuperAdmin)
                 if ($isSuperAdmin) {
                     // Web (1)
-                    $webAccessData[] = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
-                        $q->where('paroquia_id', $paroquiaId);
-                    })->whereYear('access_date', $year)
-                      ->whereMonth('access_date', $month)
-                      ->where('device_type', 1)
-                      ->count();
+                    $webAccessData[] = $accessRaw->where('year', $year)
+                        ->where('month', $month)
+                        ->where('device_type', 1)
+                        ->sum('total');
 
                     // Android (2)
-                    $androidAccessData[] = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
-                        $q->where('paroquia_id', $paroquiaId);
-                    })->whereYear('access_date', $year)
-                      ->whereMonth('access_date', $month)
-                      ->where('device_type', 2)
-                      ->count();
+                    $androidAccessData[] = $accessRaw->where('year', $year)
+                        ->where('month', $month)
+                        ->where('device_type', 2)
+                        ->sum('total');
 
                     // iOS (3)
-                    $iosAccessData[] = UserAccess::whereHas('user', function($q) use ($paroquiaId) {
-                        $q->where('paroquia_id', $paroquiaId);
-                    })->whereYear('access_date', $year)
-                      ->whereMonth('access_date', $month)
-                      ->where('device_type', 3)
-                      ->count();
+                    $iosAccessData[] = $accessRaw->where('year', $year)
+                        ->where('month', $month)
+                        ->where('device_type', 3)
+                        ->sum('total');
                 }
             }
     
