@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\TurmaCrisma;
-use App\Models\CatequistaCrisma;
+use App\Models\Register;
 use App\Models\Crismando;
+use App\Models\CatequistaCrisma;
 use App\Models\FaltaCrisma;
+use App\Models\Batismo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class TurmasCrismaController extends Controller
@@ -123,6 +124,9 @@ class TurmasCrismaController extends Controller
                         'register_id' => $studentData['id'],
                         'batizado' => isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false,
                     ]);
+
+                    // Sincroniza com Batismos
+                    Batismo::syncFromTurma($studentData['id'], isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false);
                 }
             }
             // Update count
@@ -204,6 +208,9 @@ class TurmasCrismaController extends Controller
                             'batizado' => $isBatizado,
                         ]);
                     }
+
+                    // Sincroniza com Batismos
+                    Batismo::syncFromTurma($studentData['id'], $isBatizado);
                 }
             }
         }

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\TurmaEucaristia;
-use App\Models\CatequistaEucaristia;
+use App\Models\Register;
 use App\Models\Catecando;
+use App\Models\CatequistaEucaristia;
 use App\Models\FaltaCatequese;
+use App\Models\Batismo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class TurmasEucaristiaController extends Controller
@@ -122,6 +123,9 @@ class TurmasEucaristiaController extends Controller
                         'register_id' => $studentData['id'],
                         'batizado' => isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false,
                     ]);
+
+                    // Sincroniza com Batismos
+                    Batismo::syncFromTurma($studentData['id'], isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false);
                 }
             }
         }
@@ -200,6 +204,9 @@ class TurmasEucaristiaController extends Controller
                             'batizado' => $isBatizado,
                         ]);
                     }
+
+                    // Sincroniza com Batismos
+                    Batismo::syncFromTurma($studentData['id'], $isBatizado);
                 }
             }
         }

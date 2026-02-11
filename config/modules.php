@@ -41,5 +41,6 @@ return [
     ['name' => 'Turmas de Catequese de Adultos', 'icon' => 'people', 'url' => '/turmas-adultos', 'allowed_roles' => ['17']],
     ['name' => 'Notas Fiscais', 'icon' => 'receipt', 'url' => '/notas-fiscais', 'allowed_roles' => ['11', '14', '2']],
     ['name' => 'Ofertas e Dízimos', 'icon' => 'cash-coin', 'url' => '/ofertas', 'allowed_roles' => ['11', '14']],
+    ['name' => 'Batismos', 'icon' => 'droplet', 'url' => '/batismos', 'allowed_roles' => ['1', '111', '15', '3', '7', '12', '13', '17', '*']],
     ['name' => 'Início', 'icon' => 'house', 'allowed_roles' => ['*']], // Everyone
 ];

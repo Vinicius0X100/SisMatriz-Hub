@@ -76,6 +76,11 @@ class Register extends Model
         return $this->hasOne(DocsEucaristia::class, 'register_id');
     }
 
+    public function batismo()
+    {
+        return $this->hasOne(Batismo::class, 'register_id');
+    }
+
     public function acolitos()
     {
         return $this->hasMany(Acolito::class, 'register_id');

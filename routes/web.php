@@ -45,6 +45,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::delete('registers/attachments/{id}', [RegisterController::class, 'destroyAttachment'])->name('registers.attachments.destroy');
     Route::resource('registers', RegisterController::class);
 
+    // Batismos
+    Route::resource('batismos', App\Http\Controllers\BatismoController::class);
+
     // Lembretes
     Route::get('lembretes/check', [App\Http\Controllers\LembreteController::class, 'checkDue'])->name('lembretes.check');
     Route::post('lembretes/{id}/snooze', [App\Http\Controllers\LembreteController::class, 'snooze'])->name('lembretes.snooze');

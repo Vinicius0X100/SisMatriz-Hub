@@ -11,16 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mass_communications', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('sender_id');
-            $table->unsignedBigInteger('recipient_id');
-            $table->text('message_body');
-            $table->string('status')->default('pending'); // pending, sent, failed
-            $table->string('sid')->nullable(); // Twilio SID
-            $table->integer('paroquia_id');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('mass_communications')) {
+            Schema::create('mass_communications', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('sender_id');
+                $table->unsignedBigInteger('recipient_id');
+                $table->text('message_body');
+                $table->string('status')->default('pending'); // pending, sent, failed
+                $table->string('sid')->nullable(); // Twilio SID
+                $table->integer('paroquia_id');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\TurmaAdultos;
-use App\Models\CatequistaAdultos;
+use App\Models\Register;
 use App\Models\CatecandoAdultos;
+use App\Models\CatequistaAdultos;
 use App\Models\FaltaAdultos;
+use App\Models\Batismo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class TurmasAdultosController extends Controller
@@ -119,6 +120,9 @@ class TurmasAdultosController extends Controller
                         'register_id' => $studentData['id'],
                         'batizado' => isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false,
                     ]);
+
+                    // Sincroniza com Batismos
+                    Batismo::syncFromTurma($studentData['id'], isset($studentData['batizado']) ? (bool)$studentData['batizado'] : false);
                 }
             }
         }
@@ -197,6 +201,9 @@ class TurmasAdultosController extends Controller
                             'batizado' => $isBatizado,
                         ]);
                     }
+
+                    // Sincroniza com Batismos
+                    Batismo::syncFromTurma($studentData['id'], $isBatizado);
                 }
             }
         }

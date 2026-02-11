@@ -7,6 +7,7 @@ use App\Models\PrazoInscricao;
 use App\Models\InscricaoTaxaConfig;
 use App\Models\InscricaoTaxaItem;
 use App\Models\Register;
+use App\Models\Batismo;
 use App\Models\User;
 use App\Mail\ShareInscricoesEucaristia;
 use Illuminate\Http\Request;
@@ -492,7 +493,7 @@ class InscricoesEucaristiaController extends Controller
                     if (stripos($record->sexo, 'masc') !== false) $sexo = 1;
                     if (stripos($record->sexo, 'fem') !== false) $sexo = 2;
 
-                    Register::create([
+                    $newRegister = Register::create([
                         'name' => $record->nome,
                         'phone' => $phone,
                         'address' => $record->endereco,
@@ -507,6 +508,12 @@ class InscricoesEucaristiaController extends Controller
                         'civil_status' => 1, // Default Solteiro
                         'paroquia_id' => Auth::user()->paroquia_id,
                     ]);
+
+                    // Sincroniza com Batismos
+                    // Se tem certidão de batismo, consideramos batizado
+                    $isBatizado = !empty($record->certidao_batismo);
+                    Batismo::syncFromTurma($newRegister->id, $isBatizado);
+
                     $messages[] = 'Registro Geral criado com sucesso.';
                 } catch (\Exception $e) {
                     $messages[] = 'Erro ao criar Registro Geral: ' . $e->getMessage();
