@@ -37,6 +37,18 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::put('/settings/privacy', [App\Http\Controllers\SettingsController::class, 'updatePrivacy'])->name('settings.update.privacy');
     Route::put('/settings/password', [App\Http\Controllers\SettingsController::class, 'updatePassword'])->name('settings.update.password');
 
+    // Chat
+    Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
+    Route::get('/chat/messages/{userId}', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/chat/block', [App\Http\Controllers\ChatController::class, 'blockUser'])->name('chat.block');
+    Route::post('/chat/unblock', [App\Http\Controllers\ChatController::class, 'unblockUser'])->name('chat.unblock');
+    Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
+
+    // Excursões
+    Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class);
+
     // Módulos Internos
     // Registros Gerais
     Route::get('registers/search', [RegisterController::class, 'searchPeople'])->name('registers.search');
@@ -117,6 +129,20 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::prefix('api')->group(function () {
         Route::get('reservas-calendar/locais', [App\Http\Controllers\ReservaCalendarController::class, 'getLocais']);
         Route::resource('reservas-calendar', App\Http\Controllers\ReservaCalendarController::class)->except(['create', 'edit']);
+    });
+
+    // Calendário Matrimonial
+    Route::get('calendario-matrimonio', [App\Http\Controllers\CalendarioMatrimonioController::class, 'index'])->name('calendario-matrimonio.index');
+    
+    Route::prefix('api/calendario-matrimonio')->group(function () {
+        Route::get('reservas', [App\Http\Controllers\CalendarioMatrimonioController::class, 'events']);
+        Route::post('reservas', [App\Http\Controllers\CalendarioMatrimonioController::class, 'store']);
+        Route::put('reservas/{id}', [App\Http\Controllers\CalendarioMatrimonioController::class, 'update']);
+        Route::delete('reservas/{id}', [App\Http\Controllers\CalendarioMatrimonioController::class, 'destroy']);
+        
+        Route::get('locais', [App\Http\Controllers\CalendarioMatrimonioController::class, 'getLocais']);
+        Route::get('regras', [App\Http\Controllers\CalendarioMatrimonioController::class, 'getRules']);
+        Route::post('regras', [App\Http\Controllers\CalendarioMatrimonioController::class, 'saveRules']);
     });
 
     // Documentação
@@ -216,14 +242,29 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('admin/protocols', [App\Http\Controllers\AdminProtocolController::class, 'index'])->name('admin.protocols.index');
     Route::get('admin/protocols/{id}', [App\Http\Controllers\AdminProtocolController::class, 'show'])->name('admin.protocols.show');
     Route::post('admin/protocols/{id}/status', [App\Http\Controllers\AdminProtocolController::class, 'updateStatus'])->name('admin.protocols.update-status');
+    Route::put('admin/protocols/{id}', [App\Http\Controllers\AdminProtocolController::class, 'update'])->name('admin.protocols.update');
 
     // Comunidades
     Route::resource('comunidades', App\Http\Controllers\ComunidadeController::class);
 
     // Salas e Espaços
-    Route::resource('reservas-locais', App\Http\Controllers\ReservaLocalController::class);
+    Route::resource('reservas-locais', App\Http\Controllers\ReservasLocaisController::class);
 
     // Comunicação em Massa
     Route::get('mass-communication', [App\Http\Controllers\MassCommunicationController::class, 'index'])->name('mass-communication.index');
     Route::post('mass-communication/send', [App\Http\Controllers\MassCommunicationController::class, 'send'])->name('mass-communication.send');
+
+    // Calendário Matrimonial
+    Route::get('/calendario-matrimonio', [App\Http\Controllers\CalendarioMatrimonioController::class, 'index'])->name('calendario-matrimonio.index');
+    
+    // API interna para o React Calendar
+    Route::prefix('api/matrimonio-calendar')->group(function () {
+        Route::get('/', [App\Http\Controllers\CalendarioMatrimonioController::class, 'events']);
+        Route::post('/', [App\Http\Controllers\CalendarioMatrimonioController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\CalendarioMatrimonioController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\CalendarioMatrimonioController::class, 'destroy']);
+        Route::get('/rules', [App\Http\Controllers\CalendarioMatrimonioController::class, 'getRules']);
+        Route::post('/rules', [App\Http\Controllers\CalendarioMatrimonioController::class, 'saveRules']);
+        Route::get('/locais', [App\Http\Controllers\CalendarioMatrimonioController::class, 'getLocais']);
+    });
 });
