@@ -55,13 +55,9 @@
                                                 <a href="{{ route('excursoes.onibus.passagens.show', [$excursao, $onibus, $assento]) }}" target="_blank" class="btn btn-xs btn-outline-primary rounded-circle" title="Imprimir Passagem">
                                                     <i class="bi bi-printer"></i>
                                                 </a>
-                                                <form action="{{ route('excursoes.onibus.assentos.destroy', [$excursao, $onibus, $assento]) }}" method="POST" onsubmit="return confirm('Liberar este assento?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-circle">
-                                                        <i class="bi bi-x"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-xs btn-outline-danger rounded-circle" onclick="confirmDelete('{{ route('excursoes.onibus.assentos.destroy', [$excursao, $onibus, $assento]) }}', '{{ $assento->poltrona }}', '{{ addslashes($assento->passageiro_nome) }}')">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
                                             </div>
                                         @else
                                             <small class="d-block text-muted mb-1">Livre</small>
@@ -311,10 +307,54 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Exclusão -->
+<div class="modal fade" id="deleteSeatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Liberar Assento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="bg-danger bg-opacity-10 rounded-circle p-3 d-inline-block mb-3 text-danger">
+                    <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                </div>
+                <h4 class="fw-bold mb-2">Tem certeza?</h4>
+                <p class="text-muted mb-0">
+                    Você está prestes a liberar o assento <span id="deleteSeatNumber" class="fw-bold text-dark"></span> 
+                    de <span id="deleteSeatPassenger" class="fw-bold text-dark"></span>.
+                    <br>Esta ação não pode ser desfeita.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteSeatForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Sim, Liberar Assento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
+    function confirmDelete(url, seatNumber, passengerName) {
+        const form = document.getElementById('deleteSeatForm');
+        const seatSpan = document.getElementById('deleteSeatNumber');
+        const passengerSpan = document.getElementById('deleteSeatPassenger');
+        
+        form.action = url;
+        seatSpan.textContent = seatNumber;
+        passengerSpan.textContent = passengerName;
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteSeatModal'));
+        modal.show();
+    }
+
     function toggleResponsavel(checkbox, index) {
         const container = document.getElementById(`responsavel-container-${index}`);
         const inputs = container.querySelectorAll('input');
