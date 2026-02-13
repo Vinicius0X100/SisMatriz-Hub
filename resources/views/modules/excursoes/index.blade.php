@@ -53,11 +53,11 @@
                             </td>
                             <td class="text-muted small">{{ $excursao->created_at->format('d/m/Y') }}</td>
                             <td class="text-end pe-3">
-                                <div class="btn-group">
-                                    <a href="{{ route('excursoes.show', $excursao) }}" class="btn btn-sm btn-outline-info rounded-pill me-1" title="Visualizar">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{{ route('excursoes.show', $excursao) }}" class="btn btn-sm btn-outline-info rounded-pill" title="Visualizar">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('excursoes.edit', $excursao) }}" class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar">
+                                    <a href="{{ route('excursoes.edit', $excursao) }}" class="btn btn-sm btn-outline-primary rounded-pill" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('excursoes.destroy', $excursao) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta excursão?');">

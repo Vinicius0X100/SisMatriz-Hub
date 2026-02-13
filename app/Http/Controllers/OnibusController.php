@@ -121,4 +121,57 @@ class OnibusController extends Controller
 
         return redirect()->route('excursoes.show', $excursao)->with('success', 'Ônibus removido com sucesso!');
     }
+
+    public function storeAssento(Request $request, Excursao $excursao, Onibus $onibus)
+    {
+        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'poltrona' => 'required|integer|min:1|max:' . $onibus->capacidade,
+            'passageiro_nome' => 'required|string|max:255',
+            'passageiro_rg' => 'nullable|string|max:20',
+            'passageiro_telefone' => 'nullable|string|max:20',
+            'posicao' => 'required|in:janela,corredor',
+            'menor' => 'sometimes|boolean',
+            'responsavel_nome' => 'nullable|required_if:menor,true|string|max:255',
+            'responsavel_rg' => 'nullable|required_if:menor,true|string|max:20',
+            'responsavel_telefone' => 'nullable|required_if:menor,true|string|max:20',
+        ]);
+
+        // Verifica se a poltrona já está ocupada
+        if ($onibus->assentosVendidos()->where('poltrona', $request->poltrona)->exists()) {
+            return back()->withErrors(['poltrona' => 'Esta poltrona já está ocupada.']);
+        }
+
+        $onibus->assentosVendidos()->create([
+            'paroquia_id' => $excursao->paroquia_id,
+            'passageiro_nome' => $request->passageiro_nome,
+            'passageiro_rg' => $request->passageiro_rg,
+            'passageiro_telefone' => $request->passageiro_telefone,
+            'poltrona' => $request->poltrona,
+            'posicao' => $request->posicao,
+            'menor' => $request->boolean('menor'),
+            'responsavel_nome' => $request->responsavel_nome,
+            'responsavel_rg' => $request->responsavel_rg,
+            'responsavel_telefone' => $request->responsavel_telefone,
+            'embarque_ida' => $request->has('embarque_ida'),
+            'embarque_volta' => $request->has('embarque_volta'),
+        ]);
+
+        return redirect()->route('excursoes.onibus.show', [$excursao, $onibus])->with('success', 'Passagem vendida com sucesso!');
+    }
+
+    public function destroyAssento(Excursao $excursao, Onibus $onibus, $assentoId)
+    {
+        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+            abort(403);
+        }
+
+        $assento = $onibus->assentosVendidos()->findOrFail($assentoId);
+        $assento->delete();
+
+        return redirect()->route('excursoes.onibus.show', [$excursao, $onibus])->with('success', 'Assento liberado com sucesso!');
+    }
 }

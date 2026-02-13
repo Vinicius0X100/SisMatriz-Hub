@@ -47,7 +47,16 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
 
     // Excursões
-    Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class);
+    Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class)->parameters([
+        'excursoes' => 'excursao'
+    ]);
+    Route::get('excursoes/{excursao}/onibus/create', [App\Http\Controllers\OnibusController::class, 'create'])->name('excursoes.onibus.create');
+    Route::post('excursoes/{excursao}/onibus', [App\Http\Controllers\OnibusController::class, 'store'])->name('excursoes.onibus.store');
+    Route::delete('excursoes/onibus/{onibus}', [App\Http\Controllers\OnibusController::class, 'destroy'])->name('excursoes.onibus.destroy');
+    Route::get('excursoes/onibus/{onibus}/passageiros', [App\Http\Controllers\OnibusController::class, 'passageiros'])->name('excursoes.onibus.passageiros');
+    Route::post('excursoes/onibus/{onibus}/passageiros', [App\Http\Controllers\OnibusController::class, 'storePassageiro'])->name('excursoes.onibus.passageiros.store');
+    Route::delete('excursoes/passageiros/{passageiro}', [App\Http\Controllers\OnibusController::class, 'destroyPassageiro'])->name('excursoes.passageiros.destroy');
+    Route::get('excursoes/onibus/{onibus}/pdf', [App\Http\Controllers\OnibusPdfController::class, 'generate'])->name('excursoes.onibus.pdf');
 
     // Módulos Internos
     // Registros Gerais
