@@ -58,7 +58,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::delete('excursoes/{excursao}/onibus/{onibus}', [App\Http\Controllers\OnibusController::class, 'destroy'])->name('excursoes.onibus.destroy');
     Route::post('excursoes/{excursao}/onibus/{onibus}/assentos', [App\Http\Controllers\OnibusController::class, 'storeAssento'])->name('excursoes.onibus.assentos.store');
     Route::delete('excursoes/{excursao}/onibus/{onibus}/assentos/{assento}', [App\Http\Controllers\OnibusController::class, 'destroyAssento'])->name('excursoes.onibus.assentos.destroy');
-    Route::get('excursoes/onibus/{onibus}/pdf', [App\Http\Controllers\OnibusPdfController::class, 'generate'])->name('excursoes.onibus.pdf');
+    Route::get('excursoes/{excursao}/onibus/{onibus}/pdf', [App\Http\Controllers\OnibusPdfController::class, 'generate'])->name('excursoes.onibus.pdf');
+    Route::get('excursoes/{excursao}/onibus/{onibus}/manifesto', [App\Http\Controllers\OnibusPdfController::class, 'downloadManifest'])->name('excursoes.onibus.manifesto');
+    Route::get('excursoes/{excursao}/onibus/{onibus}/passagens', [App\Http\Controllers\OnibusPdfController::class, 'downloadTickets'])->name('excursoes.onibus.passagens');
+    Route::get('excursoes/{excursao}/onibus/{onibus}/passagens/recorte', [App\Http\Controllers\OnibusPdfController::class, 'downloadTicketsPrintable'])->name('excursoes.onibus.passagens-recorte');
+    Route::get('excursoes/{excursao}/onibus/{onibus}/passagens/{assento}', [App\Http\Controllers\OnibusPdfController::class, 'downloadTicket'])->name('excursoes.onibus.passagens.show');
 
     // Módulos Internos
     // Registros Gerais
