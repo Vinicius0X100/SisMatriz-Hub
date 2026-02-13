@@ -68,7 +68,9 @@ class OnibusController extends Controller
         // Prepare seats grid
         $seats = [];
         for ($i = 1; $i <= $onibus->capacidade; $i++) {
-            $seats[$i] = $onibus->assentosVendidos->where('poltrona', $i)->first();
+            $seats[$i] = $onibus->assentosVendidos->first(function ($assento) use ($i) {
+                return (int) $assento->poltrona === $i;
+            });
         }
 
         return view('modules.excursoes.onibus.show', compact('excursao', 'onibus', 'seats'));
@@ -140,46 +142,63 @@ class OnibusController extends Controller
 
     public function storeAssento(Request $request, Excursao $excursao, Onibus $onibus)
     {
+        \Illuminate\Support\Facades\Log::info('Iniciando venda de assento', ['request' => $request->all(), 'excursao' => $excursao->id, 'onibus' => $onibus->id]);
+
         if ($onibus->excursao_id != $excursao->id) {
+            \Illuminate\Support\Facades\Log::error('Onibus não pertence a excursão');
             abort(404);
         }
 
         $user = Auth::user();
         if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+            \Illuminate\Support\Facades\Log::error('Usuário sem permissão');
             abort(403);
         }
 
-        $request->validate([
-            'poltrona' => 'required|integer|min:1|max:' . $onibus->capacidade,
-            'passageiro_nome' => 'required|string|max:255',
-            'passageiro_rg' => 'nullable|string|max:20',
-            'passageiro_telefone' => 'nullable|string|max:20',
-            'posicao' => 'required|in:janela,corredor',
-            'menor' => 'sometimes|boolean',
-            'responsavel_nome' => 'nullable|required_if:menor,true|string|max:255',
-            'responsavel_rg' => 'nullable|required_if:menor,true|string|max:20',
-            'responsavel_telefone' => 'nullable|required_if:menor,true|string|max:20',
-        ]);
+        try {
+            $validated = $request->validate([
+                'poltrona' => 'required|integer|min:1|max:' . $onibus->capacidade,
+                'passageiro_nome' => 'required|string|max:255',
+                'passageiro_rg' => 'nullable|string|max:20',
+                'passageiro_telefone' => 'nullable|string|max:20',
+                'posicao' => 'required|in:janela,corredor',
+                'menor' => 'sometimes|boolean',
+                'responsavel_nome' => 'nullable|required_if:menor,true|string|max:255',
+                'responsavel_rg' => 'nullable|required_if:menor,true|string|max:20',
+                'responsavel_telefone' => 'nullable|required_if:menor,true|string|max:20',
+            ]);
+            \Illuminate\Support\Facades\Log::info('Validação passou', $validated);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('Erro de validação', $e->errors());
+            throw $e;
+        }
 
         // Verifica se a poltrona já está ocupada
         if ($onibus->assentosVendidos()->where('poltrona', $request->poltrona)->exists()) {
+            \Illuminate\Support\Facades\Log::warning('Poltrona já ocupada: ' . $request->poltrona);
             return back()->withErrors(['poltrona' => 'Esta poltrona já está ocupada.']);
         }
 
-        $onibus->assentosVendidos()->create([
-            'paroquia_id' => $excursao->paroquia_id,
-            'passageiro_nome' => $request->passageiro_nome,
-            'passageiro_rg' => $request->passageiro_rg,
-            'passageiro_telefone' => $request->passageiro_telefone,
-            'poltrona' => $request->poltrona,
-            'posicao' => $request->posicao,
-            'menor' => $request->boolean('menor'),
-            'responsavel_nome' => $request->responsavel_nome,
-            'responsavel_rg' => $request->responsavel_rg,
-            'responsavel_telefone' => $request->responsavel_telefone,
-            'embarque_ida' => $request->has('embarque_ida'),
-            'embarque_volta' => $request->has('embarque_volta'),
-        ]);
+        try {
+            $assento = $onibus->assentosVendidos()->create([
+                'paroquia_id' => $excursao->paroquia_id,
+                'passageiro_nome' => $request->passageiro_nome,
+                'passageiro_rg' => $request->passageiro_rg,
+                'passageiro_telefone' => $request->passageiro_telefone,
+                'poltrona' => $request->poltrona,
+                'posicao' => $request->posicao,
+                'menor' => $request->boolean('menor'),
+                'responsavel_nome' => $request->responsavel_nome,
+                'responsavel_rg' => $request->responsavel_rg,
+                'responsavel_telefone' => $request->responsavel_telefone,
+                'embarque_ida' => $request->has('embarque_ida'),
+                'embarque_volta' => $request->has('embarque_volta'),
+            ]);
+            \Illuminate\Support\Facades\Log::info('Assento criado com sucesso', ['id' => $assento->id]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erro ao criar assento no banco', ['message' => $e->getMessage()]);
+            return back()->withErrors(['erro' => 'Erro ao salvar no banco de dados: ' . $e->getMessage()]);
+        }
 
         return redirect()->route('excursoes.onibus.show', [$excursao, $onibus])->with('success', 'Passagem vendida com sucesso!');
     }

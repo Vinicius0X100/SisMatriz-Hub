@@ -83,6 +83,16 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
+                                            @if($errors->any())
+                                                <div class="alert alert-danger rounded-4 shadow-sm">
+                                                    <ul class="mb-0 small">
+                                                        @foreach($errors->all() as $error)
+                                                            <li>{{ $error }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
+                                            
                                             <form action="{{ route('excursoes.onibus.assentos.store', [$excursao, $onibus]) }}" method="POST">
                                                 @csrf
                                                 <input type="hidden" name="poltrona" value="{{ $i }}">
@@ -311,14 +321,23 @@
         
         if (checkbox.checked) {
             container.classList.remove('d-none');
-            inputs.forEach(input => input.setAttribute('required', 'required'));
+            inputs.forEach(input => input.required = true);
         } else {
             container.classList.add('d-none');
-            inputs.forEach(input => {
-                input.removeAttribute('required');
-                input.value = '';
-            });
+            inputs.forEach(input => input.required = false);
         }
     }
+
+    // Reopen modal if there are errors
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', function() {
+            var oldPoltrona = "{{ old('poltrona') }}";
+            if (oldPoltrona) {
+                var modalId = '#sellSeatModal' + oldPoltrona;
+                var modal = new bootstrap.Modal(document.querySelector(modalId));
+                modal.show();
+            }
+        });
+    @endif
 </script>
 @endsection
