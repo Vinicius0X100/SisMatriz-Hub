@@ -111,13 +111,9 @@
                                             <a href="{{ route('excursoes.onibus.edit', [$excursao, $onibus]) }}" class="btn btn-sm btn-outline-secondary rounded-pill me-1" title="Editar">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <form action="{{ route('excursoes.onibus.destroy', [$excursao, $onibus]) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este ônibus?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Excluir">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" title="Excluir" onclick="confirmDeleteOnibus('{{ route('excursoes.onibus.destroy', [$excursao, $onibus]) }}', '{{ addslashes($onibus->numero) }}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -137,4 +133,47 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Exclusão de Ônibus -->
+<div class="modal fade" id="deleteOnibusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Excluir Ônibus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="bg-danger bg-opacity-10 rounded-circle p-3 d-inline-block mb-3 text-danger">
+                    <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                </div>
+                <h4 class="fw-bold mb-2">Tem certeza?</h4>
+                <p class="text-muted mb-0">
+                    Você está prestes a excluir o ônibus número <span id="deleteOnibusNumero" class="fw-bold text-dark"></span>.
+                    <br>Esta ação removerá também todas as passagens vendidas para este ônibus.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteOnibusForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Sim, Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDeleteOnibus(url, numero) {
+        const form = document.getElementById('deleteOnibusForm');
+        const numeroSpan = document.getElementById('deleteOnibusNumero');
+        
+        form.action = url;
+        numeroSpan.textContent = numero;
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteOnibusModal'));
+        modal.show();
+    }
+</script>
 @endsection

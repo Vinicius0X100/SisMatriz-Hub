@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ExcursaoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $query = Excursao::query();
@@ -16,9 +16,36 @@ class ExcursaoController extends Controller
         if (!in_array($user->rule, [1, 111])) {
             $query->where('paroquia_id', $user->paroquia_id);
         }
+
+        // Stats calculation
+        $statsQuery = clone $query;
+        $stats = [
+            'total' => $statsQuery->count(),
+            'active' => (clone $statsQuery)->where('finalizada', false)->count(),
+            'finished' => (clone $statsQuery)->where('finalizada', true)->count(),
+        ];
+
+        // Search by destination
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('destino', 'like', "%{$request->search}%");
+        }
+
+        // Filter by type
+        if ($request->has('tipo') && !empty($request->tipo)) {
+            $query->where('tipo', $request->tipo);
+        }
+
+        // Filter by status (finalizada)
+        if ($request->has('status') && $request->status !== null) {
+            $query->where('finalizada', $request->status == '1');
+        }
         
         $excursoes = $query->orderBy('created_at', 'desc')->paginate(10);
-        return view('modules.excursoes.index', compact('excursoes'));
+        
+        // Get unique types for filter
+        $types = Excursao::select('tipo')->distinct()->whereNotNull('tipo')->pluck('tipo');
+
+        return view('modules.excursoes.index', compact('excursoes', 'stats', 'types'));
     }
 
     public function create()

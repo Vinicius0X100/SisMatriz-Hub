@@ -197,7 +197,7 @@ class OnibusController extends Controller
             \Illuminate\Support\Facades\Log::info('Assento criado com sucesso', ['id' => $assento->id]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Erro ao criar assento no banco', ['message' => $e->getMessage()]);
-            return back()->withErrors(['erro' => 'Erro ao salvar no banco de dados: ' . $e->getMessage()]);
+            return back()->withErrors(['erro' => 'Erro ao salvar no banco de dados: ' . $e->getMessage()])->withInput();
         }
 
         return redirect()->route('excursoes.onibus.show', [$excursao, $onibus])->with('success', 'Passagem vendida com sucesso!');
