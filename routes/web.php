@@ -52,10 +52,12 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     ]);
     Route::get('excursoes/{excursao}/onibus/create', [App\Http\Controllers\OnibusController::class, 'create'])->name('excursoes.onibus.create');
     Route::post('excursoes/{excursao}/onibus', [App\Http\Controllers\OnibusController::class, 'store'])->name('excursoes.onibus.store');
-    Route::delete('excursoes/onibus/{onibus}', [App\Http\Controllers\OnibusController::class, 'destroy'])->name('excursoes.onibus.destroy');
-    Route::get('excursoes/onibus/{onibus}/passageiros', [App\Http\Controllers\OnibusController::class, 'passageiros'])->name('excursoes.onibus.passageiros');
-    Route::post('excursoes/onibus/{onibus}/passageiros', [App\Http\Controllers\OnibusController::class, 'storePassageiro'])->name('excursoes.onibus.passageiros.store');
-    Route::delete('excursoes/passageiros/{passageiro}', [App\Http\Controllers\OnibusController::class, 'destroyPassageiro'])->name('excursoes.passageiros.destroy');
+    Route::get('excursoes/{excursao}/onibus/{onibus}', [App\Http\Controllers\OnibusController::class, 'show'])->name('excursoes.onibus.show');
+    Route::get('excursoes/{excursao}/onibus/{onibus}/edit', [App\Http\Controllers\OnibusController::class, 'edit'])->name('excursoes.onibus.edit');
+    Route::put('excursoes/{excursao}/onibus/{onibus}', [App\Http\Controllers\OnibusController::class, 'update'])->name('excursoes.onibus.update');
+    Route::delete('excursoes/{excursao}/onibus/{onibus}', [App\Http\Controllers\OnibusController::class, 'destroy'])->name('excursoes.onibus.destroy');
+    Route::post('excursoes/{excursao}/onibus/{onibus}/assentos', [App\Http\Controllers\OnibusController::class, 'storeAssento'])->name('excursoes.onibus.assentos.store');
+    Route::delete('excursoes/{excursao}/onibus/{onibus}/assentos/{assento}', [App\Http\Controllers\OnibusController::class, 'destroyAssento'])->name('excursoes.onibus.assentos.destroy');
     Route::get('excursoes/onibus/{onibus}/pdf', [App\Http\Controllers\OnibusPdfController::class, 'generate'])->name('excursoes.onibus.pdf');
 
     // Módulos Internos
