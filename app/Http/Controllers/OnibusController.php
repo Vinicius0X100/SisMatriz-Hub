@@ -76,15 +76,26 @@ class OnibusController extends Controller
 
     public function edit(Excursao $excursao, Onibus $onibus)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+        if ($onibus->excursao_id != $excursao->id) {
+            abort(404);
+        }
+
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
+
         return view('modules.excursoes.onibus.edit', compact('excursao', 'onibus'));
     }
 
     public function update(Request $request, Excursao $excursao, Onibus $onibus)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+        if ($onibus->excursao_id != $excursao->id) {
+            abort(404);
+        }
+
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -113,7 +124,12 @@ class OnibusController extends Controller
 
     public function destroy(Excursao $excursao, Onibus $onibus)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+        if ($onibus->excursao_id != $excursao->id) {
+            abort(404);
+        }
+
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -124,7 +140,12 @@ class OnibusController extends Controller
 
     public function storeAssento(Request $request, Excursao $excursao, Onibus $onibus)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+        if ($onibus->excursao_id != $excursao->id) {
+            abort(404);
+        }
+
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -165,7 +186,12 @@ class OnibusController extends Controller
 
     public function destroyAssento(Excursao $excursao, Onibus $onibus, $assentoId)
     {
-        if ($excursao->paroquia_id != Auth::user()->paroquia_id || $onibus->excursao_id != $excursao->id) {
+        if ($onibus->excursao_id != $excursao->id) {
+            abort(404);
+        }
+
+        $user = Auth::user();
+        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
