@@ -119,7 +119,7 @@
                                                 </div>
                                                 
                                                 <div class="form-check mb-3">
-                                                    <input class="form-check-input" type="checkbox" name="menor" id="menor{{ $i }}" onchange="toggleResponsavel(this, {{ $i }})">
+                                                    <input class="form-check-input" type="checkbox" name="menor" id="menor{{ $i }}" value="1" onchange="toggleResponsavel(this, {{ $i }})">
                                                     <label class="form-check-label" for="menor{{ $i }}">Menor de Idade</label>
                                                 </div>
 
@@ -143,11 +143,11 @@
                                                     <label class="form-label fw-bold small text-muted">Embarque</label>
                                                     <div class="d-flex gap-3">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="embarque_ida" id="embarque_ida{{ $i }}" checked>
+                                                            <input class="form-check-input" type="checkbox" name="embarque_ida" id="embarque_ida{{ $i }}" value="1" checked>
                                                             <label class="form-check-label" for="embarque_ida{{ $i }}">Ida</label>
                                                         </div>
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="embarque_volta" id="embarque_volta{{ $i }}" checked>
+                                                            <input class="form-check-input" type="checkbox" name="embarque_volta" id="embarque_volta{{ $i }}" value="1" checked>
                                                             <label class="form-check-label" for="embarque_volta{{ $i }}">Volta</label>
                                                         </div>
                                                     </div>

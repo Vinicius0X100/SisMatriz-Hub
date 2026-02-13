@@ -163,9 +163,9 @@ class OnibusController extends Controller
                 'passageiro_telefone' => 'nullable|string|max:20',
                 'posicao' => 'required|in:janela,corredor',
                 'menor' => 'sometimes|boolean',
-                'responsavel_nome' => 'nullable|required_if:menor,true|string|max:255',
-                'responsavel_rg' => 'nullable|required_if:menor,true|string|max:20',
-                'responsavel_telefone' => 'nullable|required_if:menor,true|string|max:20',
+                'responsavel_nome' => 'nullable|required_if:menor,1|string|max:255',
+                'responsavel_rg' => 'nullable|required_if:menor,1|string|max:20',
+                'responsavel_telefone' => 'nullable|required_if:menor,1|string|max:20',
             ]);
             \Illuminate\Support\Facades\Log::info('Validação passou', $validated);
         } catch (\Illuminate\Validation\ValidationException $e) {
