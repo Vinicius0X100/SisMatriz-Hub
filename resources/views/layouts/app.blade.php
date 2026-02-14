@@ -249,7 +249,7 @@
             setInterval(checkReminders, 30000); // Check every 30 seconds
 
             function checkReminders() {
-                fetch('/lembretes/check', { credentials: 'same-origin' })
+                fetch('/lembretes/check', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');

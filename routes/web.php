@@ -28,6 +28,13 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/dashboard/update-pin-style', [DashboardController::class, 'updatePinStyle'])->name('dashboard.update-pin-style');
     Route::get('/dashboard/online-users', [DashboardController::class, 'getOnlineUsers'])->name('dashboard.online-users');
 
+    // Onboarding
+    Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
+    Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
+    Route::get('/setup/welcome', [OnboardingController::class, 'showWelcome'])->name('setup.welcome');
+    Route::post('/setup/welcome', [OnboardingController::class, 'updateWelcome'])->name('setup.welcome.update');
+    Route::post('/setup/welcome/skip', [OnboardingController::class, 'skipWelcome'])->name('setup.welcome.skip');
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

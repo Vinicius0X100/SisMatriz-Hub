@@ -27,6 +27,11 @@ class CheckOnboarding
             return $next($request);
         }
 
+        // Permitir checagem de lembretes (JSON) mesmo durante onboarding
+        if ($request->routeIs('lembretes.check')) {
+            return $next($request);
+        }
+
         // 1. Verificar Troca de Senha
         if ($user->is_pass_change == 0) {
             if ($request->routeIs('setup.password') || $request->routeIs('setup.password.update')) {
@@ -37,7 +42,7 @@ class CheckOnboarding
 
         // 2. Verificar Boas Vindas / Foto
         if ($user->accepted_photo == 0) {
-            if ($request->routeIs('setup.welcome') || $request->routeIs('setup.welcome.update')) {
+            if ($request->routeIs('setup.welcome') || $request->routeIs('setup.welcome.update') || $request->routeIs('setup.welcome.skip')) {
                 return $next($request);
             }
             return redirect()->route('setup.welcome');
