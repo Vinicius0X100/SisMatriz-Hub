@@ -282,4 +282,27 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         Route::post('/rules', [App\Http\Controllers\CalendarioMatrimonioController::class, 'saveRules']);
         Route::get('/locais', [App\Http\Controllers\CalendarioMatrimonioController::class, 'getLocais']);
     });
+
+    // Campanhas
+    Route::resource('campanhas', App\Http\Controllers\CampanhaController::class);
+    Route::get('campanhas/{campanha}/report', [App\Http\Controllers\CampanhaController::class, 'generateReport'])->name('campanhas.report');
+    
+    // API Campanhas (React)
+    Route::prefix('api/campanhas')->group(function () {
+        // Dashboard Data
+        Route::get('{campanha}/dashboard-data', [App\Http\Controllers\CampanhaController::class, 'getDashboardData']);
+        
+        // Categorias
+        Route::get('categorias', [App\Http\Controllers\CampanhaCategoriaController::class, 'index']);
+        Route::get('categorias/stats', [App\Http\Controllers\CampanhaCategoriaController::class, 'stats']);
+        Route::post('categorias', [App\Http\Controllers\CampanhaCategoriaController::class, 'store']);
+        Route::put('categorias/{categoria}', [App\Http\Controllers\CampanhaCategoriaController::class, 'update']);
+        Route::delete('categorias/{categoria}', [App\Http\Controllers\CampanhaCategoriaController::class, 'destroy']);
+        
+        // Movimentações
+        Route::post('{campanha}/entradas', [App\Http\Controllers\CampanhaController::class, 'storeEntrada']);
+        Route::delete('entradas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroyEntrada']);
+        Route::post('{campanha}/saidas', [App\Http\Controllers\CampanhaController::class, 'storeSaida']);
+        Route::delete('saidas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroySaida']);
+    });
 });
