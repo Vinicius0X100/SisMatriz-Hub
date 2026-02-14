@@ -284,12 +284,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     });
 
     // Campanhas
-    Route::middleware(function ($request, $next) {
-        if (!\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['1', '111', '11'])) {
-             abort(403, 'Acesso não autorizado. Apenas administradores e financeiro (tesoureiros) podem acessar este módulo.');
-        }
-        return $next($request);
-    })->group(function () {
+    Route::middleware([\App\Http\Middleware\CheckCampaignAccess::class])->group(function () {
         Route::resource('campanhas', App\Http\Controllers\CampanhaController::class);
         Route::get('campanhas/{campanha}/report', [App\Http\Controllers\CampanhaController::class, 'generateReport'])->name('campanhas.report');
         
