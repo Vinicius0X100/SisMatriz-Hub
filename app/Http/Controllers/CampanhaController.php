@@ -13,16 +13,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class CampanhaController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::check() || !Auth::user()->hasAnyRole(['1', '111', '11'])) {
-                abort(403, 'Acesso não autorizado. Apenas administradores e financeiro (tesoureiros) podem acessar este módulo.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index(Request $request)
     {
         $query = Campanha::query();

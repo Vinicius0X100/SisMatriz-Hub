@@ -284,25 +284,32 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     });
 
     // Campanhas
-    Route::resource('campanhas', App\Http\Controllers\CampanhaController::class);
-    Route::get('campanhas/{campanha}/report', [App\Http\Controllers\CampanhaController::class, 'generateReport'])->name('campanhas.report');
-    
-    // API Campanhas (React)
-    Route::prefix('api/campanhas')->group(function () {
-        // Dashboard Data
-        Route::get('{campanha}/dashboard-data', [App\Http\Controllers\CampanhaController::class, 'getDashboardData']);
+    Route::middleware(function ($request, $next) {
+        if (!\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['1', '111', '11'])) {
+             abort(403, 'Acesso não autorizado. Apenas administradores e financeiro (tesoureiros) podem acessar este módulo.');
+        }
+        return $next($request);
+    })->group(function () {
+        Route::resource('campanhas', App\Http\Controllers\CampanhaController::class);
+        Route::get('campanhas/{campanha}/report', [App\Http\Controllers\CampanhaController::class, 'generateReport'])->name('campanhas.report');
         
-        // Categorias
-        Route::get('categorias', [App\Http\Controllers\CampanhaCategoriaController::class, 'index']);
-        Route::get('categorias/stats', [App\Http\Controllers\CampanhaCategoriaController::class, 'stats']);
-        Route::post('categorias', [App\Http\Controllers\CampanhaCategoriaController::class, 'store']);
-        Route::put('categorias/{categoria}', [App\Http\Controllers\CampanhaCategoriaController::class, 'update']);
-        Route::delete('categorias/{categoria}', [App\Http\Controllers\CampanhaCategoriaController::class, 'destroy']);
-        
-        // Movimentações
-        Route::post('{campanha}/entradas', [App\Http\Controllers\CampanhaController::class, 'storeEntrada']);
-        Route::delete('entradas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroyEntrada']);
-        Route::post('{campanha}/saidas', [App\Http\Controllers\CampanhaController::class, 'storeSaida']);
-        Route::delete('saidas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroySaida']);
+        // API Campanhas (React)
+        Route::prefix('api/campanhas')->group(function () {
+            // Dashboard Data
+            Route::get('{campanha}/dashboard-data', [App\Http\Controllers\CampanhaController::class, 'getDashboardData']);
+            
+            // Categorias
+            Route::get('categorias', [App\Http\Controllers\CampanhaCategoriaController::class, 'index']);
+            Route::get('categorias/stats', [App\Http\Controllers\CampanhaCategoriaController::class, 'stats']);
+            Route::post('categorias', [App\Http\Controllers\CampanhaCategoriaController::class, 'store']);
+            Route::put('categorias/{categoria}', [App\Http\Controllers\CampanhaCategoriaController::class, 'update']);
+            Route::delete('categorias/{categoria}', [App\Http\Controllers\CampanhaCategoriaController::class, 'destroy']);
+            
+            // Movimentações
+            Route::post('{campanha}/entradas', [App\Http\Controllers\CampanhaController::class, 'storeEntrada']);
+            Route::delete('entradas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroyEntrada']);
+            Route::post('{campanha}/saidas', [App\Http\Controllers\CampanhaController::class, 'storeSaida']);
+            Route::delete('saidas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroySaida']);
+        });
     });
 });

@@ -10,16 +10,6 @@ use Illuminate\Support\Facades\DB;
 
 class CampanhaCategoriaController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::check() || !Auth::user()->hasAnyRole(['1', '111', '11'])) {
-                abort(403, 'Acesso não autorizado. Apenas administradores e financeiro (tesoureiros) podem acessar este módulo.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index()
     {
         $categorias = CampanhaCategoria::where('paroquia_id', Auth::user()->paroquia_id)
