@@ -449,7 +449,7 @@ class AcolitoEscalaController extends Controller
     /**
      * Delete a celebration.
      */
-    public function deleteCelebration($id, $celebrationId)
+    public function destroyCelebration($id, $celebrationId)
     {
         if (Auth::user()->rule == 8) {
             return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
@@ -457,14 +457,22 @@ class AcolitoEscalaController extends Controller
 
         $escala = Escala::where('es_id', $id)
                         ->where('paroquia_id', Auth::user()->paroquia_id)
-                        ->firstOrFail();
+                        ->first();
+
+        if (!$escala) {
+            return response()->json(['success' => false, 'message' => 'Escala não encontrada.'], 404);
+        }
 
         // Check if draft
         if (str_starts_with($celebrationId, 'draft_')) {
             $draftId = str_replace('draft_', '', $celebrationId);
             $draft = EscalaDraft::where('id', $draftId)
                                 ->where('es_id', $escala->es_id)
-                                ->firstOrFail();
+                                ->first();
+
+            if (!$draft) {
+                 return response()->json(['success' => false, 'message' => 'Rascunho não encontrado.'], 404);
+            }
             
             if (Storage::disk('local')->exists('escalas/drafts/' . $draft->payload)) {
                 Storage::disk('local')->delete('escalas/drafts/' . $draft->payload);
@@ -479,7 +487,12 @@ class AcolitoEscalaController extends Controller
         try {
             $celebration = EscalaDataHora::where('d_id', $celebrationId)
                                          ->where('es_id', $id)
-                                         ->firstOrFail();
+                                         ->first();
+
+            if (!$celebration) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Celebração não encontrada.'], 404);
+            }
 
             // Remove assigned acolytes
             EscaladoData::where('d_id', $celebration->d_id)->delete();
@@ -495,7 +508,7 @@ class AcolitoEscalaController extends Controller
             return response()->json(['success' => true, 'message' => 'Celebração excluída com sucesso!']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Erro ao excluir celebração.'], 500);
+            return response()->json(['success' => false, 'message' => 'Erro ao excluir celebração: ' . $e->getMessage()], 500);
         }
     }
 

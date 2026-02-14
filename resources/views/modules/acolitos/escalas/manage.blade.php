@@ -277,6 +277,31 @@
     </div>
 </div>
 
+<!-- Modal de Confirmação de Exclusão de Celebração -->
+<div class="modal fade" id="deleteCelebrationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Tem certeza?</h5>
+                    <p class="text-muted mb-0">Esta ação é <strong>irreversível</strong> e removerá esta celebração da escala.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4" onclick="deleteCelebration()">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .calendar-grid {
         display: grid;
@@ -339,9 +364,15 @@
         // Delete Button
         const deleteBtn = document.getElementById('btnDelete');
         if(deleteBtn) {
-            deleteBtn.addEventListener('click', deleteCelebration);
+            deleteBtn.addEventListener('click', confirmDeleteCelebration);
         }
     });
+
+    function confirmDeleteCelebration() {
+        // Abre o modal de confirmação em vez de usar window.confirm
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteCelebrationModal'));
+        deleteModal.show();
+    }
 
     function openViewModal(celebrationId) {
         if (!celebrationId) return;
@@ -663,24 +694,45 @@
     }
 
     function deleteCelebration() {
-        if(!confirm('Tem certeza que deseja excluir esta celebração?')) return;
-
         const id = document.getElementById('celebrationId').value;
         const url = `{{ url('acolitos/escalas/' . $escala->es_id . '/celebrations') }}/${id}`;
+
+        // Fechar o modal de confirmação
+        const deleteModalEl = document.getElementById('deleteCelebrationModal');
+        const deleteModal = bootstrap.Modal.getInstance(deleteModalEl);
+        if (deleteModal) {
+            deleteModal.hide();
+        }
 
         fetch(url, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                 return response.text().then(text => { throw new Error(text) });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 location.reload();
             } else {
                 alert('Erro: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro na exclusão:', error);
+            // Tenta extrair mensagem JSON se possível, senão mostra erro genérico
+            try {
+                const errorObj = JSON.parse(error.message);
+                alert('Erro ao excluir: ' + (errorObj.message || 'Erro desconhecido'));
+            } catch(e) {
+                alert('Erro ao processar exclusão. Verifique o console para mais detalhes.');
             }
         });
     }
