@@ -44,6 +44,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::put('/settings/privacy', [App\Http\Controllers\SettingsController::class, 'updatePrivacy'])->name('settings.update.privacy');
     Route::put('/settings/password', [App\Http\Controllers\SettingsController::class, 'updatePassword'])->name('settings.update.password');
 
+    // Acessos e Usuários
+    Route::resource('access-control', App\Http\Controllers\AccessControlController::class)->parameters([
+        'access-control' => 'userAccess',
+    ]);
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
@@ -240,6 +245,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Estoque (Social Assistant)
     Route::post('estoque/bulk-delete', [App\Http\Controllers\EstoqueController::class, 'bulkDestroy'])->name('estoque.bulk-delete');
+    Route::post('estoque/bulk-destroy', [App\Http\Controllers\EstoqueController::class, 'bulkDestroy'])->name('estoque.bulk-destroy');
     Route::any('estoque/pdf', [App\Http\Controllers\EstoqueController::class, 'generatePdf'])->name('estoque.pdf');
     Route::delete('estoque/image/{id}', [App\Http\Controllers\EstoqueController::class, 'deleteImage'])->name('estoque.image.delete');
     Route::resource('estoque', App\Http\Controllers\EstoqueController::class);
@@ -251,6 +257,21 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('inventory/bulk-delete', [App\Http\Controllers\InventoryController::class, 'bulkDestroy'])->name('inventory.bulk-delete');
     Route::get('inventory/photo/{id}/delete', [App\Http\Controllers\InventoryController::class, 'destroyPhoto'])->name('inventory.photo.destroy');
     Route::resource('inventory', App\Http\Controllers\InventoryController::class);
+
+    // Notas Fiscais
+    Route::post('notas-fiscais/bulk-destroy', [App\Http\Controllers\NotaFiscalController::class, 'bulkDestroy'])->name('notas-fiscais.bulk-destroy');
+    Route::get('notas-fiscais/{notaFiscal}/download', [App\Http\Controllers\NotaFiscalController::class, 'download'])->name('notas-fiscais.download');
+    Route::resource('notas-fiscais', App\Http\Controllers\NotaFiscalController::class)->parameters([
+        'notas-fiscais' => 'notaFiscal',
+    ]);
+
+    // Ofertas e Dízimos
+    Route::post('ofertas/bulk-store', [App\Http\Controllers\OfertaController::class, 'storeBulk'])->name('ofertas.bulk-store');
+    Route::post('ofertas/bulk-delete', [App\Http\Controllers\OfertaController::class, 'bulkDestroy'])->name('ofertas.bulk-delete');
+    Route::post('ofertas/export-pdf', [App\Http\Controllers\OfertaController::class, 'exportPdf'])->name('ofertas.export-pdf');
+    Route::resource('ofertas', App\Http\Controllers\OfertaController::class)->parameters([
+        'ofertas' => 'oferta',
+    ]);
 
     // Celebrações e Horários
     Route::post('celebration-schedules/bulk-delete', [App\Http\Controllers\CelebrationScheduleController::class, 'bulkDestroy'])->name('celebration-schedules.bulk-delete');
