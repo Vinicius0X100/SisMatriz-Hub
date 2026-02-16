@@ -229,6 +229,12 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::delete('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'destroyCelebration'])->name('acolitos.escalas.celebrations.destroy');
     Route::resource('acolitos/escalas', App\Http\Controllers\AcolitoEscalaController::class, ['as' => 'acolitos']);
     
+    // Faltas/Presenças de Acólitos
+    Route::get('acolitos/chamada', [App\Http\Controllers\AcolitoController::class, 'chamada'])->name('acolitos.chamada');
+    Route::get('acolitos/{id}/attendance-history', [App\Http\Controllers\AcolitoController::class, 'attendanceHistory'])->name('acolitos.attendance-history');
+    Route::post('acolitos/attendance/store', [App\Http\Controllers\AcolitoController::class, 'storeAttendance'])->name('acolitos.attendance.store');
+    Route::post('acolitos/attendance/justify', [App\Http\Controllers\AcolitoController::class, 'storeJustification'])->name('acolitos.attendance.justify');
+    
     Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
     // Vicentinos

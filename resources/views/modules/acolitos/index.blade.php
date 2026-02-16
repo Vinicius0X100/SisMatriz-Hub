@@ -129,7 +129,11 @@
                 </div>
 
                 <!-- Ações e Novo -->
-                <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
+                <div class="col-md-3 text-end d-flex gap-2 justify-content-end">
+                    <a href="{{ route('acolitos.chamada') }}" class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center justify-content-center" style="height: 45px;">
+                        <i class="bi bi-clipboard-check me-2"></i>
+                        <span class="d-none d-lg-inline">Fazer Chamada</span>
+                    </a>
                     <div class="dropdown">
                         <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center justify-content-center" style="height: 45px;" type="button" id="bulkActionsBtn" data-bs-toggle="dropdown" aria-expanded="false" disabled>
                             Ações
@@ -733,6 +737,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${statusBadge}</td>
                 <td class="text-end pe-4">
                     <div class="d-flex gap-2 justify-content-end">
+                        <a href="{{ url('acolitos') }}/${item.id}/attendance-history" class="btn btn-light text-warning btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" data-bs-toggle="tooltip" data-bs-title="Faltas">
+                            <i class="bi bi-calendar-x"></i>
+                        </a>
                         <a href="{{ url('acolitos') }}/${item.id}/edit" class="btn btn-light text-primary btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" data-bs-toggle="tooltip" data-bs-title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>

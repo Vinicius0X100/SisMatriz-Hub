@@ -11,44 +11,55 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('campanha_categorias', function (Blueprint $table) {
-            $table->id();
-            $table->string('nome');
-            $table->unsignedBigInteger('paroquia_id')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('campanha_categorias')) {
+            Schema::create('campanha_categorias', function (Blueprint $table) {
+                $table->id();
+                $table->string('nome');
+                $table->unsignedBigInteger('paroquia_id')->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('campanhas', function (Blueprint $table) {
-            $table->id();
-            $table->string('nome');
-            $table->foreignId('categoria_id')->constrained('campanha_categorias')->onDelete('cascade');
-            $table->text('descricao')->nullable();
-            $table->date('data_inicio')->nullable();
-            $table->date('data_fim')->nullable();
-            $table->unsignedBigInteger('paroquia_id')->nullable();
-            $table->string('status')->default('ativa'); // ativa, inativa, concluida
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('campanhas')) {
+            Schema::create('campanhas', function (Blueprint $table) {
+                $table->id();
+                $table->string('nome');
+                $table->unsignedBigInteger('categoria_id');
+                $table->text('descricao')->nullable();
+                $table->date('data_inicio')->nullable();
+                $table->date('data_fim')->nullable();
+                $table->unsignedBigInteger('paroquia_id')->nullable();
+                $table->string('status')->default('ativa');
+                $table->timestamps();
+                $table->index('categoria_id');
+            });
+        }
 
-        Schema::create('campanha_entradas', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('campanha_id')->constrained('campanhas')->onDelete('cascade');
-            $table->date('data');
-            $table->decimal('valor', 10, 2);
-            $table->string('forma')->nullable(); // Dinheiro, Pix, etc.
-            $table->text('observacoes')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('campanha_entradas')) {
+            Schema::create('campanha_entradas', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('campanha_id');
+                $table->date('data');
+                $table->decimal('valor', 10, 2);
+                $table->string('forma')->nullable();
+                $table->text('observacoes')->nullable();
+                $table->timestamps();
+                $table->index('campanha_id');
+            });
+        }
 
-        Schema::create('campanha_saidas', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('campanha_id')->constrained('campanhas')->onDelete('cascade');
-            $table->date('data');
-            $table->decimal('valor', 10, 2);
-            $table->string('categoria')->nullable(); // Material, Mão de obra, etc.
-            $table->text('descricao')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('campanha_saidas')) {
+            Schema::create('campanha_saidas', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('campanha_id');
+                $table->date('data');
+                $table->decimal('valor', 10, 2);
+                $table->string('categoria')->nullable();
+                $table->text('descricao')->nullable();
+                $table->timestamps();
+                $table->index('campanha_id');
+            });
+        }
     }
 
     /**

@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Acolito;
+use App\Models\AcolitoFalta;
+use App\Models\AcolitoFaltaJustify;
 use App\Models\Entidade;
+use App\Models\Escala;
+use App\Models\EscalaDataHora;
+use App\Models\EscaladoData;
 use App\Models\Register;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -348,5 +353,201 @@ class AcolitoController extends Controller
             ->get(['id', 'name', 'age']);
 
         return response()->json($registers);
+    }
+    
+    public function chamada(Request $request)
+    {
+        $escalas = Escala::where('paroquia_id', Auth::user()->paroquia_id)
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get();
+
+        $selectedEscalaId = $request->input('escala_id');
+        $selectedDId = $request->input('d_id');
+
+        $datas = collect();
+        $celebration = null;
+        $escalados = collect();
+        $existingByAcolito = collect();
+        $dateStr = null;
+
+        if ($selectedEscalaId) {
+            $datas = EscalaDataHora::where('es_id', $selectedEscalaId)
+                ->with('entidade')
+                ->orderBy('data')
+                ->orderBy('hora')
+                ->get();
+        }
+
+        if ($selectedDId) {
+            $celebration = EscalaDataHora::where('d_id', $selectedDId)
+                ->whereHas('escala', function ($q) {
+                    $q->where('paroquia_id', Auth::user()->paroquia_id);
+                })
+                ->with(['entidade', 'escala'])
+                ->firstOrFail();
+
+            $escalados = EscaladoData::where('d_id', $selectedDId)
+                ->with(['acolito', 'funcao'])
+                ->get();
+
+            $monthsMap = [
+                'janeiro' => 1,'fevereiro' => 2,'março' => 3,'marco' => 3,'abril' => 4,'maio' => 5,'junho' => 6,
+                'julho' => 7,'agosto' => 8,'setembro' => 9,'outubro' => 10,'novembro' => 11,'dezembro' => 12
+            ];
+            $monthName = mb_strtolower($celebration->escala->month, 'UTF-8');
+            $monthNum = $monthsMap[$monthName] ?? date('n');
+            $dateStr = sprintf('%04d-%02d-%02d', (int)$celebration->escala->year, (int)$monthNum, (int)$celebration->data);
+
+            $existingByAcolito = AcolitoFalta::with('justificativa')
+                ->where('paroquia_id', Auth::user()->paroquia_id)
+                ->where('d_id', $selectedDId)
+                ->whereDate('data_aula', $dateStr)
+                ->get()
+                ->keyBy('acolito_id');
+        }
+
+        return view('modules.acolitos.chamada', compact(
+            'escalas',
+            'datas',
+            'celebration',
+            'escalados',
+            'selectedEscalaId',
+            'selectedDId',
+            'existingByAcolito',
+            'dateStr'
+        ));
+    }
+    
+    public function attendanceHistory(Request $request, $id)
+    {
+        $acolito = Acolito::where('id', $id)->where('paroquia_id', Auth::user()->paroquia_id)->firstOrFail();
+        
+        $query = AcolitoFalta::with(['justificativa', 'escalaDataHora'])
+                              ->where('acolito_id', $id)
+                              ->where('paroquia_id', Auth::user()->paroquia_id);
+        
+        if ($request->filled('status')) {
+            if ($request->status == 'present') {
+                $query->where('status', 1);
+            } elseif ($request->status == 'absent') {
+                $query->where('status', 0);
+            }
+        }
+        
+        if ($request->filled('start_date')) {
+            $query->whereDate('data_aula', '>=', $request->start_date);
+        }
+        
+        if ($request->filled('end_date')) {
+            $query->whereDate('data_aula', '<=', $request->end_date);
+        }
+        
+        $history = $query->orderBy('data_aula', 'desc')->get();
+        
+        return view('modules.acolitos.attendance-history', compact('acolito', 'history'));
+    }
+    
+    public function storeAttendance(Request $request)
+    {
+        if ($request->has('registros')) {
+            $request->validate([
+                'd_id' => 'nullable|integer',
+                'data' => 'required|date',
+                'registros' => 'required|array',
+                'registros.*.acolito_id' => 'required|exists:acolitos,id',
+                'registros.*.status' => 'required|in:present,absent',
+                'registros.*.justify_type' => 'nullable|in:sem,com',
+                'registros.*.motivo' => 'nullable|string|max:255',
+            ]);
+
+            foreach ($request->registros as $registro) {
+                $acolito = Acolito::where('id', $registro['acolito_id'])
+                    ->where('paroquia_id', Auth::user()->paroquia_id)
+                    ->first();
+
+                if (!$acolito) {
+                    continue;
+                }
+
+                $record = AcolitoFalta::updateOrCreate(
+                    [
+                        'acolito_id' => $acolito->id,
+                        'paroquia_id' => Auth::user()->paroquia_id,
+                        'data_aula' => $request->data,
+                        'd_id' => $request->input('d_id'),
+                    ],
+                    [
+                        'title' => $registro['status'] === 'present' ? 'Presença' : 'Falta',
+                        'status' => $registro['status'] === 'present' ? 1 : 0,
+                        'grave' => $registro['status'] === 'absent' && ($registro['justify_type'] ?? 'sem') === 'sem',
+                    ]
+                );
+
+                if ($registro['status'] === 'absent' && ($registro['justify_type'] ?? null) === 'com' && !empty($registro['motivo'])) {
+                    AcolitoFaltaJustify::updateOrCreate(
+                        ['faltas_id' => $record->id],
+                        ['motivo' => $registro['motivo']]
+                    );
+                } else {
+                    AcolitoFaltaJustify::where('faltas_id', $record->id)->delete();
+                }
+            }
+
+            return back()->with('success', 'Chamada salva com sucesso!');
+        }
+
+        $request->validate([
+            'acolito_id' => 'required|exists:acolitos,id',
+            'data' => 'required|date',
+            'status' => 'required|in:present,absent',
+            'justify_type' => 'nullable|in:sem,com',
+            'motivo' => 'nullable|string|max:255',
+        ]);
+
+        $acolito = Acolito::where('id', $request->acolito_id)
+            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->firstOrFail();
+
+        $record = AcolitoFalta::create([
+            'acolito_id' => $acolito->id,
+            'paroquia_id' => Auth::user()->paroquia_id,
+            'title' => $request->status === 'present' ? 'Presença' : 'Falta',
+            'data_aula' => $request->data,
+            'status' => $request->status === 'present' ? 1 : 0,
+            'grave' => $request->status === 'absent' && $request->justify_type === 'sem',
+            'd_id' => $request->input('d_id'),
+        ]);
+
+        if ($request->status === 'absent' && $request->justify_type === 'com' && $request->filled('motivo')) {
+            AcolitoFaltaJustify::updateOrCreate(
+                ['faltas_id' => $record->id],
+                ['motivo' => $request->motivo]
+            );
+        }
+
+        return back()->with('success', 'Registro salvo com sucesso!');
+    }
+    
+    public function storeJustification(Request $request)
+    {
+        $request->validate([
+            'falta_id' => 'required|exists:faltas_acolitos,id',
+            'motivo' => 'required|string|max:255',
+        ]);
+        
+        $falta = AcolitoFalta::findOrFail($request->falta_id);
+        $acolito = Acolito::findOrFail($falta->acolito_id);
+        
+        if (Auth::user()->paroquia_id && $acolito->paroquia_id != Auth::user()->paroquia_id) {
+            abort(403);
+        }
+        
+        AcolitoFaltaJustify::updateOrCreate(
+            ['faltas_id' => $request->falta_id],
+            ['motivo' => $request->motivo]
+        );
+        
+        return back()->with('success', 'Justificativa salva com sucesso!');
     }
 }
