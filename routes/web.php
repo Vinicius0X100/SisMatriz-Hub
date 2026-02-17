@@ -341,4 +341,18 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
             Route::delete('saidas/{id}', [App\Http\Controllers\CampanhaController::class, 'destroySaida']);
         });
     });
+
+    // Festas e Eventos
+    Route::resource('festas-eventos', App\Http\Controllers\FestaEventoController::class)->parameters([
+        'festas-eventos' => 'festaEvento',
+    ]);
+    Route::post('festas-eventos/{festaEvento}/entradas', [App\Http\Controllers\FestaEventoController::class, 'storeEntrada'])->name('festas-eventos.entradas.store');
+    Route::post('festas-eventos/{festaEvento}/saidas', [App\Http\Controllers\FestaEventoController::class, 'storeSaida'])->name('festas-eventos.saidas.store');
+    Route::post('festas-eventos/{festaEvento}/itens-entrada', [App\Http\Controllers\FestaEventoController::class, 'storeItemEntrada'])->name('festas-eventos.itens-entrada.store');
+    Route::post('festas-eventos/{festaEvento}/itens-saida', [App\Http\Controllers\FestaEventoController::class, 'storeItemSaida'])->name('festas-eventos.itens-saida.store');
+    Route::get('festas-eventos/{festaEvento}/report', [App\Http\Controllers\FestaEventoController::class, 'generateReport'])->name('festas-eventos.report');
+    Route::delete('festas-eventos/entradas/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroyEntrada'])->name('festas-eventos.entradas.destroy');
+    Route::delete('festas-eventos/saidas/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroySaida'])->name('festas-eventos.saidas.destroy');
+    Route::delete('festas-eventos/itens-entrada/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroyItemEntrada'])->name('festas-eventos.itens-entrada.destroy');
+    Route::delete('festas-eventos/itens-saida/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroyItemSaida'])->name('festas-eventos.itens-saida.destroy');
 });

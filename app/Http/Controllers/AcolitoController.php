@@ -357,6 +357,10 @@ class AcolitoController extends Controller
     
     public function chamada(Request $request)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403);
+        }
+
         $escalas = Escala::where('paroquia_id', Auth::user()->paroquia_id)
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
@@ -421,6 +425,10 @@ class AcolitoController extends Controller
     
     public function attendanceHistory(Request $request, $id)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403);
+        }
+
         $acolito = Acolito::where('id', $id)->where('paroquia_id', Auth::user()->paroquia_id)->firstOrFail();
         
         $query = AcolitoFalta::with(['justificativa', 'escalaDataHora'])
@@ -450,6 +458,10 @@ class AcolitoController extends Controller
     
     public function storeAttendance(Request $request)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403);
+        }
+
         if ($request->has('registros')) {
             $request->validate([
                 'd_id' => 'nullable|integer',
@@ -531,6 +543,10 @@ class AcolitoController extends Controller
     
     public function storeJustification(Request $request)
     {
+        if (Auth::user()->rule == 8) {
+            abort(403);
+        }
+
         $request->validate([
             'falta_id' => 'required|exists:faltas_acolitos,id',
             'motivo' => 'required|string|max:255',
