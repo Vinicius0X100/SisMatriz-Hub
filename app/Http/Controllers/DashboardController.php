@@ -25,6 +25,8 @@ use App\Models\VinWatched;
 use App\Models\DocsEucaristia;
 use App\Models\DocsCrisma;
 use Illuminate\Support\Facades\DB;
+use App\Models\Evento;
+use Illuminate\Support\Facades\Storage;
 
 use Carbon\CarbonPeriod;
 
@@ -257,7 +259,39 @@ class DashboardController extends Controller
             return strtoupper(substr($item['name'], 0, 1));
         });
 
-        return view('dashboard', compact('pinnedModules', 'groupedModules', 'stats', 'chartData', 'accessChartData'));
+        // Eventos: Hoje e Próximos
+        $now = Carbon::now();
+        $today = $now->toDateString();
+        $currentTime = $now->format('H:i:s');
+
+        $todayEvents = Evento::where('paroquia_id', $paroquiaId)
+            ->whereDate('date', '=', $today)
+            ->where('time', '>=', $currentTime)
+            ->orderBy('time', 'asc')
+            ->limit(12)
+            ->get()
+            ->map(function ($event) {
+                $photoPath = $event->photo ? 'uploads/eventos/' . $event->photo : null;
+                $exists = $photoPath && Storage::disk('public')->exists($photoPath);
+                $event->photo_url = $exists ? asset('storage/' . $photoPath) : null;
+                return $event;
+            });
+
+        // Próximos eventos (excluir os de hoje para não duplicar a seção)
+        $upcomingEvents = Evento::where('paroquia_id', $paroquiaId)
+            ->whereDate('date', '>', $today)
+            ->orderBy('date', 'asc')
+            ->orderBy('time', 'asc')
+            ->limit(20)
+            ->get()
+            ->map(function ($event) {
+                $photoPath = $event->photo ? 'uploads/eventos/' . $event->photo : null;
+                $exists = $photoPath && Storage::disk('public')->exists($photoPath);
+                $event->photo_url = $exists ? asset('storage/' . $photoPath) : null;
+                return $event;
+            });
+
+        return view('dashboard', compact('pinnedModules', 'groupedModules', 'stats', 'chartData', 'accessChartData', 'todayEvents', 'upcomingEvents'));
     }
 
     public function togglePin(Request $request)

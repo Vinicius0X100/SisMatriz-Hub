@@ -28,6 +28,92 @@
                 </div>
             </div>
 
+            @if(isset($todayEvents) && $todayEvents->count() > 0)
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="fw-bold text-primary mb-0">HOJE NA SUA PARÓQUIA</h5>
+                    <a href="{{ url('/eventos') }}" class="btn btn-light rounded-pill">Ver todos</a>
+                </div>
+                <div class="position-relative">
+                    <button class="btn btn-light rounded-circle position-absolute top-50 start-0 translate-middle-y shadow-sm" id="todayPrevBtn" style="z-index: 2;">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="d-flex overflow-auto gap-2 px-2" id="todayCarousel" style="scroll-behavior: smooth;">
+                        @foreach($todayEvents as $evento)
+                            <div class="event-thumb rounded-3 shadow-sm position-relative"
+                                 data-title="{{ $evento->title }}"
+                                 data-date="{{ $evento->date }}"
+                                 data-time="{{ $evento->time }}"
+                                 data-address="{{ $evento->address }}"
+                                 data-photo-url="{{ $evento->photo_url }}"
+                                 role="button"
+                                 tabindex="0"
+                                 aria-label="Evento: {{ $evento->title }}">
+                                @if($evento->photo_url)
+                                    <img src="{{ $evento->photo_url }}" alt="{{ $evento->title }}" class="w-100 h-100">
+                                @else
+                                    <div class="w-100 h-100 thumb-fallback">
+                                        <div class="thumb-gradient"></div>
+                                        <div class="thumb-title text-white fw-bold">{{ $evento->title }}</div>
+                                    </div>
+                                @endif
+                                    <div class="thumb-overlay d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-mouse me-2 text-white"></i>
+                                        <span class="text-white small fw-bold overlay-text">Clique para saber mais</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <button class="btn btn-light rounded-circle position-absolute top-50 end-0 translate-middle-y shadow-sm" id="todayNextBtn" style="z-index: 2;">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            @endif
+
+            @if(isset($upcomingEvents) && $upcomingEvents->count() > 0)
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="fw-bold text-dark mb-0">Próximos eventos</h5>
+                    <a href="{{ url('/eventos') }}" class="btn btn-light rounded-pill">Ver todos</a>
+                </div>
+                <div class="position-relative">
+                    <button class="btn btn-light rounded-circle position-absolute top-50 start-0 translate-middle-y shadow-sm" id="upcomingPrevBtn" style="z-index: 2;">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="d-flex overflow-auto gap-2 px-2" id="upcomingCarousel" style="scroll-behavior: smooth;">
+                        @foreach($upcomingEvents as $evento)
+                            <div class="event-thumb rounded-3 shadow-sm position-relative"
+                                 data-title="{{ $evento->title }}"
+                                 data-date="{{ $evento->date }}"
+                                 data-time="{{ $evento->time }}"
+                                 data-address="{{ $evento->address }}"
+                                 data-photo-url="{{ $evento->photo_url }}"
+                                 role="button"
+                                 tabindex="0"
+                                 aria-label="Evento: {{ $evento->title }}">
+                                @if($evento->photo_url)
+                                    <img src="{{ $evento->photo_url }}" alt="{{ $evento->title }}" class="w-100 h-100">
+                                @else
+                                    <div class="w-100 h-100 thumb-fallback">
+                                        <div class="thumb-gradient"></div>
+                                        <div class="thumb-title text-white fw-bold">{{ $evento->title }}</div>
+                                    </div>
+                                @endif
+                                    <div class="thumb-overlay d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-mouse me-2 text-white"></i>
+                                        <span class="text-white small fw-bold overlay-text">Clique para saber mais</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <button class="btn btn-light rounded-circle position-absolute top-50 end-0 translate-middle-y shadow-sm" id="upcomingNextBtn" style="z-index: 2;">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            @endif
+
             <!-- Quantitative Cards -->
             @if(isset($stats))
             <div class="row g-3 mb-4">
@@ -350,6 +436,29 @@
     </div>
 </div>
 
+<!-- Modal Detalhe do Evento -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="eventDetailTitle">Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3" id="eventDetailImageWrapper" style="height: 180px;">
+                    <img id="eventDetailImage" src="#" alt="" class="w-100 h-100 rounded-3" style="object-fit: cover; display: none;">
+                    <div id="eventDetailFallback" class="w-100 h-100 rounded-3 position-relative" style="display: none; background: linear-gradient(135deg, #0d6efd, #6c757d);">
+                        <div class="position-absolute bottom-0 start-0 p-3 text-white fw-bold" id="eventDetailFallbackTitle"></div>
+                    </div>
+                </div>
+                <div class="text-muted mb-2"><i class="bi bi-calendar-event me-1"></i><span id="eventDetailDate"></span></div>
+                <div class="text-muted mb-2"><i class="bi bi-clock me-1"></i><span id="eventDetailTime"></span></div>
+                <div class="text-muted"><i class="bi bi-geo-alt me-1"></i><span id="eventDetailAddress"></span></div>
+            </div>
+        </div>
+    </div>
+    </div>
+
 
 <style>
     .card-module {
@@ -400,6 +509,65 @@
     /* Estilo específico para quando o ícone já tem a classe text-primary (pinned) */
     .pin-btn i.text-primary {
         color: #0d6efd !important;
+    }
+    /* Streaming-like thumbs */
+    .event-thumb {
+        width: 180px;
+        height: 110px;
+        background-color: #f8f9fa;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+    }
+    @media (max-width: 576px) {
+        .event-thumb { width: 160px; height: 100px; }
+    }
+    @media (min-width: 992px) {
+        .event-thumb { width: 200px; height: 120px; }
+    }
+    .event-thumb img {
+        object-fit: contain;
+        object-position: center center;
+        background-color: #000;
+        display: block;
+    }
+    .event-thumb .thumb-fallback {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+    }
+    .event-thumb .thumb-gradient {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.6) 100%);
+    }
+    .event-thumb .thumb-title {
+        position: relative;
+        padding: 8px;
+        font-size: 0.8rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .event-thumb .thumb-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.0);
+        opacity: 0;
+        transition: opacity 0.2s ease, background 0.2s ease;
+        text-align: center;
+    }
+    .event-thumb:hover .thumb-overlay {
+        opacity: 1;
+        background: rgba(0,0,0,0.35);
+    }
+    .event-thumb:focus {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
+    .event-thumb:focus .thumb-overlay {
+        opacity: 1;
+        background: rgba(0,0,0,0.35);
     }
 </style>
 
@@ -806,6 +974,98 @@
             }
         }
         fetchWeather(); // Call once on load
+
+        // Eventos carousels scroll
+        function bindCarouselControls(containerId, prevBtnId, nextBtnId) {
+            const container = document.getElementById(containerId);
+            const prevBtn = document.getElementById(prevBtnId);
+            const nextBtn = document.getElementById(nextBtnId);
+            if (!container) return;
+            const touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const scrollAmount = () => Math.max(280, Math.floor(container.clientWidth * 0.8));
+            if (prevBtn) prevBtn.addEventListener('click', () => container.scrollBy({ left: -scrollAmount(), behavior: 'smooth' }));
+            if (nextBtn) nextBtn.addEventListener('click', () => container.scrollBy({ left: scrollAmount(), behavior: 'smooth' }));
+            function updateArrows() {
+                if (touch) {
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                    return;
+                }
+                const canScroll = container.scrollWidth > container.clientWidth + 4;
+                if (prevBtn) prevBtn.style.display = canScroll && container.scrollLeft > 0 ? 'inline-flex' : (canScroll ? 'inline-flex' : 'none');
+                if (nextBtn) nextBtn.style.display = canScroll && (container.scrollLeft + container.clientWidth < container.scrollWidth - 1) ? 'inline-flex' : (canScroll ? 'inline-flex' : 'none');
+                if (!canScroll) {
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                }
+            }
+            updateArrows();
+            container.addEventListener('scroll', updateArrows);
+            window.addEventListener('resize', updateArrows);
+        }
+        bindCarouselControls('todayCarousel', 'todayPrevBtn', 'todayNextBtn');
+        bindCarouselControls('upcomingCarousel', 'upcomingPrevBtn', 'upcomingNextBtn');
+
+        // Bind event detail modal
+        const modalEl = document.getElementById('eventDetailModal');
+        const eventModal = modalEl ? new bootstrap.Modal(modalEl) : null;
+        function formatDate(dateStr) {
+            try { return new Date(dateStr).toLocaleDateString('pt-BR'); } catch (e) { return dateStr; }
+        }
+        function hhmm(timeStr) {
+            return (timeStr || '').substring(0,5);
+        }
+        function openEventModal(data) {
+            document.getElementById('eventDetailTitle').textContent = data.title || 'Evento';
+            document.getElementById('eventDetailDate').textContent = formatDate(data.date || '');
+            document.getElementById('eventDetailTime').textContent = hhmm(data.time || '');
+            document.getElementById('eventDetailAddress').textContent = data.address || '';
+            const imgEl = document.getElementById('eventDetailImage');
+            const wrap = document.getElementById('eventDetailImageWrapper');
+            const fb = document.getElementById('eventDetailFallback');
+            const fbTitle = document.getElementById('eventDetailFallbackTitle');
+            if (data.photoUrl) {
+                imgEl.src = data.photoUrl;
+                imgEl.style.display = 'block';
+                fb.style.display = 'none';
+            } else {
+                fb.style.display = 'block';
+                fbTitle.textContent = data.title || '';
+                imgEl.style.display = 'none';
+            }
+            if (eventModal) eventModal.show();
+        }
+        document.querySelectorAll('.event-thumb').forEach(el => {
+            function trigger() {
+                openEventModal({
+                    title: el.getAttribute('data-title'),
+                    date: el.getAttribute('data-date'),
+                    time: el.getAttribute('data-time'),
+                    address: el.getAttribute('data-address'),
+                    photoUrl: el.getAttribute('data-photo-url'),
+                });
+            }
+            el.addEventListener('click', trigger);
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    trigger();
+                }
+            });
+        });
+
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        document.querySelectorAll('.thumb-overlay').forEach(el => {
+            const icon = el.querySelector('i');
+            const text = el.querySelector('.overlay-text');
+            if (isTouch) {
+                if (icon) icon.className = 'bi bi-hand-index-thumb me-2 text-white';
+                if (text) text.textContent = 'Toque para saber mais';
+            } else {
+                if (icon) icon.className = 'bi bi-mouse me-2 text-white';
+                if (text) text.textContent = 'Clique para saber mais';
+            }
+        });
     });
 </script>
 @endsection

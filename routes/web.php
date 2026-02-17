@@ -244,6 +244,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Pascom
     Route::resource('solicitacoes-pascom', App\Http\Controllers\SolicitacaoPascomController::class);
+    Route::resource('eventos', App\Http\Controllers\EventoController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('eventos/{id}/lembrete', [App\Http\Controllers\EventoController::class, 'addToLembretes'])->name('eventos.lembrete');
 
     // Categorias Doacao (Estoque)
     Route::post('categorias_doacao/bulk-delete', [App\Http\Controllers\CategoriaDoacaoController::class, 'bulkDestroy'])->name('categorias_doacao.bulk-delete');
