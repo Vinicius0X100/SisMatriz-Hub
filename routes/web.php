@@ -344,6 +344,16 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         });
     });
 
+    // Buckets de mídia
+    Route::get('buckets', [App\Http\Controllers\BucketController::class, 'index'])->name('buckets.index');
+    Route::get('buckets/create', [App\Http\Controllers\BucketController::class, 'create'])->name('buckets.create');
+    Route::post('buckets', [App\Http\Controllers\BucketController::class, 'store'])->name('buckets.store');
+    Route::delete('buckets/{bucket}', [App\Http\Controllers\BucketController::class, 'destroy'])->name('buckets.destroy');
+    Route::get('buckets/{bucket}', [App\Http\Controllers\BucketController::class, 'show'])->name('buckets.show');
+    Route::post('buckets/{bucket}/files', [App\Http\Controllers\BucketController::class, 'storeFile'])->name('buckets.files.store');
+    Route::post('buckets/{bucket}/files/bulk-delete', [App\Http\Controllers\BucketController::class, 'bulkDestroyFiles'])->name('buckets.files.bulk-destroy');
+    Route::delete('buckets/files/{file}', [App\Http\Controllers\BucketController::class, 'destroyFile'])->name('buckets.files.destroy');
+
     // Avisos Paroquiais
     Route::resource('avisos', App\Http\Controllers\FeedPostController::class);
 

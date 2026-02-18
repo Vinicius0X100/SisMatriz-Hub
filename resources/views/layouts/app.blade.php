@@ -59,11 +59,28 @@
                     <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
                         <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white sticky-top">
                             <h6 class="mb-0 fw-bold">Notificações</h6>
+                            @php
+                                $extraNavbarNotification = session('bucket_notification');
+                            @endphp
                             @if($totalNotifications > 0)
                                 <span class="badge bg-primary rounded-pill">{{ $totalNotifications }}</span>
                             @endif
                         </div>
                         <div class="list-group list-group-flush" id="notificationList">
+                            @if(!empty($extraNavbarNotification))
+                                <div class="list-group-item border-0 px-3 py-3 bg-light">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="position-relative">
+                                            <i class="bi bi-cloud-arrow-up text-primary mt-1 fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ $extraNavbarNotification['title'] ?? 'Bucket criado com sucesso' }}</div>
+                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $extraNavbarNotification['message'] ?? '' }}</div>
+                                            <div class="text-muted" style="font-size: 0.65rem;">agora mesmo</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                             <!-- Protocol Notifications -->
                             @foreach($protocolNotifications as $notification)
                                 <a href="{{ route('protocols.notification.read', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
