@@ -27,7 +27,7 @@ return [
     ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'url' => '/inscricoes-eucaristia', 'allowed_roles' => ['7', '12']],
     ['name' => 'Inscrições de catequese de adultos', 'icon' => 'pencil-square', 'url' => '/inscricoes-catequese-adultos', 'allowed_roles' => ['17']],
     ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus', 'url' => '/solicitacoes-segunda-via', 'allowed_roles' => ['15']],
-    ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'allowed_roles' => []],
+    ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'url' => '/avisos', 'allowed_roles' => ['*']],
     ['name' => 'Comunicação em massa', 'icon' => 'broadcast', 'url' => '/mass-communication', 'allowed_roles' => ['1', '111']],
     ['name' => 'Chat', 'icon' => 'chat-dots', 'url' => '/chat', 'allowed_roles' => ['3', '7', '17', '12', '13', '6', '8', '9', '10', '4', '16']],
     ['name' => 'Excursões', 'icon' => 'bus-front', 'url' => '/excursoes', 'allowed_roles' => []],

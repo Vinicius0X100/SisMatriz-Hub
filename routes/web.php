@@ -344,6 +344,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         });
     });
 
+    // Avisos Paroquiais
+    Route::resource('avisos', App\Http\Controllers\FeedPostController::class);
+
     // Festas e Eventos
     Route::resource('festas-eventos', App\Http\Controllers\FestaEventoController::class)->parameters([
         'festas-eventos' => 'festaEvento',
