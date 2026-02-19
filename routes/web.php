@@ -20,6 +20,15 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 use App\Http\Controllers\ProfileController;
 
+// Onboarding (somente autenticado; fora do CheckOnboarding para garantir disponibilidade das rotas)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
+    Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
+    Route::get('/setup/welcome', [OnboardingController::class, 'showWelcome'])->name('setup.welcome');
+    Route::post('/setup/welcome', [OnboardingController::class, 'updateWelcome'])->name('setup.welcome.update');
+    Route::post('/setup/welcome/skip', [OnboardingController::class, 'skipWelcome'])->name('setup.welcome.skip');
+});
+
 Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -27,13 +36,6 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/dashboard/reorder-pins', [DashboardController::class, 'reorderPins'])->name('dashboard.reorder-pins');
     Route::post('/dashboard/update-pin-style', [DashboardController::class, 'updatePinStyle'])->name('dashboard.update-pin-style');
     Route::get('/dashboard/online-users', [DashboardController::class, 'getOnlineUsers'])->name('dashboard.online-users');
-
-    // Onboarding
-    Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
-    Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
-    Route::get('/setup/welcome', [OnboardingController::class, 'showWelcome'])->name('setup.welcome');
-    Route::post('/setup/welcome', [OnboardingController::class, 'updateWelcome'])->name('setup.welcome.update');
-    Route::post('/setup/welcome/skip', [OnboardingController::class, 'skipWelcome'])->name('setup.welcome.skip');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
