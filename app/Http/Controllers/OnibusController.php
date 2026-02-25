@@ -12,7 +12,7 @@ class OnibusController extends Controller
     public function create(Excursao $excursao)
     {
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
         return view('modules.excursoes.onibus.create', compact('excursao'));
@@ -21,7 +21,7 @@ class OnibusController extends Controller
     public function store(Request $request, Excursao $excursao)
     {
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -59,7 +59,7 @@ class OnibusController extends Controller
 
         // Verifica permissão (Admin ou mesma paróquia)
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
         
@@ -83,7 +83,7 @@ class OnibusController extends Controller
         }
 
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -97,7 +97,7 @@ class OnibusController extends Controller
         }
 
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 

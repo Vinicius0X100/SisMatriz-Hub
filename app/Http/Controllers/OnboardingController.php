@@ -39,18 +39,43 @@ class OnboardingController extends Controller
     {
         set_time_limit(300); // Increase execution time to 5 minutes for FTP upload
 
-        $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
-        ]);
+        $request->validate(
+            [
+                'avatar' => 'required|mimes:jpeg,png,jpg,heic,heif|max:5120',
+            ],
+            [
+                'avatar.required' => 'Envie uma foto para continuar.',
+                'avatar.mimes' => 'A foto deve ser do tipo JPEG, PNG ou HEIC.',
+                'avatar.max' => 'A foto deve ter no máximo 5 MB.',
+            ]
+        );
 
         $user = Auth::user();
 
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
-            $filename = $user->id . '.png';
+            $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension());
+            $originalExtension = $extension;
+            $targetExtension = 'png';
 
-            // Upload to local storage (storage/app/public/uploads/avatars)
-            Storage::disk('public')->putFileAs('uploads/avatars', $file, $filename);
+            if (in_array($extension, ['heic', 'heif'])) {
+                if (!class_exists(\Imagick::class)) {
+                    $targetExtension = $extension;
+                }
+            }
+
+            $filename = $user->id . '.' . $targetExtension;
+
+            if (in_array($originalExtension, ['heic', 'heif']) && class_exists(\Imagick::class)) {
+                $image = new \Imagick();
+                $image->readImageBlob($file->get());
+                $image->setImageFormat($targetExtension);
+                Storage::disk('public')->put('uploads/avatars/' . $filename, $image->getImageBlob());
+                $image->clear();
+                $image->destroy();
+            } else {
+                Storage::disk('public')->putFileAs('uploads/avatars', $file, $filename);
+            }
 
             $user->avatar = $filename;
             $user->accepted_photo = 1;

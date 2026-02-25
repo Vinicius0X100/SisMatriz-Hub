@@ -13,7 +13,7 @@ class ExcursaoController extends Controller
         $user = Auth::user();
         $query = Excursao::query();
         
-        if (!in_array($user->rule, [1, 111])) {
+        if ($user->paroquia_id) {
             $query->where('paroquia_id', $user->paroquia_id);
         }
 
@@ -43,7 +43,11 @@ class ExcursaoController extends Controller
         $excursoes = $query->orderBy('created_at', 'desc')->paginate(10);
         
         // Get unique types for filter
-        $types = Excursao::select('tipo')->distinct()->whereNotNull('tipo')->pluck('tipo');
+        $typesQuery = Excursao::select('tipo')->distinct()->whereNotNull('tipo');
+        if ($user->paroquia_id) {
+            $typesQuery->where('paroquia_id', $user->paroquia_id);
+        }
+        $types = $typesQuery->pluck('tipo');
 
         return view('modules.excursoes.index', compact('excursoes', 'stats', 'types'));
     }
@@ -75,7 +79,7 @@ class ExcursaoController extends Controller
     public function show(Excursao $excursao)
     {
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -87,7 +91,7 @@ class ExcursaoController extends Controller
     public function edit(Excursao $excursao)
     {
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
         return view('modules.excursoes.edit', compact('excursao'));
@@ -96,7 +100,7 @@ class ExcursaoController extends Controller
     public function update(Request $request, Excursao $excursao)
     {
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 
@@ -114,7 +118,7 @@ class ExcursaoController extends Controller
     public function destroy(Excursao $excursao)
     {
         $user = Auth::user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
 

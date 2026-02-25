@@ -99,7 +99,7 @@ class OnibusPdfController extends Controller
     private function authorizeAccess(Excursao $excursao)
     {
         $user = auth()->user();
-        if (!in_array($user->rule, [1, 111]) && $excursao->paroquia_id != $user->paroquia_id) {
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
             abort(403);
         }
     }
