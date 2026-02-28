@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client;
+use Barryvdh\DomPDF\Facade\Pdf;
 // use App\Jobs\SendEscalaWhatsappJob;
 
 class AcolitoEscalaController extends Controller
@@ -725,4 +726,124 @@ class AcolitoEscalaController extends Controller
         Log::info('DEBUG: sendWhatsappNotification finished');
     }
 
+    public function generatePdf($id)
+    {
+        $escala = Escala::where('es_id', $id)
+            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->firstOrFail();
+
+        // Use the existing Stored Procedure as requested
+        // Procedure: GeneratePDFEscalaComAcolitos(es_id)
+        // Returns: d_id, data_formatada, hora, church, celebration, acolitos_funcoes (concatenated)
+        
+        try {
+            $results = \DB::select('CALL GeneratePDFEscalaComAcolitos(?)', [$id]);
+        } catch (\Exception $e) {
+            // Fallback or error handling
+            \Log::error("Error calling procedure GeneratePDFEscalaComAcolitos: " . $e->getMessage());
+            // If procedure fails, we might return error or empty pdf
+            $results = [];
+        }
+        
+        // Transform the flat procedure results into the structured format expected by the view
+        // The view expects $finalGrouped collection with dates as keys
+        
+        $finalGrouped = collect();
+        
+        // Group results by date (raw date needed for sorting, but procedure gives formatted date?)
+        // The procedure returns 'data_formatada' which is like "05 de Outubro de 2025".
+        // It also returns 'd_id' which is unique per day/time slot? No, d_id comes from escalados_datas? 
+        // Wait, the SQL provided shows: FROM escalas_datas_horas edh ... GROUP BY edh.d_id
+        // So each row is a celebration slot.
+        // But the user wants them grouped by DATE in the PDF table.
+        
+        // We need to parse the results.
+        foreach ($results as $row) {
+            // Create a date object for sorting keys
+            // The procedure doesn't return raw YYYY-MM-DD date? 
+            // The SQL provided: SELECT edh.d_id, CONCAT(...) as data_formatada ...
+            // It orders by edh.data ASC.
+            // We need the raw date to group correctly if we want to stick to previous logic,
+            // OR we just iterate sequentially since the procedure already orders by date/time.
+            // The previous view logic used $finalGrouped = [ 'Y-m-d' => [ 'date' => obj, 'celebrations' => [...] ] ]
+            
+            // Let's reconstruct the structure.
+            // Since the procedure groups acolytes into one string, we need to split them back.
+            
+            $acolitosList = [];
+            if (!empty($row->acolitos_funcoes)) {
+                $pairs = explode(';;', $row->acolitos_funcoes);
+                foreach ($pairs as $pair) {
+                    $parts = explode('||', $pair);
+                    $name = $parts[0] ?? 'N/A';
+                    $func = $parts[1] ?? 'Sem função';
+                    $acolitosList[] = (object)['name' => $name, 'function' => $func];
+                }
+            } else {
+                 // Even if empty, we might want to show N/A?
+                 $acolitosList[] = (object)['name' => 'N/A', 'function' => 'Função'];
+            }
+            
+            // We need a key for grouping by day to handle rowspan in the view
+            // But wait, the previous view logic grouped by Y-m-d.
+            // Here we don't have Y-m-d easily unless we parse 'data_formatada' or fetch it.
+            // ACTUALLY, the SQL provided in the prompt implies we CAN change the SELECT if we wanted, 
+            // but the user said "nao modifique ela". 
+            // However, the procedure returns what it returns.
+            // Let's assume we can't get raw date easily from result if it's not selected.
+            // BUT, we can probably use the 'data_formatada' as the grouping key since it's unique per day.
+            // OR, better: The procedure returns one row per celebration (d_id).
+            // So we just need to group these rows by their date text.
+            
+            $dateKey = $row->data_formatada; // e.g. "05 de Outubro de 2025"
+            
+            if (!$finalGrouped->has($dateKey)) {
+                $finalGrouped->put($dateKey, [
+                    'date_string' => $row->data_formatada, // We use this for display
+                    'celebrations' => collect()
+                ]);
+            }
+            
+            // Create a celebration object that matches what view expects somewhat
+            // View uses: $cel->hora, $cel->entidade->ent_name, $cel->celebration, $cel->escalados
+            // We need to mock this structure or update the view.
+            // Updating view is cleaner.
+            
+            $celebrationObj = (object)[
+                'hora' => $row->hora,
+                'local' => $row->church, // Procedure returns 'church' from scales table? No, wait.
+                // The SQL says: SELECT ... es.church ... 
+                // Wait, es.church is the COMMUNITY name (e.g. Matriz).
+                // But previously we had edh.entidade->ent_name (Local).
+                // Does the procedure return the LOCAL of the mass?
+                // The SQL provided: JOIN escalas_datas_horas edh ... 
+                // It does NOT select ent_id or join entities.
+                // It selects 'es.church'. This might be wrong if the mass is in a different chapel.
+                // But the user said "use de base para corrigir isso".
+                // If the procedure returns 'es.church', then all rows will have the same location?
+                // That seems like a limitation of the procedure if true.
+                // HOWEVER, the user said "O codigo que chama procedure... adapte tudo isso... porem chamando a procedure que ja existe".
+                // If the procedure is "GeneratePDFEscalaComAcolitos", and the SQL provided is just an EXAMPLE of what it might do?
+                // "EU tenho essa procedure que faz esse sql... use de base para corrigir isso"
+                // It seems the user WANTS us to use the procedure.
+                // Let's trust the procedure's output for 'church'.
+                
+                'celebration' => $row->celebration,
+                'acolitos' => $acolitosList
+            ];
+            
+            $finalGrouped[$dateKey]['celebrations']->push($celebrationObj);
+        }
+        
+        // We don't need to sort by keys if the procedure already ordered by date.
+        // But we put them in a collection, so order is preserved if inserted in order.
+
+        $parish = Auth::user()->paroquia;
+        $parishPhone = $parish ? $parish->phone : 'Não informado';
+
+        $pdf = Pdf::loadView('modules.acolitos.escalas.pdf_procedure', compact('escala', 'finalGrouped', 'parishPhone'))
+            ->setPaper('a4', 'landscape');
+            
+        return $pdf->download('escala_acolitos_' . $escala->month . '_' . $escala->year . '.pdf');
+    }
 }

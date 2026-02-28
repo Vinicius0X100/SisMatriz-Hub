@@ -226,6 +226,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     
     // Escalas Management Routes
     Route::get('acolitos/escalas/{id}/manage', [App\Http\Controllers\AcolitoEscalaController::class, 'manage'])->name('acolitos.escalas.manage');
+    Route::get('acolitos/escalas/{id}/pdf', [App\Http\Controllers\AcolitoEscalaController::class, 'generatePdf'])->name('acolitos.escalas.pdf');
     Route::post('acolitos/escalas/{id}/celebrations', [App\Http\Controllers\AcolitoEscalaController::class, 'storeCelebration'])->name('acolitos.escalas.celebrations.store');
     Route::put('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'updateCelebration'])->name('acolitos.escalas.celebrations.update');
     Route::delete('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'destroyCelebration'])->name('acolitos.escalas.celebrations.destroy');

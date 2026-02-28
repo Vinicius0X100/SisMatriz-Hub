@@ -10,14 +10,20 @@
             <h2 class="mb-0 fw-bold text-dark">Gerenciar Escala</h2>
             <p class="text-muted mb-0">{{ $escala->month }} de {{ $escala->year }} - {{ $escala->church }}</p>
         </div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('acolitos.index') }}" class="text-decoration-none">Acólitos</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('acolitos.escalas.index') }}" class="text-decoration-none">Escalas</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Gerenciar</li>
-            </ol>
-        </nav>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('acolitos.index') }}" class="text-decoration-none">Acólitos</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('acolitos.escalas.index') }}" class="text-decoration-none">Escalas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Gerenciar</li>
+                </ol>
+            </nav>
+            <a href="{{ route('acolitos.escalas.pdf', $escala->es_id) }}" target="_blank" class="btn btn-danger btn-sm shadow-sm d-flex align-items-center gap-2 rounded-3 px-3">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                <span>Exportar Escala em PDF</span>
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
