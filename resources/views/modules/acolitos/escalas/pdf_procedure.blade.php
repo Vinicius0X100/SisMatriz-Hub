@@ -105,6 +105,11 @@
                         $totalDateRows += ($count > 0 ? $count : 1);
                     }
                     
+                    // Add rows for separators between celebrations (hours)
+                    if (count($celebrations) > 1) {
+                        $totalDateRows += (count($celebrations) - 1);
+                    }
+                    
                     $firstCelOfDate = true;
                 @endphp
 
@@ -173,7 +178,22 @@
                             <td colspan="2" style="color: #999; text-align: center;">Nenhum acólito escalado</td>
                         </tr>
                     @endif
+                    
+                    {{-- Add separator row between celebrations within same date --}}
+                    @if(!$loop->last)
+                        <tr>
+                            {{-- Date column spans over this, so we skip it --}}
+                            <td colspan="5" style="height: 5px; background-color: #f5f5f5; border-left: 0; border-right: 0;"></td>
+                        </tr>
+                    @endif
                 @endforeach
+                
+                {{-- Add separator between different dates --}}
+                @if(!$loop->last)
+                    <tr>
+                        <td colspan="6" style="height: 5px; background-color: #e0e0e0; border: 0;"></td>
+                    </tr>
+                @endif
             @endforeach
         </tbody>
     </table>
