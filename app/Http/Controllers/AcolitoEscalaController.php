@@ -737,11 +737,9 @@ class AcolitoEscalaController extends Controller
         // Returns: d_id, data_formatada, hora, church, celebration, acolitos_funcoes (concatenated)
         
         try {
-            $results = \DB::select('CALL GeneratePDFEscalaComAcolitos(?)', [$id]);
+            $results = DB::select('CALL GeneratePDFEscalaComAcolitos(?)', [$id]);
         } catch (\Exception $e) {
-            // Fallback or error handling
-            \Log::error("Error calling procedure GeneratePDFEscalaComAcolitos: " . $e->getMessage());
-            // If procedure fails, we might return error or empty pdf
+            Log::error("Error calling procedure GeneratePDFEscalaComAcolitos: " . $e->getMessage());
             $results = [];
         }
         
@@ -834,9 +832,31 @@ class AcolitoEscalaController extends Controller
             
             $finalGrouped[$dateKey]['celebrations']->push($celebrationObj);
         }
-        
-        // We don't need to sort by keys if the procedure already ordered by date.
-        // But we put them in a collection, so order is preserved if inserted in order.
+
+        // Sort the collection chronologically based on the Portuguese date string
+        $finalGrouped = $finalGrouped->sortBy(function ($item, $key) {
+            // $key format: "05 de Outubro de 2025"
+            if (preg_match('/^(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/ui', $key, $matches)) {
+                $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                $monthName = mb_strtolower($matches[2]);
+                $year = $matches[3];
+                
+                $months = [
+                    'janeiro' => '01', 'fevereiro' => '02', 'março' => '03', 'marco' => '03',
+                    'abril' => '04', 'maio' => '05', 'junho' => '06', 'julho' => '07',
+                    'agosto' => '08', 'setembro' => '09', 'outubro' => '10', 
+                    'novembro' => '11', 'dezembro' => '12'
+                ];
+                
+                $month = $months[$monthName] ?? '00';
+                
+                // Return YYYYMMDD integer for correct chronological sorting
+                return (int) ($year . $month . $day);
+            }
+            
+            // Fallback: if parsing fails, try to sort by the key string itself
+            return $key;
+        });
 
         $parish = Auth::user()->paroquia;
         $parishPhone = $parish ? $parish->phone : 'Não informado';
