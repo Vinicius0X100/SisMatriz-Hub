@@ -8,6 +8,7 @@ return [
     ['name' => 'Saída de Estoque', 'icon' => 'box-arrow-right', 'url' => '/estoque-saida', 'allowed_roles' => ['4', '1', '111']],
     ['name' => 'Inventário', 'icon' => 'clipboard-data', 'url' => '/inventory', 'allowed_roles' => ['15']],
     ['name' => 'Acessos e Usuários', 'icon' => 'people', 'url' => '/access-control', 'allowed_roles' => ['1', '111']],
+    ['name' => 'Ferramentas do Site', 'icon' => 'globe', 'url' => '/site-tools', 'allowed_roles' => ['1', '111', '9', '10']],
     ['name' => 'Configurações', 'icon' => 'gear', 'url' => '/settings', 'allowed_roles' => []], // Only Admins
     ['name' => 'Escalas de Acólitos e Coroinhas', 'icon' => 'calendar-check', 'url' => '/acolitos/escalas', 'allowed_roles' => ['6', '8']],
     ['name' => 'Funções de Acólitos e Coroinhas', 'icon' => 'list-task', 'url' => '/acolitos/funcoes', 'allowed_roles' => ['6', '8']],

@@ -381,4 +381,9 @@ Route::resource('vicentinos-apuracoes', App\Http\Controllers\VicentinoController
     Route::delete('festas-eventos/saidas/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroySaida'])->name('festas-eventos.saidas.destroy');
     Route::delete('festas-eventos/itens-entrada/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroyItemEntrada'])->name('festas-eventos.itens-entrada.destroy');
     Route::delete('festas-eventos/itens-saida/{id}', [App\Http\Controllers\FestaEventoController::class, 'destroyItemSaida'])->name('festas-eventos.itens-saida.destroy');
+
+    // Ferramentas do Site
+    Route::get('/site-tools', [App\Http\Controllers\SiteToolsController::class, 'index'])->name('site-tools.index');
+    Route::get('/site-tools/gallery', [App\Http\Controllers\SiteToolsController::class, 'gallery'])->name('site-tools.gallery');
+    Route::post('/site-tools/gallery/upload', [App\Http\Controllers\SiteToolsController::class, 'uploadGallery'])->name('site-tools.gallery.upload');
 });
