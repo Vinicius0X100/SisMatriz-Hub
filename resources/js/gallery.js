@@ -43,10 +43,20 @@ export default (config = {}) => ({
         const newFiles = Array.from(fileList);
         
         // Validate file types
-        const invalidFiles = newFiles.filter(file => !file.type.startsWith('image/'));
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'svg'];
+        
+        const invalidFiles = newFiles.filter(file => {
+            // Check MIME type first
+            if (file.type.startsWith('image/')) return false;
+            
+            // If MIME type is empty or not image/, check extension
+            const extension = file.name.split('.').pop().toLowerCase();
+            return !allowedExtensions.includes(extension);
+        });
+
         if (invalidFiles.length > 0) {
             this.error = true;
-            this.errorMessage = 'Apenas arquivos de imagem são permitidos (sem vídeos).';
+            this.errorMessage = 'Apenas arquivos de imagem são permitidos (JPG, PNG, GIF, WEBP, HEIC, SVG).';
             return;
         }
 

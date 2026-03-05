@@ -52,13 +52,15 @@ class SiteToolsController extends Controller
 
     public function uploadGallery(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'items' => 'required|array',
-            'items.*.file' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
+            'items.*.file' => 'required|file|mimes:jpeg,png,jpg,gif,webp,heic,heif,svg|max:20480', // 20MB max, expanded types
             'items.*.tipo' => 'required|in:1,2',
             'items.*.titulo' => 'nullable|string|max:255',
             'items.*.descricao' => 'nullable|string',
         ]);
+
+        $data = $request->all();
 
         $uploadedCount = 0;
 

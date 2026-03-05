@@ -110,7 +110,7 @@
                              :class="{'border-primary bg-primary-subtle': dragover, 'border-secondary-subtle': !dragover, 'border-danger bg-danger-subtle': error}">
                             
                             <input type="file" x-ref="fileInputIndividual" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer z-10" 
-                                   accept="image/png, image/jpeg, image/jpg, image/webp"
+                                   accept="image/*, .heic, .heif"
                                    @change="handleFiles($event.target.files)">
                             
                             <div x-show="!items[0].file" class="pointer-events-none">
@@ -153,7 +153,7 @@
                             <button type="button" @click="$refs.fileInputBatch.click()" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold transition-all hover-scale">
                                 <i class="bi bi-plus-lg me-1"></i> Adicionar Imagens
                             </button>
-                            <input type="file" x-ref="fileInputBatch" class="d-none" multiple accept="image/png, image/jpeg, image/jpg, image/webp" @change="handleFiles($event.target.files)">
+                            <input type="file" x-ref="fileInputBatch" class="d-none" multiple accept="image/*, .heic, .heif" @change="handleFiles($event.target.files)">
                         </div>
 
                         <template x-if="items.length === 0">
