@@ -46,4 +46,9 @@ class VinWatched extends Model
     {
         return $this->belongsTo(ParoquiaSuperadmin::class, 'paroquia_id');
     }
+
+    public function sender()
+    {
+        return $this->belongsTo(User::class, 'sendby');
+    }
 }

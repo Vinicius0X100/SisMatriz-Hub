@@ -1,338 +1,499 @@
 @extends('layouts.app')
 
-@section('title', 'Apuração de Vicentinos')
-
 @section('content')
 <div class="container-fluid px-4">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-        <h2 class="mb-0 fw-bold text-dark">Apuração de Vicentinos</h2>
+        <div>
+            <h2 class="mb-0 fw-bold text-dark">Registros Vicentinos</h2>
+            <p class="text-muted small mb-0">Gerencie as fichas e acompanhamentos vicentinos.</p>
+        </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Vicentinos</li>
+                <li class="breadcrumb-item active" aria-current="page">Registros Vicentinos</li>
             </ol>
         </nav>
     </div>
 
-    <!-- Flash Messages -->
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-4 border-0 mb-4" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-            <div>
-                <strong>Sucesso!</strong> {{ session('success') }}
-            </div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-4 border-0 mb-4" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-            <div>
-                <strong>Erro!</strong> {{ session('error') }}
-            </div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-people fs-3 text-primary"></i>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="bi bi-people-fill text-primary fs-4"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Total</h6>
-                        <h3 class="mb-0 fw-bold">{{ $stats['total'] ?? 0 }}</h3>
+                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Total de Fichas</h6>
+                        <h3 class="fw-bold text-dark mb-0">{{ $stats['total'] ?? 0 }}</h3>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-check-circle fs-3 text-success"></i>
+                    <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="bi bi-person-heart text-success fs-4"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Assistidos</h6>
-                        <h3 class="mb-0 fw-bold">{{ $stats['assistidos'] ?? 0 }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="rounded-circle bg-secondary bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-person-x fs-3 text-secondary"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted mb-1 small fw-bold text-uppercase">Não Assistidos</h6>
-                        <h3 class="mb-0 fw-bold">{{ $stats['nao_assistidos'] ?? 0 }}</h3>
+                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Total de Familiares</h6>
+                        <h3 class="fw-bold text-dark mb-0">{{ $stats['families_total'] ?? 0 }}</h3>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Filters & Table -->
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
-            <!-- Barra de Ferramentas -->
-            <form id="filterForm" action="{{ route('vicentinos.index') }}" method="GET" class="row g-3 mb-4 align-items-end">
-                <!-- Pesquisa -->
-                <div class="col-md-3">
-                    <label for="search" class="form-label fw-bold text-muted small">Pesquisar</label>
-                    <div class="position-relative">
-                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input type="text" name="search" id="search" value="{{ request('search') }}" class="form-control ps-5 rounded-pill" placeholder="Buscar por nome..." style="height: 45px;">
+            <!-- Toolbar -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+                <div class="d-flex flex-column flex-md-row gap-3 w-100">
+                    <div class="flex-grow-1">
+                        <label for="searchInput" class="form-label fw-bold text-muted small">Pesquisar</label>
+                        <div class="position-relative">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" class="form-control ps-5 rounded-pill bg-light border-0" id="searchInput" placeholder="Nome, CPF, RG ou Telefone...">
+                        </div>
+                    </div>
+                    <div style="min-width: 200px;">
+                        <label for="bairroFilter" class="form-label fw-bold text-muted small">Filtrar por Bairro</label>
+                        <input type="text" class="form-control rounded-pill bg-light border-0" id="bairroFilter" placeholder="Digite o bairro...">
+                    </div>
+                    <div style="min-width: 150px;">
+                        <label for="statusFilter" class="form-label fw-bold text-muted small">Status</label>
+                        <select class="form-select rounded-pill bg-light border-0" id="statusFilter">
+                            <option value="">Todos</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Dispensado</option>
+                        </select>
                     </div>
                 </div>
-
-                <!-- Filtro Comunidade -->
-                <div class="col-md-3">
-                    <label for="ent_id" class="form-label fw-bold text-muted small">Comunidade</label>
-                    <select name="ent_id" id="ent_id" class="form-select rounded-pill" style="height: 45px;">
-                        <option value="">Todas</option>
-                        @foreach($entidades as $entidade)
-                            <option value="{{ $entidade->ent_id }}" {{ request('ent_id') == $entidade->ent_id ? 'selected' : '' }}>{{ $entidade->ent_name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Filtro Tipo -->
-                <div class="col-md-2">
-                    <label for="kind" class="form-label fw-bold text-muted small">Tipo</label>
-                    <select name="kind" id="kind" class="form-select rounded-pill" style="height: 45px;">
-                        <option value="">Todos</option>
-                        <option value="1" {{ request('kind') == '1' ? 'selected' : '' }}>Assistido</option>
-                        <option value="0" {{ request('kind') == '0' ? 'selected' : '' }}>Não Assistido</option>
-                    </select>
-                </div>
-
-                <!-- Filtro Mês -->
-                <div class="col-md-2">
-                    <label for="month" class="form-label fw-bold text-muted small">Mês</label>
-                    <select name="month" id="month" class="form-select rounded-pill" style="height: 45px;">
-                        <option value="">Todos</option>
-                        @foreach(range(1, 12) as $m)
-                            <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>{{ $m }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Botões -->
-                <div class="col-md-2 text-end">
-                    <a href="{{ route('vicentinos.create') }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center w-100" style="height: 45px;" title="Nova Apuração">
-                        <i class="bi bi-plus-lg"></i> <span class="d-none d-lg-inline ms-2">Nova Apuração</span>
+                <div class="d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle rounded-pill px-4 fw-bold text-nowrap" type="button" id="bulkActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                            <i class="bi bi-layers me-2"></i> Ações
+                        </button>
+                        <ul class="dropdown-menu border-0 shadow rounded-3" aria-labelledby="bulkActionsDropdown">
+                            <li><a class="dropdown-item py-2" href="#" id="bulkPdfBtn"><i class="bi bi-file-earmark-pdf me-2"></i> Gerar Relatório PDF</a></li>
+                        </ul>
+                    </div>
+                    <a href="{{ route('vicentinos.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
+                        <i class="bi bi-plus-lg me-2"></i> Nova Ficha
                     </a>
                 </div>
-            </form>
-
-            <div class="mb-3 d-flex justify-content-end">
-                <button class="btn btn-outline-danger rounded-pill btn-sm" id="bulkDeleteBtn" disabled>
-                    <i class="bi bi-trash me-1"></i> Excluir Selecionados
-                </button>
             </div>
 
-            <!-- Tabela -->
+            <!-- Table -->
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th scope="col" width="40" class="text-center">
-                                <div class="form-check d-flex justify-content-center">
-                                    <input class="form-check-input" type="checkbox" id="selectAll">
-                                </div>
+                            <th class="border-0 rounded-start ps-4 py-3 text-secondary text-uppercase small fw-bold" style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
                             </th>
-                            <th scope="col" class="ps-4">Nome</th>
-                            <th scope="col">Endereço</th>
-                            <th scope="col">Comunidade</th>
-                            <th scope="col">Tipo</th>
-                            <th scope="col">Mês</th>
-                            <th scope="col">Enviado Por</th>
-                            <th scope="col">Observação</th>
-                            <th scope="col" class="text-end pe-4">Ações</th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold sortable cursor-pointer" data-sort="responsavel_nome">
+                                Responsável <i class="bi bi-arrow-down-up small text-muted ms-1"></i>
+                            </th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">CPF/Telefone</th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold sortable cursor-pointer" data-sort="bairro">
+                                Bairro <i class="bi bi-arrow-down-up small text-muted ms-1"></i>
+                            </th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold text-center">Familiares</th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold sortable cursor-pointer" data-sort="created_at">
+                                Data Cadastro <i class="bi bi-arrow-down-up small text-muted ms-1"></i>
+                            </th>
+                            <th class="border-0 rounded-end py-3 text-secondary text-uppercase small fw-bold text-end pe-4">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse($records as $record)
+                    <tbody id="tableBody">
+                        <!-- Content loaded via JS -->
                         <tr>
-                            <td class="text-center">
-                                <div class="form-check d-flex justify-content-center">
-                                    <input class="form-check-input record-checkbox" type="checkbox" value="{{ $record->w_id }}">
-                                </div>
-                            </td>
-                            <td class="ps-4 fw-bold text-dark">{{ $record->name }}</td>
-                            <td class="small text-muted">
-                                {{ $record->address }}
-                                @if($record->address_number) , {{ $record->address_number }} @endif
-                            </td>
-                            <td><span class="badge bg-light text-dark border">{{ $record->entidade->ent_name ?? 'N/A' }}</span></td>
-                            <td>
-                                @if($record->kind == 1)
-                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Assistido</span>
-                                @else
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">Não Assistido</span>
-                                @endif
-                            </td>
-                            <td>
-                                @php
-                                    $months = [
-                                        1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
-                                        5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
-                                        9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
-                                    ];
-                                @endphp
-                                <span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill">
-                                    {{ $months[$record->month_entire] ?? $record->month_entire }}
-                                </span>
-                            </td>
-                            <td class="small text-muted">{{ $record->sendby }}</td>
-                            <td class="small text-muted text-truncate" style="max-width: 150px;" title="{{ $record->description }}">{{ $record->description ?? '-' }}</td>
-                            <td class="text-end pe-4">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <a href="{{ route('vicentinos.edit', $record->w_id) }}" class="btn btn-sm btn-light text-primary border-0 rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Editar">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-light text-danger border-0 rounded-circle delete-btn" data-id="{{ $record->w_id }}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Excluir">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </button>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
                                 </div>
                             </td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
-                                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                    <i class="bi bi-inbox fs-3 text-secondary"></i>
-                                </div>
-                                <p class="mb-0">Nenhum registro encontrado.</p>
-                            </td>
-                        </tr>
-                        @endforelse
                     </tbody>
                 </table>
             </div>
 
-            <!-- Paginação -->
-            <div class="d-flex justify-content-end mt-4">
-                {{ $records->links() }}
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-4" id="paginationContainer" style="display: none !important;">
+                <div class="text-muted small" id="paginationInfo"></div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0 gap-1" id="paginationLinks"></ul>
+                </nav>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de Confirmação de Exclusão -->
+<!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold text-danger">Confirmar Exclusão</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="text-center py-4">
-            <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-body p-4 text-center">
+                <div class="bg-danger bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">Excluir Ficha?</h4>
+                <p class="text-muted mb-4">Esta ação não pode ser desfeita. Todos os dados, incluindo familiares, serão removidos permanentemente.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Sim, Excluir</button>
+                </div>
             </div>
-            <h5 class="fw-bold mb-2">Tem certeza?</h5>
-            <p class="text-muted mb-0">Esta ação é <strong>irreversível</strong> e removerá permanentemente o registro do sistema.</p>
         </div>
-        <form id="deleteForm" method="POST" action="">
-            @csrf
-            @method('DELETE')
-        </form>
-      </div>
-      <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
-        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Sim, Excluir</button>
-      </div>
     </div>
-  </div>
 </div>
 
-<script type="module">
-    // Automatic Filtering Logic
-    const filterForm = document.getElementById('filterForm');
-    const inputs = filterForm.querySelectorAll('select, input');
+<!-- PDF Modal -->
+<div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Gerar Relatório PDF</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-3">Selecione as colunas que deseja incluir no relatório.</p>
+                <form id="pdfForm" action="{{ route('vicentinos.pdf') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="selected_ids" id="pdfSelectedIds">
+                    
+                    <div class="row g-2 mb-4">
+                        <div class="col-12"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Dados Pessoais</h6></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="responsavel_nome" checked disabled><label class="form-check-label small">Nome</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="cpf" checked><label class="form-check-label small">CPF</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="rg"><label class="form-check-label small">RG</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="data_nascimento"><label class="form-check-label small">Data Nasc.</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="telefone" checked><label class="form-check-label small">Telefone</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="sexo"><label class="form-check-label small">Sexo</label></div></div>
+                        
+                        <div class="col-12 mt-3"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Endereço</h6></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="endereco"><label class="form-check-label small">Endereço</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="bairro" checked><label class="form-check-label small">Bairro</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="cidade"><label class="form-check-label small">Cidade</label></div></div>
+                        
+                        <div class="col-12 mt-3"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Situação</h6></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="quem_trabalha"><label class="form-check-label small">Quem Trabalha</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="local_trabalho"><label class="form-check-label small">Local Trab.</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="recebe_bolsa_familia"><label class="form-check-label small">Bolsa Família</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="valor_bolsa_familia"><label class="form-check-label small">Valor Bolsa</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="tipo_residencia"><label class="form-check-label small">Tipo Residência</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="valor_aluguel_prestacao"><label class="form-check-label small">Valor Aluguel</label></div></div>
+                        
+                        <div class="col-12 mt-3"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Outros</h6></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="religiao"><label class="form-check-label small">Religião</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="catolico_tem_sacramentos"><label class="form-check-label small">Católico?</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="responsaveis_sindicancia"><label class="form-check-label small">Resp. Sindicância</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="data_dispensa"><label class="form-check-label small">Data Dispensa</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="motivo_dispensa"><label class="form-check-label small">Motivo Dispensa</label></div></div>
+                        
+                        <div class="col-12 mt-3"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Opções Adicionais</h6></div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="include_family" id="includeFamily" value="1">
+                                <label class="form-check-label small" for="includeFamily">
+                                    Incluir Composição Familiar 
+                                    <span class="text-muted fst-italic ms-1" style="font-size: 0.8em;">(Disponível apenas no modo Ficha individual - mais de 10 colunas selecionadas)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
 
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Gerar PDF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-    inputs.forEach(input => {
-        if (input.tagName === 'SELECT') {
-            input.addEventListener('change', () => filterForm.submit());
-        } else if (input.tagName === 'INPUT' && input.type === 'text') {
-            // Focus restoration trick not needed for full reload, but nice to have if we used AJAX.
-            // For full reload, the focus is lost anyway.
-            input.addEventListener('input', debounce(() => filterForm.submit(), 800));
-        }
-    });
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #64748b; border-bottom-width: 1px !important; }
+    .table td { font-size: 0.9rem; color: #334155; }
+    .sortable:hover { background-color: #f1f5f9; color: #0f172a; }
+</style>
 
-    // Delete Modal Logic
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    const deleteForm = document.getElementById('deleteForm');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            deleteForm.action = `/vicentinos/${id}`;
-            deleteModal.show();
-        });
-    });
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let currentPage = 1;
+        let sortBy = 'created_at';
+        let sortDir = 'desc';
+        let debounceTimer;
+        let deleteId = null;
 
-    confirmDeleteBtn.addEventListener('click', () => deleteForm.submit());
-
-    // Bulk Delete Logic
-    const selectAll = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.record-checkbox');
-    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-
-    function updateBulkButton() {
-        const checked = document.querySelectorAll('.record-checkbox:checked');
-        bulkDeleteBtn.disabled = checked.length === 0;
-    }
-
-    selectAll.addEventListener('change', function() {
-        checkboxes.forEach(cb => cb.checked = this.checked);
-        updateBulkButton();
-    });
-
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateBulkButton);
-    });
-
-    bulkDeleteBtn.addEventListener('click', function() {
-        if (!confirm('Tem certeza que deseja excluir os registros selecionados?')) return;
-
-        const selectedIds = Array.from(document.querySelectorAll('.record-checkbox:checked')).map(cb => cb.value);
+        // Elements
+        const searchInput = document.getElementById('searchInput');
+        const bairroFilter = document.getElementById('bairroFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const tableBody = document.getElementById('tableBody');
+        const paginationContainer = document.getElementById('paginationContainer');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const paginationLinks = document.getElementById('paginationLinks');
         
-        fetch('{{ route("vicentinos.bulk-delete") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ ids: selectedIds })
-        })
-        .then(response => response.json())
-        .then(data => {
-            location.reload();
-        })
-        .catch(error => alert('Erro ao excluir registros.'));
+        // Bulk Actions Elements
+        const selectAll = document.getElementById('selectAll');
+        const bulkActionsDropdown = document.getElementById('bulkActionsDropdown');
+        const bulkPdfBtn = document.getElementById('bulkPdfBtn');
+        const pdfSelectedIds = document.getElementById('pdfSelectedIds');
+        const pdfModal = new bootstrap.Modal(document.getElementById('pdfModal'));
+        
+        // Modals
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Initial Load
+        fetchData();
+
+        // Search Logic
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentPage = 1;
+                fetchData();
+            }, 300);
+        });
+
+        bairroFilter.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentPage = 1;
+                fetchData();
+            }, 300);
+        });
+
+        statusFilter.addEventListener('change', function() {
+            currentPage = 1;
+            fetchData();
+        });
+        
+        // Bulk Actions Logic
+        selectAll.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkActionsState();
+        });
+
+        function updateBulkActionsState() {
+            const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+            bulkActionsDropdown.disabled = checkboxes.length === 0;
+            if (checkboxes.length > 0) {
+                bulkActionsDropdown.innerHTML = `<i class="bi bi-layers me-2"></i> Ações (${checkboxes.length})`;
+            } else {
+                bulkActionsDropdown.innerHTML = `<i class="bi bi-layers me-2"></i> Ações`;
+            }
+        }
+        
+        bulkPdfBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selected = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            pdfSelectedIds.value = selected.join(',');
+            pdfModal.show();
+        });
+
+        // Sorting
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', function() {
+                const column = this.getAttribute('data-sort');
+                if (sortBy === column) {
+                    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortBy = column;
+                    sortDir = 'asc';
+                }
+                
+                document.querySelectorAll('.sortable i').forEach(i => i.className = 'bi bi-arrow-down-up small text-muted ms-1');
+                const icon = this.querySelector('i');
+                icon.className = sortDir === 'asc' ? 'bi bi-arrow-up text-primary small ms-1' : 'bi bi-arrow-down text-primary small ms-1';
+                
+                fetchData();
+            });
+        });
+
+        // Delete Logic
+        window.openDeleteModal = function(id) {
+            deleteId = id;
+            deleteModal.show();
+        };
+
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (!deleteId) return;
+
+            const btn = this;
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Excluindo...';
+
+            fetch(`/vicentinos/${deleteId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    deleteModal.hide();
+                    fetchData();
+                } else {
+                    alert('Erro ao excluir registro.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao excluir registro.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                deleteId = null;
+            });
+        });
+
+        // Fetch Data Function
+        function fetchData() {
+            // Reset select all
+            selectAll.checked = false;
+            updateBulkActionsState();
+
+            const params = new URLSearchParams({
+                page: currentPage,
+                search: searchInput.value,
+                bairro: bairroFilter.value,
+                status: statusFilter.value,
+                sort_by: sortBy,
+                sort_dir: sortDir
+            });
+
+            fetch(`{{ route('vicentinos.index') }}?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                renderTable(data.data); // Laravel paginate returns data in 'data' key
+                renderPagination(data);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-danger">
+                            <i class="bi bi-exclamation-circle fs-1 mb-3 d-block"></i>
+                            Erro ao carregar dados. Tente novamente.
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderTable(records) {
+            if (records.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <div class="mb-3"><i class="bi bi-inbox fs-1 text-secondary opacity-25"></i></div>
+                            <p class="mb-0">Nenhuma ficha encontrada.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = records.map(record => `
+                <tr>
+                    <td class="ps-4">
+                        <input class="form-check-input row-checkbox" type="checkbox" value="${record.id}">
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">${record.responsavel_nome}</div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="small text-dark fw-semibold"><i class="bi bi-person-vcard me-1 text-muted"></i>${record.cpf || '-'}</span>
+                            <span class="small text-muted"><i class="bi bi-telephone me-1"></i>${record.telefone || '-'}</span>
+                        </div>
+                    </td>
+                    <td>${record.bairro || '-'}</td>
+                    <td class="text-center">
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">
+                            ${record.families_count}
+                        </span>
+                    </td>
+                    <td>${record.created_at_formatted}</td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group">
+                            <a href="/vicentinos/${record.id}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Ver Detalhes">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+                            <a href="/vicentinos/${record.id}/edit" class="btn btn-sm btn-outline-primary border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Editar">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <button onclick="openDeleteModal(${record.id})" class="btn btn-sm btn-outline-danger border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Excluir">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateBulkActionsState);
+            });
+        }
+
+        function renderPagination(data) {
+            if (data.total === 0) {
+                paginationContainer.style.setProperty('display', 'none', 'important');
+                return;
+            }
+
+            paginationContainer.style.setProperty('display', 'flex', 'important');
+            paginationInfo.textContent = `Mostrando ${data.from || 0} a ${data.to || 0} de ${data.total} registros`;
+
+            let html = '';
+            
+            // Previous
+            html += `<li class="page-item ${data.prev_page_url ? '' : 'disabled'}">
+                        <a class="page-link rounded-start border-0 bg-light text-secondary" href="#" onclick="event.preventDefault(); changePage(${currentPage - 1})"><i class="bi bi-chevron-left"></i></a>
+                     </li>`;
+
+            // Pages (simple implementation)
+            for (let i = 1; i <= data.last_page; i++) {
+                if (i === 1 || i === data.last_page || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link border-0 ${i === currentPage ? 'bg-primary text-white shadow-sm rounded-3' : 'bg-light text-secondary rounded-3 mx-1'}" href="#" onclick="event.preventDefault(); changePage(${i})">${i}</a>
+                             </li>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<li class="page-item disabled"><span class="page-link border-0 bg-transparent">...</span></li>`;
+                }
+            }
+
+            // Next
+            html += `<li class="page-item ${data.next_page_url ? '' : 'disabled'}">
+                        <a class="page-link rounded-end border-0 bg-light text-secondary" href="#" onclick="event.preventDefault(); changePage(${currentPage + 1})"><i class="bi bi-chevron-right"></i></a>
+                     </li>`;
+
+            paginationLinks.innerHTML = html;
+        }
+
+        window.changePage = function(page) {
+            if (page < 1) return;
+            currentPage = page;
+            fetchData();
+        };
     });
 </script>
 @endsection

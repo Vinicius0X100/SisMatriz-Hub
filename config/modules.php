@@ -1,11 +1,11 @@
 <?php
 
 return [
-    ['name' => 'Reservas e calendário', 'icon' => 'calendar-event', 'url' => '/reservas-calendar', 'allowed_roles' => ['*']],
+    ['name' => 'Reservas e calendário', 'icon' => 'calendar-event', 'url' => '/reservas-calendar', 'allowed_roles' => ['1', '111']],
     ['name' => 'Documentação de Crisma', 'icon' => 'file-earmark-text', 'url' => '/docs-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Documentação de Eucaristia', 'icon' => 'file-earmark-text', 'url' => '/docs-eucaristia', 'allowed_roles' => ['7', '12']],
-    ['name' => 'Estoque', 'icon' => 'box-seam', 'url' => '/estoque', 'allowed_roles' => ['15', '4', '1', '111']],
-    ['name' => 'Saída de Estoque', 'icon' => 'box-arrow-right', 'url' => '/estoque-saida', 'allowed_roles' => ['15', '4', '1', '111']],
+    ['name' => 'Estoque', 'icon' => 'box-seam', 'url' => '/estoque', 'allowed_roles' => ['4', '1', '111']],
+    ['name' => 'Saída de Estoque', 'icon' => 'box-arrow-right', 'url' => '/estoque-saida', 'allowed_roles' => ['4', '1', '111']],
     ['name' => 'Inventário', 'icon' => 'clipboard-data', 'url' => '/inventory', 'allowed_roles' => ['15']],
     ['name' => 'Acessos e Usuários', 'icon' => 'people', 'url' => '/access-control', 'allowed_roles' => ['1', '111']],
     ['name' => 'Configurações', 'icon' => 'gear', 'url' => '/settings', 'allowed_roles' => []], // Only Admins
@@ -13,9 +13,10 @@ return [
     ['name' => 'Funções de Acólitos e Coroinhas', 'icon' => 'list-task', 'url' => '/acolitos/funcoes', 'allowed_roles' => ['6', '8']],
     ['name' => 'Notas e Avisos de Acólitos e Coroinhas', 'icon' => 'journal-bookmark', 'url' => '/acolitos/notes', 'allowed_roles' => ['6', '8']],
     ['name' => 'Lista de Acólitos e Coroinhas', 'icon' => 'person-lines-fill', 'url' => '/acolitos', 'allowed_roles' => ['6']],
-    ['name' => 'Vicentinos', 'icon' => 'heart', 'url' => '/vicentinos', 'allowed_roles' => ['4']],
+    ['name' => 'Registros Vicentinos', 'icon' => 'heart', 'url' => '/vicentinos', 'allowed_roles' => ['4', '1', '111']],
+    ['name' => 'Apuração de Vicentinos', 'icon' => 'calculator', 'url' => '/vicentinos-apuracoes', 'allowed_roles' => ['4', '1', '111']],
     ['name' => 'Categorias(Inventário/Estoque)', 'icon' => 'tags', 'url' => '/categorias_doacao', 'allowed_roles' => ['1', '111', '15']],
-    ['name' => 'Celebrações e Horários', 'icon' => 'clock', 'url' => '/celebration-schedules', 'allowed_roles' => ['15', '4']],
+    ['name' => 'Celebrações e Horários', 'icon' => 'clock', 'url' => '/celebration-schedules', 'allowed_roles' => ['1', '111']],
     // ['name' => 'Primeira eucaristia', 'icon' => 'cup-straw', 'allowed_roles' => ['7', '12']],
     ['name' => 'Comunidades', 'icon' => 'houses', 'url' => '/comunidades', 'allowed_roles' => ['15']],
     ['name' => 'Salas e espaços', 'icon' => 'door-open', 'url' => '/reservas-locais', 'allowed_roles' => ['15']],
@@ -43,8 +44,8 @@ return [
     ['name' => 'Notas Fiscais', 'icon' => 'receipt', 'url' => '/notas-fiscais', 'allowed_roles' => ['11', '14', '2']],
     ['name' => 'Ofertas e Dízimos', 'icon' => 'cash-coin', 'url' => '/ofertas', 'allowed_roles' => ['11', '14']],
     ['name' => 'Festas e Eventos', 'icon' => 'balloon-heart', 'url' => '/festas-eventos', 'allowed_roles' => ['1', '111', '11', '14']],
-    ['name' => 'Batismos', 'icon' => 'droplet', 'url' => '/batismos', 'allowed_roles' => ['1', '111', '15', '3', '7', '12', '13', '17', '*']],
-    ['name' => 'Calendário Matrimonial', 'icon' => 'calendar-heart', 'url' => '/calendario-matrimonio', 'allowed_roles' => ['*']],
+    ['name' => 'Batismos', 'icon' => 'droplet', 'url' => '/batismos', 'allowed_roles' => ['1', '111']],
+    ['name' => 'Calendário Matrimonial', 'icon' => 'calendar-heart', 'url' => '/calendario-matrimonio', 'allowed_roles' => ['1', '111']],
     ['name' => 'Campanhas', 'icon' => 'megaphone', 'url' => '/campanhas', 'allowed_roles' => ['1', '111', '11']],
     ['name' => 'Início', 'icon' => 'house', 'allowed_roles' => ['*']], // Everyone
 ];

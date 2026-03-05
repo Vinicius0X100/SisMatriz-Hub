@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('reservas_calendar', function (Blueprint $table) {
-            $table->timestamps();
+        Schema::table('vicentinos_records', function (Blueprint $table) {
+            $table->string('telefone')->nullable()->after('cpf');
+            $table->string('sexo')->nullable()->after('idade'); // Masculino, Feminino, Outro
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('reservas_calendar', function (Blueprint $table) {
-            $table->dropTimestamps();
+        Schema::table('vicentinos_records', function (Blueprint $table) {
+            $table->dropColumn(['telefone', 'sexo']);
         });
     }
 };

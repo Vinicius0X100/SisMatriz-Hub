@@ -241,9 +241,17 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
     // Vicentinos
-    Route::get('vicentinos/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('vicentinos.search-registers');
-    Route::post('vicentinos/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos.bulk-delete');
-    Route::resource('vicentinos', App\Http\Controllers\VicentinoController::class);
+    // Vicentinos (Novo Módulo de Fichas)
+    Route::get('vicentinos/search-registers', [App\Http\Controllers\VicentinosRecordController::class, 'searchRegisters'])->name('vicentinos.search-registers');
+    Route::post('vicentinos/pdf', [App\Http\Controllers\VicentinosRecordController::class, 'generatePdf'])->name('vicentinos.pdf');
+    Route::resource('vicentinos', App\Http\Controllers\VicentinosRecordController::class);
+    
+    // Vicentinos (Antigo / Apurações - Renomeado para evitar conflito se ainda necessário)
+    // Rotas de Apuração de Vicentinos (Antigo/Legado mas ainda em uso)
+Route::get('vicentinos-apuracoes/search-vicentinos-records', [App\Http\Controllers\VicentinoController::class, 'searchVicentinosRecords'])->name('vicentinos-apuracoes.search-records');
+Route::get('vicentinos-apuracoes/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('vicentinos.search-registers');
+Route::post('vicentinos-apuracoes/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos-apuracoes.bulk-delete');
+Route::resource('vicentinos-apuracoes', App\Http\Controllers\VicentinoController::class);
 
     // Pascom
     Route::resource('solicitacoes-pascom', App\Http\Controllers\SolicitacaoPascomController::class);
