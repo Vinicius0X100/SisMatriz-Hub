@@ -75,147 +75,196 @@
             <form @submit.prevent="submitForm">
                 
                 <!-- Individual Mode -->
-                <div x-show="uploadType === 'individual'" style="display: none;" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-                    <div class="row g-4 mb-4">
-                        <!-- Título -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small text-uppercase ls-1">Título <span class="text-primary fw-bold small">(opcional)</span></label>
-                            <input type="text" x-model="items[0].titulo" class="form-control rounded-pill bg-light border-0 px-4 py-2 shadow-sm-hover" placeholder="Ex: Festa do Padroeiro">
-                        </div>
-
-                        <!-- Tipo -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small text-uppercase ls-1">Tipo de Imagem <span class="text-danger fw-bold small">*</span></label>
-                            <select x-model="items[0].tipo" class="form-select rounded-pill bg-light border-0 px-4 py-2 shadow-sm-hover" required>
-                                <option value="1">Poster (Página Principal)</option>
-                                <option value="2">Postagem (Galeria/Blog)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Descrição -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-muted small text-uppercase ls-1">Descrição <span class="text-primary fw-bold small">(opcional)</span></label>
-                        <textarea x-model="items[0].descricao" rows="3" class="form-control rounded-4 bg-light border-0 px-4 py-3 shadow-sm-hover" placeholder="Detalhes opcionais sobre a imagem..."></textarea>
-                    </div>
-
-                    <!-- Drag & Drop Area -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-muted small text-uppercase ls-1">Imagem <span class="text-danger fw-bold small">*</span></label>
-                        
-                        <div class="file-drop-area rounded-4 border-2 border-dashed bg-light p-5 text-center position-relative transition-all" 
-                             @dragover.prevent="dragover = true" 
-                             @dragleave.prevent="dragover = false"
-                             @drop.prevent="handleDrop($event)"
-                             :class="{'border-primary bg-primary-subtle': dragover, 'border-secondary-subtle': !dragover, 'border-danger bg-danger-subtle': error}">
-                            
-                            <input type="file" x-ref="fileInputIndividual" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer z-10" 
-                                   accept="image/*, .heic, .heif"
-                                   @change="handleFiles($event.target.files)">
-                            
-                            <div x-show="!items[0].file" class="pointer-events-none">
-                                <div class="mb-3">
-                                    <i class="bi bi-cloud-arrow-up text-primary" style="font-size: 3rem;"></i>
-                                </div>
-                                <h6 class="fw-bold text-dark">Arraste e solte sua imagem aqui</h6>
-                                <p class="text-muted small mb-0">ou clique para selecionar</p>
+                <template x-if="uploadType === 'individual'">
+                    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+                        <div class="row g-4 mb-4">
+                            <!-- Título -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small text-uppercase ls-1">Título <span class="text-primary fw-bold small">(opcional)</span></label>
+                                <input type="text" x-model="items[0].titulo" class="form-control rounded-pill bg-light border-0 px-4 py-2 shadow-sm-hover" placeholder="Ex: Festa do Padroeiro">
                             </div>
-
-                            <div x-show="items[0].file" class="text-start position-relative z-20 pointer-events-none" style="display: none;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="fw-bold text-secondary small">Arquivo selecionado:</span>
-                                    <button type="button" @click.stop="clearFiles()" class="btn btn-sm btn-outline-danger pointer-events-auto py-1 px-3 rounded-pill transition-all hover-scale">
-                                        <i class="bi bi-trash me-1"></i> Remover
-                                    </button>
-                                </div>
-                                <div class="bg-white p-3 rounded-4 border d-flex align-items-center shadow-sm">
-                                    <div class="bg-light rounded-3 p-2 me-3 text-secondary d-flex align-items-center justify-content-center border" style="width: 48px; height: 48px;">
-                                        <i class="bi bi-file-earmark-image fs-4"></i>
-                                    </div>
-                                    <div class="flex-grow-1 text-truncate">
-                                        <div class="fw-bold text-dark small text-truncate" x-text="items[0].file ? items[0].file.name : ''"></div>
-                                        <div class="text-muted small" x-text="items[0].file ? formatSize(items[0].file.size) : ''"></div>
-                                    </div>
-                                    <div class="text-success ms-3">
-                                        <i class="bi bi-check-circle-fill fs-5"></i>
-                                    </div>
-                                </div>
+    
+                            <!-- Tipo -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small text-uppercase ls-1">Tipo de Imagem <span class="text-danger fw-bold small">*</span></label>
+                                <select x-model="items[0].tipo" class="form-select rounded-pill bg-light border-0 px-4 py-2 shadow-sm-hover" required>
+                                    <option value="1">Poster (Página Principal)</option>
+                                    <option value="2">Postagem (Galeria/Blog)</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Batch Mode -->
-                <div x-show="uploadType === 'batch'" style="display: none;" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <label class="form-label fw-bold text-muted small text-uppercase ls-1 mb-0">Itens para Upload</label>
-                            <button type="button" @click="$refs.fileInputBatch.click()" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold transition-all hover-scale">
-                                <i class="bi bi-plus-lg me-1"></i> Adicionar Imagens
-                            </button>
-                            <input type="file" x-ref="fileInputBatch" class="d-none" multiple accept="image/*, .heic, .heif" @change="handleFiles($event.target.files)">
+    
+                        <!-- Descrição -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small text-uppercase ls-1">Descrição <span class="text-primary fw-bold small">(opcional)</span></label>
+                            <textarea x-model="items[0].descricao" rows="3" class="form-control rounded-4 bg-light border-0 px-4 py-3 shadow-sm-hover" placeholder="Detalhes opcionais sobre a imagem..."></textarea>
                         </div>
-
-                        <template x-if="items.length === 0">
-                            <div class="text-center py-5 border-2 border-dashed rounded-4 bg-light transition-all"
+    
+                        <!-- Drag & Drop Area -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small text-uppercase ls-1">Imagem <span class="text-danger fw-bold small">*</span></label>
+                            
+                            <div class="file-drop-area rounded-4 border-2 border-dashed bg-light p-5 text-center position-relative transition-all" 
                                  @dragover.prevent="dragover = true" 
                                  @dragleave.prevent="dragover = false"
                                  @drop.prevent="handleDrop($event)"
-                                 :class="{'border-primary bg-primary-subtle': dragover, 'border-secondary-subtle': !dragover}">
-                                <i class="bi bi-images display-4 text-muted opacity-50 mb-3"></i>
-                                <h6 class="fw-bold text-secondary">Nenhuma imagem adicionada</h6>
-                                <p class="text-muted small">Arraste arquivos ou clique em "Adicionar Imagens"</p>
-                            </div>
-                        </template>
-
-                        <div class="row g-4">
-                            <template x-for="(item, index) in items" :key="index">
-                                <div class="col-12">
-                                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                                        <div class="card-body p-0 d-flex flex-column flex-md-row">
-                                            <!-- Image Preview/Info -->
-                                            <div class="bg-light p-4 d-flex flex-column align-items-center justify-content-center text-center border-end-md" style="min-width: 200px;">
-                                                <div class="mb-2">
-                                                    <i class="bi bi-file-earmark-image fs-1 text-secondary opacity-50"></i>
-                                                </div>
-                                                <div class="fw-bold text-dark small text-break" x-text="item.file.name" style="max-width: 180px;"></div>
-                                                <div class="text-muted x-small" x-text="formatSize(item.file.size)"></div>
-                                            </div>
-
-                                            <!-- Fields -->
-                                            <div class="p-4 flex-grow-1">
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fw-bold text-muted x-small text-uppercase">Título <span class="text-primary x-small">(opcional)</span></label>
-                                                        <input type="text" x-model="item.titulo" class="form-control form-control-sm rounded-pill bg-light border-0 px-3 shadow-sm-hover" placeholder="Título da imagem">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fw-bold text-muted x-small text-uppercase">Tipo <span class="text-danger x-small">*</span></label>
-                                                        <select x-model="item.tipo" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 shadow-sm-hover" required>
-                                                            <option value="1">Poster</option>
-                                                            <option value="2">Postagem</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form-label fw-bold text-muted x-small text-uppercase">Descrição <span class="text-primary x-small">(opcional)</span></label>
-                                                        <textarea x-model="item.descricao" rows="2" class="form-control form-control-sm rounded-4 bg-light border-0 px-3 py-2 shadow-sm-hover" placeholder="Descrição da imagem"></textarea>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Actions -->
-                                            <div class="p-2 d-flex align-items-start justify-content-end bg-white">
-                                                <button type="button" @click="removeFile(index)" class="btn btn-link text-danger p-2 hover-scale" title="Remover">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
+                                 :class="{'border-primary bg-primary-subtle': dragover, 'border-secondary-subtle': !dragover, 'border-danger bg-danger-subtle': error}">
+                                
+                                <input type="file" x-ref="fileInputIndividual" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer z-10" 
+                                       accept="image/*, .heic, .heif"
+                                       @change="handleFiles($event.target.files)">
+                                
+                                <div x-show="!items[0].file" class="pointer-events-none">
+                                    <div class="mb-3">
+                                        <i class="bi bi-cloud-arrow-up text-primary" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark">Arraste e solte sua imagem aqui</h6>
+                                    <p class="text-muted small mb-0">ou clique para selecionar</p>
+                                </div>
+    
+                                <div x-show="items[0].file" class="text-start position-relative z-20 pointer-events-none" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-bold text-secondary small">Arquivo selecionado:</span>
+                                        <button type="button" @click.stop="clearFiles()" class="btn btn-sm btn-outline-danger pointer-events-auto py-1 px-3 rounded-pill transition-all hover-scale">
+                                            <i class="bi bi-trash me-1"></i> Remover
+                                        </button>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-4 border d-flex align-items-center shadow-sm">
+                                        <div class="bg-light rounded-3 p-2 me-3 text-secondary d-flex align-items-center justify-content-center border" style="width: 48px; height: 48px;">
+                                            <template x-if="items[0].previewUrl">
+                                                <img :src="items[0].previewUrl" class="w-100 h-100 object-fit-cover rounded-2">
+                                            </template>
+                                            <template x-if="!items[0].previewUrl">
+                                                <i class="bi bi-file-earmark-image fs-4"></i>
+                                            </template>
+                                        </div>
+                                        <div class="flex-grow-1 text-truncate">
+                                            <div class="fw-bold text-dark small text-truncate" x-text="items[0].file ? items[0].file.name : ''"></div>
+                                            <div class="text-muted small" x-text="items[0].file ? formatSize(items[0].file.size) : ''"></div>
+                                        </div>
+                                        <div class="text-success ms-3">
+                                            <i class="bi bi-check-circle-fill fs-5"></i>
                                         </div>
                                     </div>
                                 </div>
-                            </template>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </template>
+
+                <!-- Batch Mode -->
+                <template x-if="uploadType === 'batch'">
+                    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+                        
+                        <!-- Batch Settings -->
+                        <div class="card border-0 shadow-sm rounded-4 bg-light mb-4">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <h6 class="fw-bold text-secondary mb-0"><i class="bi bi-gear-fill me-2"></i>Configuração em Lote</h6>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary ms-2 rounded-pill">Opcional</span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <label class="form-label fw-bold text-muted x-small text-uppercase">Título Padrão</label>
+                                        <input type="text" x-model="batchTitulo" class="form-control rounded-pill border-0 px-3 shadow-sm-hover" placeholder="Aplicar a todas...">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold text-muted x-small text-uppercase">Tipo Padrão</label>
+                                        <select x-model="batchTipo" class="form-select rounded-pill border-0 px-3 shadow-sm-hover">
+                                            <option value="1">Poster</option>
+                                            <option value="2">Postagem</option>
+                                        </select>
+                                    </div>
+                                     <div class="col-md-3 d-flex align-items-end">
+                                        <button type="button" @click="applyBatchSettings()" class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm hover-scale transition-all">
+                                            <i class="bi bi-check-all me-1"></i> Aplicar
+                                        </button>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-muted x-small text-uppercase">Descrição Padrão</label>
+                                        <textarea x-model="batchDescricao" rows="2" class="form-control rounded-4 border-0 px-3 py-2 shadow-sm-hover" placeholder="Aplicar a todas..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase ls-1 mb-0">Itens para Upload</label>
+                                <button type="button" @click="$refs.fileInputBatch.click()" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold transition-all hover-scale">
+                                    <i class="bi bi-plus-lg me-1"></i> Adicionar Imagens
+                                </button>
+                                <input type="file" x-ref="fileInputBatch" class="d-none" multiple accept="image/*, .heic, .heif" @change="handleFiles($event.target.files)">
+                            </div>
+    
+                            <template x-if="items.length === 0">
+                                <div class="text-center py-5 border-2 border-dashed rounded-4 bg-light transition-all"
+                                     @dragover.prevent="dragover = true" 
+                                     @dragleave.prevent="dragover = false"
+                                     @drop.prevent="handleDrop($event)"
+                                     :class="{'border-primary bg-primary-subtle': dragover, 'border-secondary-subtle': !dragover}">
+                                    <i class="bi bi-images display-4 text-muted opacity-50 mb-3"></i>
+                                    <h6 class="fw-bold text-secondary">Nenhuma imagem adicionada</h6>
+                                    <p class="text-muted small">Arraste arquivos ou clique em "Adicionar Imagens"</p>
+                                </div>
+                            </template>
+    
+                            <div class="row g-4">
+                                <template x-for="(item, index) in items" :key="index">
+                                    <div class="col-12" x-show="item.file">
+                                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                                            <div class="card-body p-0 d-flex flex-column flex-md-row">
+                                                <!-- Image Preview/Info -->
+                                                <div class="bg-light position-relative d-flex flex-column align-items-center justify-content-center text-center border-end-md overflow-hidden" style="min-width: 200px; width: 200px;">
+                                                    <template x-if="item.previewUrl">
+                                                        <img :src="item.previewUrl" class="w-100 h-100 object-fit-cover position-absolute top-0 start-0">
+                                                    </template>
+                                                    <template x-if="!item.previewUrl && item.file">
+                                                        <div class="p-4">
+                                                            <div class="mb-2">
+                                                                <i class="bi bi-file-earmark-image fs-1 text-secondary opacity-50"></i>
+                                                            </div>
+                                                            <div class="fw-bold text-dark small text-break" x-text="item.file.name" style="max-width: 180px;"></div>
+                                                            <div class="text-muted x-small" x-text="formatSize(item.file.size)"></div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+    
+                                                <!-- Fields -->
+                                                <div class="p-4 flex-grow-1">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-bold text-muted x-small text-uppercase">Título <span class="text-primary x-small">(opcional)</span></label>
+                                                            <input type="text" x-model="item.titulo" class="form-control form-control-sm rounded-pill bg-light border-0 px-3 shadow-sm-hover" placeholder="Título da imagem">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-bold text-muted x-small text-uppercase">Tipo <span class="text-danger x-small">*</span></label>
+                                                            <select x-model="item.tipo" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 shadow-sm-hover" required>
+                                                                <option value="1">Poster</option>
+                                                                <option value="2">Postagem</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label class="form-label fw-bold text-muted x-small text-uppercase">Descrição <span class="text-primary x-small">(opcional)</span></label>
+                                                            <textarea x-model="item.descricao" rows="2" class="form-control form-control-sm rounded-4 bg-light border-0 px-3 py-2 shadow-sm-hover" placeholder="Descrição da imagem"></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+    
+                                                <!-- Actions -->
+                                                <div class="p-2 d-flex align-items-start justify-content-end bg-white">
+                                                    <button type="button" @click="removeFile(index)" class="btn btn-link text-danger p-2 hover-scale" title="Remover">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
                 <!-- Submit Button -->
                 <div class="d-flex justify-content-end pt-4 border-top mt-2">
