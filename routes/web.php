@@ -386,4 +386,6 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('/site-tools', [App\Http\Controllers\SiteToolsController::class, 'index'])->name('site-tools.index');
     Route::get('/site-tools/gallery', [App\Http\Controllers\SiteToolsController::class, 'gallery'])->name('site-tools.gallery');
     Route::post('/site-tools/gallery/upload', [App\Http\Controllers\SiteToolsController::class, 'uploadGallery'])->name('site-tools.gallery.upload');
+    Route::get('/site-tools/paroquia-ajustes', [App\Http\Controllers\SiteToolsController::class, 'paroquiaAjustes'])->name('site-tools.paroquia-ajustes');
+    Route::post('/site-tools/paroquia-ajustes', [App\Http\Controllers\SiteToolsController::class, 'saveParoquiaAjustes'])->name('site-tools.paroquia-ajustes.save');
 });

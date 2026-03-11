@@ -35,6 +35,12 @@
                 <i class="bi bi-images me-3 fs-5"></i> 
                 <span class="fw-bold">Galeria Paroquial</span>
             </a>
+
+            <a href="{{ route('site-tools.paroquia-ajustes') }}"
+               class="list-group-item list-group-item-action border-0 p-3 d-flex align-items-center transition-all {{ request()->routeIs('site-tools.paroquia-ajustes') ? 'bg-primary-subtle text-primary border-end border-4 border-primary' : 'text-secondary' }}">
+                <i class="bi bi-gear me-3 fs-5"></i>
+                <span class="fw-bold">Ajustes da Paróquia</span>
+            </a>
             
             <!-- Outras Opções (Placeholders) -->
             <a href="#" class="list-group-item list-group-item-action border-0 p-3 d-flex align-items-center text-muted opacity-50 cursor-not-allowed">

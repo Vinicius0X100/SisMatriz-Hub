@@ -11,7 +11,6 @@
     </div>
     
     <div class="row g-4">
-        <!-- Card Galeria Paroquial -->
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm hover-shadow transition-all rounded-4 overflow-hidden">
                 <div class="card-body p-4 d-flex flex-column align-items-center text-center">
@@ -27,7 +26,21 @@
             </div>
         </div>
 
-        <!-- Card Personalização (Placeholder) -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm hover-shadow transition-all rounded-4 overflow-hidden">
+                <div class="card-body p-4 d-flex flex-column align-items-center text-center">
+                    <div class="bg-primary-subtle text-primary rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <i class="bi bi-gear fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Ajustes da Paróquia</h5>
+                    <p class="text-muted small mb-4">Defina horários da secretaria, dias e horários de confissões e adoração ao Santíssimo.</p>
+                    <a href="{{ route('site-tools.paroquia-ajustes') }}" class="btn btn-primary rounded-pill px-4 fw-bold mt-auto w-100">
+                        Acessar Ajustes
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm hover-shadow transition-all rounded-4 overflow-hidden">
                 <div class="card-body p-4 d-flex flex-column align-items-center text-center">

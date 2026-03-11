@@ -461,7 +461,7 @@ const CalendarMatrimonioApp = () => {
         );
     }, []);
 
-    const eventStyleGetter = useCallback((event: ReservaMatrimonio) => {
+    const eventStyleGetter = useCallback((_event: ReservaMatrimonio) => {
         return {
             style: {
                 backgroundColor: 'transparent', // Deixa o CustomEvent controlar a cor

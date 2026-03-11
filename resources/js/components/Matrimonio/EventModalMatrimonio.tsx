@@ -19,7 +19,6 @@ const EventModalMatrimonio: React.FC<EventModalProps> = ({
     onDelete,
     selectedEvent,
     locais,
-    rules,
     mode
 }) => {
     const [formData, setFormData] = useState<Partial<ReservaMatrimonio>>({});

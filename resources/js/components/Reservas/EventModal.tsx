@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { Reserva, Local } from './types';
 
@@ -54,7 +54,7 @@ export default function EventModal({
         }
     }, [isOpen, selectedEvent]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         
         // Reconstruir datas completas
@@ -206,7 +206,12 @@ export default function EventModal({
                                     <button
                                         type="button"
                                         className="btn btn-outline-danger rounded-pill px-4 me-auto"
-                                        onClick={() => onDelete(selectedEvent.id!)}
+                                        onClick={() => {
+                                            const rawId = selectedEvent.id;
+                                            const id = typeof rawId === 'number' ? rawId : Number(rawId);
+                                            if (!Number.isFinite(id)) return;
+                                            onDelete(id);
+                                        }}
                                     >
                                         <i className="bi bi-trash me-2"></i> Excluir
                                     </button>

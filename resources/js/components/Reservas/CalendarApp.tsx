@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer, Views, View, Components } from 'react-big-calendar';
+import { useState, useEffect, useCallback } from 'react';
+import { Calendar, dateFnsLocalizer, Views, View } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,7 +8,7 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import axios from 'axios';
 import EventModal from './EventModal';
 import CustomToolbar from './CustomToolbar';
-import { Reserva, Local, Holiday } from './types';
+import { Reserva, Local } from './types';
 
 // Configuração do Localizer (Date-fns)
 const locales = {
@@ -31,7 +31,6 @@ const CalendarApp = () => {
     const [locais, setLocais] = useState<Local[]>([]);
     const [view, setView] = useState<View>(Views.MONTH);
     const [date, setDate] = useState(new Date());
-    const [loading, setLoading] = useState(false);
     
     // Estados do Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,7 +57,6 @@ const CalendarApp = () => {
 
     // Carregar Eventos
     const fetchEvents = useCallback(async () => {
-        setLoading(true);
         try {
             // Calcular range baseado na view atual (simplificado para mês: mês anterior até próximo mês)
             // Para garantir que pegamos tudo, pegamos -1 mês e +1 mês da data atual
@@ -101,8 +99,6 @@ const CalendarApp = () => {
             }
         } catch (error) {
             console.error("Erro ao carregar eventos:", error);
-        } finally {
-            setLoading(false);
         }
     }, [date, filters.local_id]);
 
@@ -246,10 +242,7 @@ const CalendarApp = () => {
     };
 
     // Estilos customizados para eventos
-    const eventStyleGetter = (event: any) => {
-        // Cores padrão do Google Calendar
-        const backgroundColor = event.color || '#3788d8';
-        
+    const eventStyleGetter = (_event: any) => {
         return {
             style: {
                 backgroundColor: 'transparent', // Vamos controlar o fundo no componente customizado

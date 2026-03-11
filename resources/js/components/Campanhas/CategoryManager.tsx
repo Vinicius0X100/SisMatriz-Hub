@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Trash2, Edit2, Plus, X } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Trash2, Edit2, Plus } from 'lucide-react';
 
 interface Category {
     id: number;
@@ -25,7 +25,6 @@ export default function CategoryManager({ isOpen, onClose, paroquiaName }: { isO
     const [newCategoryName, setNewCategoryName] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
-    const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +36,6 @@ export default function CategoryManager({ isOpen, onClose, paroquiaName }: { isO
     }, [isOpen]);
 
     const fetchData = async () => {
-        setLoading(true);
         try {
             const [catsRes, statsRes] = await Promise.all([
                 axios.get('/api/campanhas/categorias'),
@@ -47,8 +45,6 @@ export default function CategoryManager({ isOpen, onClose, paroquiaName }: { isO
             setStats(statsRes.data);
         } catch (error) {
             console.error("Error fetching data", error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -229,7 +225,7 @@ export default function CategoryManager({ isOpen, onClose, paroquiaName }: { isO
                                                     paddingAngle={5}
                                                     dataKey="value"
                                                 >
-                                                    {(stats?.pie_chart || []).map((entry, index) => (
+                                                    {(stats?.pie_chart || []).map((_, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </Pie>

@@ -250,7 +250,7 @@ export default function CampaignDashboard({ campanhaId, paroquiaName, isOpen, on
                                                             <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `R$ ${val}`} />
                                                             <Tooltip formatter={(value: any) => formatCurrencyValue(Number(value))} cursor={{fill: 'transparent'}} />
                                                             <Bar dataKey="valor" radius={[10, 10, 0, 0]}>
-                                                                {chartData.map((entry, index) => (
+                                                                {chartData.map((_, index) => (
                                                                     <Cell key={`cell-${index}`} fill={index === 0 ? '#198754' : '#dc3545'} />
                                                                 ))}
                                                             </Bar>
