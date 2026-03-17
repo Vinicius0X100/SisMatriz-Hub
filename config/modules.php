@@ -11,7 +11,7 @@ return [
     ['name' => 'Ferramentas do Site', 'icon' => 'globe', 'url' => '/site-tools', 'allowed_roles' => ['1', '111', '9', '10']],
     ['name' => 'Configurações', 'icon' => 'gear', 'url' => '/settings', 'allowed_roles' => []], // Only Admins
     ['name' => 'Escalas de Acólitos e Coroinhas', 'icon' => 'calendar-check', 'url' => '/acolitos/escalas', 'allowed_roles' => ['6', '8']],
-    ['name' => 'Funções de Acólitos e Coroinhas', 'icon' => 'list-task', 'url' => '/acolitos/funcoes', 'allowed_roles' => ['6', '8']],
+    ['name' => 'Funções de Acólitos e Coroinhas', 'icon' => 'list-task', 'url' => '/acolitos/funcoes', 'allowed_roles' => ['6']],
     ['name' => 'Notas e Avisos de Acólitos e Coroinhas', 'icon' => 'journal-bookmark', 'url' => '/acolitos/notes', 'allowed_roles' => ['6', '8']],
     ['name' => 'Lista de Acólitos e Coroinhas', 'icon' => 'person-lines-fill', 'url' => '/acolitos', 'allowed_roles' => ['6']],
     ['name' => 'Registros Vicentinos', 'icon' => 'heart', 'url' => '/vicentinos', 'allowed_roles' => ['4', '1', '111']],

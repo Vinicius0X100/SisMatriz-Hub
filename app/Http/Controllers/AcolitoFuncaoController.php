@@ -8,8 +8,24 @@ use Illuminate\Support\Facades\Auth;
 
 class AcolitoFuncaoController extends Controller
 {
+    private function denyAcolitoOnly(Request $request = null)
+    {
+        if (Auth::user()?->rule != 8) {
+            return null;
+        }
+
+        if ($request && ($request->ajax() || $request->wantsJson())) {
+            return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+        }
+
+        abort(403);
+    }
+
     public function index(Request $request)
     {
+        $denied = $this->denyAcolitoOnly($request);
+        if ($denied) return $denied;
+
         if ($request->ajax() || $request->wantsJson()) {
             $query = AcolitoFuncao::where('paroquia_id', Auth::user()->paroquia_id);
 
@@ -59,11 +75,15 @@ class AcolitoFuncaoController extends Controller
 
     public function create()
     {
+        $this->denyAcolitoOnly();
         return view('modules.acolitos.funcoes.create');
     }
 
     public function store(Request $request)
     {
+        $denied = $this->denyAcolitoOnly($request);
+        if ($denied) return $denied;
+
         $request->validate([
             'title' => 'required|string|max:255',
         ]);
@@ -79,6 +99,7 @@ class AcolitoFuncaoController extends Controller
 
     public function edit($id)
     {
+        $this->denyAcolitoOnly();
         $funcao = AcolitoFuncao::where('paroquia_id', Auth::user()->paroquia_id)
             ->findOrFail($id);
 
@@ -87,6 +108,9 @@ class AcolitoFuncaoController extends Controller
 
     public function update(Request $request, $id)
     {
+        $denied = $this->denyAcolitoOnly($request);
+        if ($denied) return $denied;
+
         $request->validate([
             'title' => 'required|string|max:255',
         ]);
@@ -104,6 +128,7 @@ class AcolitoFuncaoController extends Controller
 
     public function destroy($id)
     {
+        $this->denyAcolitoOnly();
         $funcao = AcolitoFuncao::where('paroquia_id', Auth::user()->paroquia_id)
             ->findOrFail($id);
 
@@ -115,6 +140,9 @@ class AcolitoFuncaoController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        $denied = $this->denyAcolitoOnly($request);
+        if ($denied) return $denied;
+
         $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:acolitos_funcoes,f_id'
