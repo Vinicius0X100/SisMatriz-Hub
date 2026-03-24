@@ -91,6 +91,17 @@
 </div>
 
 @foreach($records as $record)
+    @php
+        $statusLabel = 'Pendente';
+        $statusColor = 'warning';
+        if ($record->status == 1) {
+            $statusLabel = 'Aprovado';
+            $statusColor = 'success';
+        } elseif ($record->status == 2) {
+            $statusLabel = 'Reprovado';
+            $statusColor = 'danger';
+        }
+    @endphp
     <!-- Details Modal -->
     <div class="modal fade" id="detailsModal{{ $record->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">

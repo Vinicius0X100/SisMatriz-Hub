@@ -118,6 +118,16 @@
             6 => 'Viuvo(a)',
         ];
         $estadoCivilLabel = $estadoCivilMap[$record->estado_civil] ?? $record->estado_civil ?? '-';
+
+        $statusLabel = 'Pendente';
+        $statusColor = 'warning';
+        if ($record->status == 1) {
+            $statusLabel = 'Aprovado';
+            $statusColor = 'success';
+        } elseif ($record->status == 2) {
+            $statusLabel = 'Reprovado';
+            $statusColor = 'danger';
+        }
     @endphp
     <!-- Details Modal -->
     <div class="modal fade" id="detailsModal{{ $record->id }}" tabindex="-1" aria-hidden="true">
@@ -277,6 +287,14 @@
                                 @else
                                     <span class="badge bg-secondary rounded-pill px-3">Não/Não Anexado</span>
                                 @endif
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div>
+                                <label class="text-muted small fw-bold text-uppercase d-block mb-1">Situação:</label>
+                                <span class="badge bg-{{ $statusColor }} text-{{ $statusColor }} bg-opacity-10 rounded-pill px-3 border border-{{ $statusColor }}">
+                                    <i class="bi bi-circle-fill me-1 small"></i> {{ $statusLabel }}
+                                </span>
                             </div>
                         </div>
                         <div class="col-12">
