@@ -261,7 +261,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Vicentinos (Antigo / Apurações - Renomeado para evitar conflito se ainda necessário)
     // Rotas de Apuração de Vicentinos (Antigo/Legado mas ainda em uso)
     Route::get('vicentinos-apuracoes/search-vicentinos-records', [App\Http\Controllers\VicentinoController::class, 'searchVicentinosRecords'])->name('vicentinos-apuracoes.search-records');
-    Route::get('vicentinos-apuracoes/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('vicentinos.search-registers');
+    Route::get('vicentinos-apuracoes/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('vicentinos-apuracoes.search-registers');
     Route::post('vicentinos-apuracoes/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos-apuracoes.bulk-delete');
     Route::resource('vicentinos-apuracoes', App\Http\Controllers\VicentinoController::class);
 
