@@ -340,7 +340,7 @@
                                 [
                                     'title' => 'Comprovante de Pagamento',
                                     'file' => $record->comprovante_pagamento,
-                                    'path' => 'storage/uploads/comprovantes/',
+                                    'path' => 'storage/uploads/comprovantes/adultos/',
                                     'icon' => 'bi-cash-coin',
                                     'color' => 'warning'
                                 ]

@@ -466,9 +466,9 @@ class InscricoesCrismaController extends Controller
                     $record->cep,
                     $record->cidade ?? 'Guarapuava',
                     $record->estado,
-                    $record->certidao_batismo ? asset($record->certidao_batismo) : '',
-                    $record->certidao_primeira_comunhao ? asset($record->certidao_primeira_comunhao) : '',
-                    $record->comprovante_pagamento ? asset($record->comprovante_pagamento) : '',
+                    $record->certidao_batismo ? asset('storage/uploads/certidoes/' . $record->certidao_batismo) : '',
+                    $record->certidao_primeira_comunhao ? asset('storage/uploads/certidoes/' . $record->certidao_primeira_comunhao) : '',
+                    $record->comprovante_pagamento ? asset('storage/uploads/comprovantes/crisma/' . $record->comprovante_pagamento) : '',
                     $dtCriado
                 ], ';');
             }
@@ -603,11 +603,6 @@ class InscricoesCrismaController extends Controller
     public function destroy($id)
     {
         $record = InscricaoCrisma::where('paroquia_id', Auth::user()->paroquia_id)->findOrFail($id);
-        // We might want to delete files too, but user didn't explicitly ask. 
-        // I'll just delete the record for now to be safe, or check if I should delete files.
-        // User said "uploads/certidoes/crisma" and "/comprovantes/crisma/".
-        // Usually safe to keep files or soft delete, but strict delete removes them.
-        // I will just delete the record.
         $record->delete();
 
         return redirect()->back()->with('success', 'Inscrição excluída com sucesso!');

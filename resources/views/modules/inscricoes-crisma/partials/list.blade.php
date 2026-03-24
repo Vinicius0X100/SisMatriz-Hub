@@ -303,7 +303,7 @@
                                 [
                                     'title' => 'Comprovante Pagamento',
                                     'file' => $record->comprovante_pagamento,
-                                    'path' => 'storage/uploads/comprovantes/',
+                                    'path' => 'storage/uploads/comprovantes/crisma/',
                                     'icon' => 'bi-receipt',
                                     'color' => 'success'
                                 ]

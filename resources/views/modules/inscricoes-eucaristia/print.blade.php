@@ -266,7 +266,7 @@
                         @php
                             $ext = strtolower(pathinfo($record->certidao_batismo, PATHINFO_EXTENSION));
                             // Use storage_path for internal PDF generation to ensure file access
-                            $batismoPath = storage_path('app/public/uploads/certidoes/' . $record->certidao_batismo);
+                            $batismoPath = storage_path('app/public/uploads/certidoes/eucaristia/' . $record->certidao_batismo);
                         @endphp
                         @if(in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && file_exists($batismoPath))
                         <div class="attachment-item">
