@@ -165,6 +165,16 @@
                 <form id="pdfForm" action="{{ route('vicentinos.pdf') }}" method="POST">
                     @csrf
                     <input type="hidden" name="selected_ids" id="pdfSelectedIds">
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small">Ordenação</label>
+                        <select class="form-select rounded-pill" name="order">
+                            <option value="responsavel_nome_asc" selected>Nome (A–Z)</option>
+                            <option value="responsavel_nome_desc">Nome (Z–A)</option>
+                            <option value="created_at_desc">Data de cadastro (mais recentes)</option>
+                            <option value="created_at_asc">Data de cadastro (mais antigos)</option>
+                        </select>
+                    </div>
                     
                     <div class="row g-2 mb-4">
                         <div class="col-12"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Dados Pessoais</h6></div>

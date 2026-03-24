@@ -60,6 +60,18 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/chat/unblock', [App\Http\Controllers\ChatController::class, 'unblockUser'])->name('chat.unblock');
     Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
 
+    Route::prefix('pascom')->group(function () {
+        Route::get('membros', [App\Http\Controllers\PascomMembroController::class, 'index'])->name('pascom-membros.index');
+        Route::get('membros/create', [App\Http\Controllers\PascomMembroController::class, 'create'])->name('pascom-membros.create');
+        Route::post('membros', [App\Http\Controllers\PascomMembroController::class, 'store'])->name('pascom-membros.store');
+        Route::get('membros/{id}/edit', [App\Http\Controllers\PascomMembroController::class, 'edit'])->name('pascom-membros.edit');
+        Route::put('membros/{id}', [App\Http\Controllers\PascomMembroController::class, 'update'])->name('pascom-membros.update');
+        Route::delete('membros/{id}', [App\Http\Controllers\PascomMembroController::class, 'destroy'])->name('pascom-membros.destroy');
+        Route::get('membros/search-registers', [App\Http\Controllers\PascomMembroController::class, 'searchRegisters'])->name('pascom-membros.search-registers');
+        Route::post('membros/bulk-delete', [App\Http\Controllers\PascomMembroController::class, 'bulkDelete'])->name('pascom-membros.bulk-delete');
+        Route::post('membros/pdf', [App\Http\Controllers\PascomMembroController::class, 'generatePdf'])->name('pascom-membros.pdf');
+    });
+
     // Excursões
     Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class)->parameters([
         'excursoes' => 'excursao'

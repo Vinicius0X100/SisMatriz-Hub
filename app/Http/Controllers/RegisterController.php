@@ -303,6 +303,19 @@ class RegisterController extends Controller
             $query->whereIn('id', $ids);
         }
 
+        $order = (string) $request->input('order', 'name_asc');
+        $allowedOrders = [
+            'name_asc' => ['name', 'asc'],
+            'name_desc' => ['name', 'desc'],
+            'created_at_desc' => ['created_at', 'desc'],
+            'created_at_asc' => ['created_at', 'asc'],
+            'born_date_asc' => ['born_date', 'asc'],
+            'born_date_desc' => ['born_date', 'desc'],
+        ];
+
+        [$orderBy, $orderDir] = $allowedOrders[$order] ?? $allowedOrders['name_asc'];
+        $query->orderBy($orderBy, $orderDir)->orderBy('id', 'asc');
+
         $registers = $query->get();
         $columns = $request->get('columns', ['name', 'email', 'phone']); // Default columns
         $paroquia = $user->paroquia;

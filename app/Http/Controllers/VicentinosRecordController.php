@@ -468,6 +468,17 @@ class VicentinosRecordController extends Controller
             $query->whereIn('id', $ids);
         }
 
+        $order = (string) $request->input('order', 'responsavel_nome_asc');
+        $allowedOrders = [
+            'responsavel_nome_asc' => ['responsavel_nome', 'asc'],
+            'responsavel_nome_desc' => ['responsavel_nome', 'desc'],
+            'created_at_desc' => ['created_at', 'desc'],
+            'created_at_asc' => ['created_at', 'asc'],
+        ];
+
+        [$orderBy, $orderDir] = $allowedOrders[$order] ?? $allowedOrders['responsavel_nome_asc'];
+        $query->orderBy($orderBy, $orderDir)->orderBy('id', 'asc');
+
         $records = $query->get();
         $columns = $request->get('columns', ['responsavel_nome', 'cpf', 'telefone']);
         

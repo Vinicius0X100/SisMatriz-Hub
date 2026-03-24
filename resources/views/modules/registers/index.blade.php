@@ -325,6 +325,18 @@
                     </div>
 
                     <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small">Ordenação</label>
+                        <select class="form-select rounded-pill" name="order">
+                            <option value="name_asc" selected>Nome (A–Z)</option>
+                            <option value="name_desc">Nome (Z–A)</option>
+                            <option value="created_at_desc">Data de cadastro (mais recentes)</option>
+                            <option value="created_at_asc">Data de cadastro (mais antigos)</option>
+                            <option value="born_date_asc">Data de nascimento (mais antigos)</option>
+                            <option value="born_date_desc">Data de nascimento (mais novos)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
                         <label class="form-label fw-bold text-muted small">Selecionar Pessoas (Opcional - Vazio para Todos)</label>
                         <div class="position-relative">
                             <input type="text" class="form-control rounded-pill" id="pdfSearchInput" placeholder="Digite o nome ou CPF e pressione Enter...">
