@@ -116,13 +116,13 @@ class RegisterController extends Controller
         
         // Mapeamento de Status Civil
         $civilStatusMap = [
+            0 => 'Nao Declarado',
             1 => 'Solteiro',
             2 => 'Casado',
             3 => 'União Estável',
             4 => 'Divorciado',
-            5 => 'Separado',
-            6 => 'Viúvo',
-            7 => 'Não declarado'
+            5 => 'Viuvo(a)',
+            6 => 'Nao Declarado'
         ];
         $data['civil_status_label'] = $civilStatusMap[$register->civil_status] ?? 'Não informado';
         $data['sexo_label'] = ($register->sexo == 1) ? 'Masculino' : (($register->sexo == 2) ? 'Feminino' : 'Não informado');
