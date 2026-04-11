@@ -175,6 +175,12 @@ class PascomPostagemController extends Controller
     {
         $this->ensureManageAccess();
         $postagem = PascomPostagem::where('paroquia_id', Auth::user()->paroquia_id)->findOrFail($postagemId);
+        if ($postagem->arquivos()->count() <= 1) {
+            return response()->json([
+                'success' => false,
+                'error' => 'A postagem deve ter no mínimo 1 mídia. Não é possível remover todas.',
+            ], 422);
+        }
         $arquivo = PascomPostagemArquivo::where('postagem_id', $postagem->id)->findOrFail($arquivoId);
 
         Storage::disk('public')->delete('uploads/pascom/' . $arquivo->filename);

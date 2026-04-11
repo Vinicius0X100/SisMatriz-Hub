@@ -58,6 +58,10 @@
         background-color: #dc3545;
         color: white;
     }
+    .dropzone .dz-preview .dz-remove.dz-remove-disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
 
     /* Transformando a mensagem de erro (que era um tooltip hover) num bloco fixo abaixo da imagem */
     .dropzone .dz-preview .dz-error-message {
@@ -187,6 +191,15 @@
         const hiddenInputsContainer = document.getElementById('hiddenInputsContainer');
         const dropzoneError = document.getElementById('dropzoneError');
 
+        const showMinMediaMessage = () => {
+            dropzoneError.textContent = 'A postagem deve ter no mínimo 1 mídia. Adicione outra para remover esta.';
+            dropzoneError.classList.remove('d-none');
+            setTimeout(() => {
+                dropzoneError.classList.add('d-none');
+                dropzoneError.textContent = 'Por favor, adicione pelo menos um arquivo.';
+            }, 4000);
+        };
+
         const myDropzone = new Dropzone("#mediaDropzone", {
             url: "{{ route('pascom.postagens.upload') }}",
             headers: {
@@ -228,6 +241,35 @@
             },
             
             init: function() {
+                const refreshRemoveState = () => {
+                    const successfulFiles = this.files.filter(f => f.serverData);
+                    this.files.forEach(f => {
+                        const removeLink = f.previewElement ? f.previewElement.querySelector('.dz-remove') : null;
+                        if (!removeLink) return;
+                        if (f.serverData && successfulFiles.length <= 1) {
+                            removeLink.classList.add('dz-remove-disabled');
+                            removeLink.setAttribute('aria-disabled', 'true');
+                        } else {
+                            removeLink.classList.remove('dz-remove-disabled');
+                            removeLink.removeAttribute('aria-disabled');
+                        }
+                    });
+                };
+
+                this.on('addedfile', function(file) {
+                    const removeLink = file.previewElement ? file.previewElement.querySelector('.dz-remove') : null;
+                    if (removeLink) {
+                        removeLink.addEventListener('click', function(ev) {
+                            const successfulFiles = myDropzone.files.filter(f => f.serverData);
+                            if (file.serverData && successfulFiles.length <= 1) {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                showMinMediaMessage();
+                            }
+                        });
+                    }
+                });
+
                 this.on("sending", function(file, xhr, formData) {
                     // Desabilitar submit durante o envio
                     submitBtn.disabled = true;
@@ -246,6 +288,7 @@
                     input.value = JSON.stringify(response);
                     input.id = 'file_' + file.upload.uuid;
                     hiddenInputsContainer.appendChild(input);
+                    refreshRemoveState();
                 });
 
                 this.on("error", function(file, errorMessage, xhr) {
@@ -290,12 +333,14 @@
                         const input = document.getElementById('file_' + file.upload.uuid);
                         if (input) input.remove();
                     }
+                    refreshRemoveState();
                 });
 
                 this.on("queuecomplete", function() {
                     // Reabilitar botão quando a fila acabar
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i> Salvar Postagem';
+                    refreshRemoveState();
                 });
             }
         });
@@ -307,6 +352,8 @@
                 window.scrollTo({ top: document.getElementById('mediaDropzone').offsetTop - 100, behavior: 'smooth' });
             } else {
                 dropzoneError.classList.add('d-none');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Enviando conteúdo...';
             }
         });
     });
