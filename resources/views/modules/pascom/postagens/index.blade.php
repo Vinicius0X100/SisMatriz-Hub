@@ -163,6 +163,10 @@
     .pascom-media-strip-next {
         right: 6px;
     }
+    .pascom-delete-disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
     .pascom-pagination .pagination .page-link {
         border-radius: 999px !important;
         width: 32px;
@@ -316,10 +320,10 @@
                                 <a class="btn btn-sm btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" href="{{ route('pascom.postagens.edit', $postagem->id) }}" title="Editar">
                                     <i class="bi bi-pencil text-warning"></i>
                                 </a>
-                                <form action="{{ route('pascom.postagens.destroy', $postagem->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta postagem?');">
+                                <form id="deletePostForm{{ $postagem->id }}" action="{{ route('pascom.postagens.destroy', $postagem->id) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Excluir">
+                                    <button type="button" class="btn btn-sm btn-light border rounded-circle d-flex align-items-center justify-content-center js-delete-postagem" style="width: 36px; height: 36px;" data-form-id="deletePostForm{{ $postagem->id }}" title="Excluir">
                                         <i class="bi bi-trash text-danger"></i>
                                     </button>
                                 </form>
@@ -573,6 +577,43 @@
     </div>
 </div>
 
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-4 text-center">
+                <div class="text-danger mb-3">
+                    <i class="bi bi-exclamation-triangle-fill display-4"></i>
+                </div>
+                <h5 class="fw-bold mb-3" id="deleteConfirmTitle">Confirmar</h5>
+                <p class="text-muted small mb-4" id="deleteConfirmMessage">Tem certeza?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn btn-danger rounded-pill px-4">
+                        <i class="bi bi-trash me-1"></i> Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="minMediaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-4 text-center">
+                <div class="text-warning mb-3">
+                    <i class="bi bi-info-circle-fill display-4"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Atenção</h5>
+                <p class="text-muted small mb-0" id="minMediaMessage">A postagem deve ter no mínimo 1 mídia. Não é possível remover todas.</p>
+            </div>
+            <div class="modal-footer bg-white border-top-0 px-4 py-3 justify-content-center">
+                <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Entendi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -672,6 +713,30 @@
         openVideoPlayer(url, title || 'Vídeo');
     });
 
+    let deleteConfirmModal = null;
+    let minMediaModal = null;
+    let deleteAction = null;
+
+    function showMinMediaModal(message) {
+        const el = document.getElementById('minMediaMessage');
+        if (el) el.textContent = message || 'A postagem deve ter no mínimo 1 mídia. Não é possível remover todas.';
+        if (minMediaModal) minMediaModal.show();
+    }
+
+    function showDeleteConfirm({ title, message, onConfirm }) {
+        const titleEl = document.getElementById('deleteConfirmTitle');
+        const messageEl = document.getElementById('deleteConfirmMessage');
+        const btn = document.getElementById('confirmDeleteBtn');
+        if (titleEl) titleEl.textContent = title || 'Confirmar';
+        if (messageEl) messageEl.textContent = message || 'Tem certeza?';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-trash me-1"></i> Excluir';
+        }
+        deleteAction = onConfirm || null;
+        if (deleteConfirmModal) deleteConfirmModal.show();
+    }
+
     function openImageViewer(url, title, postId, arquivoId) {
         const modalEl = document.getElementById('imageViewerModal');
         const imgEl = document.getElementById('imageViewerImg');
@@ -690,6 +755,15 @@
         if (removeBtn) {
             removeBtn.setAttribute('data-post-id', postId || '');
             removeBtn.setAttribute('data-arquivo-id', arquivoId || '');
+            const countEl = document.getElementById(`postCount${postId}`);
+            const count = countEl ? parseInt(countEl.textContent || '0', 10) : 0;
+            if (count <= 1) {
+                removeBtn.classList.add('pascom-delete-disabled');
+                removeBtn.setAttribute('data-disabled', '1');
+            } else {
+                removeBtn.classList.remove('pascom-delete-disabled');
+                removeBtn.removeAttribute('data-disabled');
+            }
         }
 
         bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -713,36 +787,98 @@
             const postId = this.getAttribute('data-post-id');
             const arquivoId = this.getAttribute('data-arquivo-id');
             if (!postId || !arquivoId) return;
-            if (!confirm('Remover esta imagem da postagem?')) return;
 
-            try {
-                const res = await fetch(`{{ url('pascom/postagens') }}/${postId}/arquivos/${arquivoId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'same-origin'
-                });
-                if (!res.ok) {
-                    throw new Error('Falha ao remover a imagem.');
-                }
-                const tile = document.querySelector(`.pascom-media-tile[data-post="${postId}"][data-arquivo="${arquivoId}"]`);
-                if (tile) tile.remove();
-                const countEl = document.getElementById(`postCount${postId}`);
-                if (countEl) {
-                    const n = parseInt(countEl.textContent || '0', 10);
-                    countEl.textContent = String(Math.max(0, n - 1));
-                }
-                const modalEl = document.getElementById('imageViewerModal');
-                if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-            } catch (err) {
-                alert('Não foi possível remover a imagem. Tente novamente.');
+            const countEl = document.getElementById(`postCount${postId}`);
+            const count = countEl ? parseInt(countEl.textContent || '0', 10) : 0;
+            if (count <= 1) {
+                showMinMediaModal('A postagem deve ter no mínimo 1 mídia. Não é possível remover todas.');
+                return;
             }
+
+            showDeleteConfirm({
+                title: 'Excluir mídia?',
+                message: 'Esta ação não pode ser desfeita. A mídia será removida permanentemente desta postagem.',
+                onConfirm: async () => {
+                    const btn = document.getElementById('confirmDeleteBtn');
+                    const originalHtml = btn ? btn.innerHTML : '';
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Excluindo...';
+                    }
+                    try {
+                        const res = await fetch(`{{ url('pascom/postagens') }}/${postId}/arquivos/${arquivoId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        });
+                        let json = null;
+                        try {
+                            json = await res.json();
+                        } catch (e) {
+                            json = null;
+                        }
+                        if (!res.ok) {
+                            if (res.status === 422 && json && json.error) {
+                                if (deleteConfirmModal) deleteConfirmModal.hide();
+                                showMinMediaModal(json.error);
+                                return;
+                            }
+                            throw new Error('Falha ao remover a mídia.');
+                        }
+                        const tile = document.querySelector(`.pascom-media-tile[data-post="${postId}"][data-arquivo="${arquivoId}"]`);
+                        if (tile) tile.remove();
+                        if (countEl) {
+                            const n = parseInt(countEl.textContent || '0', 10);
+                            countEl.textContent = String(Math.max(0, n - 1));
+                        }
+                        const modalEl = document.getElementById('imageViewerModal');
+                        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                        if (deleteConfirmModal) deleteConfirmModal.hide();
+                    } catch (err) {
+                        alert('Não foi possível remover a mídia. Tente novamente.');
+                    } finally {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml || '<i class="bi bi-trash me-1"></i> Excluir';
+                        }
+                    }
+                }
+            });
+
         });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        minMediaModal = new bootstrap.Modal(document.getElementById('minMediaModal'));
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', async function() {
+                if (typeof deleteAction === 'function') {
+                    await deleteAction();
+                }
+            });
+        }
+
+        document.querySelectorAll('.js-delete-postagem').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const formId = this.getAttribute('data-form-id');
+                const form = formId ? document.getElementById(formId) : null;
+                if (!form) return;
+                showDeleteConfirm({
+                    title: 'Excluir postagem?',
+                    message: 'Esta ação não pode ser desfeita. A postagem e todas as mídias serão removidas.',
+                    onConfirm: async () => {
+                        if (deleteConfirmModal) deleteConfirmModal.hide();
+                        form.submit();
+                    }
+                });
+            });
+        });
+
         const modalEl = document.getElementById('videoPlayerModal');
         if (!modalEl) return;
         modalEl.addEventListener('hidden.bs.modal', function() {
