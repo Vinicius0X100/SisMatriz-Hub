@@ -70,6 +70,16 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         Route::get('membros/search-registers', [App\Http\Controllers\PascomMembroController::class, 'searchRegisters'])->name('pascom-membros.search-registers');
         Route::post('membros/bulk-delete', [App\Http\Controllers\PascomMembroController::class, 'bulkDelete'])->name('pascom-membros.bulk-delete');
         Route::post('membros/pdf', [App\Http\Controllers\PascomMembroController::class, 'generatePdf'])->name('pascom-membros.pdf');
+
+        // Postagens
+        Route::get('postagens', [App\Http\Controllers\PascomPostagemController::class, 'index'])->name('pascom.postagens.index');
+        Route::get('postagens/create', [App\Http\Controllers\PascomPostagemController::class, 'create'])->name('pascom.postagens.create');
+        Route::post('postagens', [App\Http\Controllers\PascomPostagemController::class, 'store'])->name('pascom.postagens.store');
+        Route::post('postagens/upload', [App\Http\Controllers\PascomPostagemController::class, 'upload'])->name('pascom.postagens.upload');
+        Route::get('postagens/{id}/edit', [App\Http\Controllers\PascomPostagemController::class, 'edit'])->name('pascom.postagens.edit');
+        Route::put('postagens/{id}', [App\Http\Controllers\PascomPostagemController::class, 'update'])->name('pascom.postagens.update');
+        Route::delete('postagens/{id}', [App\Http\Controllers\PascomPostagemController::class, 'destroy'])->name('pascom.postagens.destroy');
+        Route::delete('postagens/{postagemId}/arquivos/{arquivoId}', [App\Http\Controllers\PascomPostagemController::class, 'destroyArquivo'])->name('pascom.postagens.arquivos.destroy');
     });
 
     // Excursões

@@ -35,6 +35,7 @@ return [
     ['name' => 'Excursões', 'icon' => 'bus-front', 'url' => '/excursoes', 'allowed_roles' => []],
     ['name' => 'Registros gerais', 'icon' => 'journal-text', 'url' => '/registers', 'allowed_roles' => ['3', '7', '6', '9', '4']],
     ['name' => 'Membros Pascom', 'icon' => 'people-fill', 'url' => '/pascom/membros', 'allowed_roles' => ['1', '111', '9']],
+    ['name' => 'Postagens Pascom', 'icon' => 'images', 'url' => '/pascom/postagens', 'allowed_roles' => ['1', '111', '9', '10']],
     ['name' => 'Meus Protocolos', 'icon' => 'shield-check', 'url' => '/protocols', 'allowed_roles' => ['*']],
     ['name' => 'Gestão de Protocolos', 'icon' => 'shield-lock', 'url' => '/admin/protocols', 'allowed_roles' => ['1', '111', '2']],
     ['name' => 'Catequistas de Primeira Eucaristia', 'icon' => 'person-badge', 'url' => '/catequistas-eucaristia', 'allowed_roles' => ['7', '12']],

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,7 +16,13 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', \App\Http\Middleware\CheckModuleAccess::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (PostTooLargeException $e, $request) {
+            if ($request->is('pascom/postagens/upload') || $request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Arquivo muito grande para o limite atual do servidor.',
+                ], 413);
+            }
+        });
     })->create();
 
 return $app;
