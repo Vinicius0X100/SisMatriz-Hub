@@ -6,6 +6,7 @@ use App\Models\InscricaoCatequeseAdultos;
 use App\Models\PrazoInscricao;
 use App\Models\InscricaoTaxaConfig;
 use App\Models\InscricaoTaxaItem;
+use App\Models\Batismo;
 use App\Models\Register;
 use App\Models\User;
 use App\Mail\ShareInscricoesCatequeseAdultos;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class InscricoesCatequeseAdultosController extends Controller
 {
@@ -510,13 +512,94 @@ class InscricoesCatequeseAdultosController extends Controller
         ]);
 
         $record = InscricaoCatequeseAdultos::where('paroquia_id', Auth::user()->paroquia_id)->findOrFail($id);
-        
-        $record->status = $request->status;
-        $record->save();
-        
-        // Register creation logic is optional, skipping for brevity unless requested
-        
-        return redirect()->back()->with('success', 'Situação atualizada com sucesso!');
+
+        $messages = ['Situação atualizada com sucesso!'];
+        $messageType = 'success';
+
+        DB::beginTransaction();
+        try {
+            if ((int) $request->status === 1) {
+                $cpf = trim((string) ($record->cpf ?? ''));
+                $paroquiaId = Auth::user()->paroquia_id;
+
+                $registerExistsInParoquia = false;
+                if ($cpf !== '') {
+                    $cpfDigits = preg_replace('/\D+/', '', $cpf);
+                    $registerExistsInParoquia = Register::where('paroquia_id', $paroquiaId)
+                        ->where(function ($q) use ($cpf, $cpfDigits) {
+                            $q->where('cpf', $cpf);
+                            if ($cpfDigits !== '') {
+                                $q->orWhere('cpf', $cpfDigits);
+                            }
+                        })
+                        ->exists();
+                }
+
+                if (!$registerExistsInParoquia) {
+                    $phone = trim((string) ($record->telefone1 ?? ''));
+                    if ($phone === '' || Register::where('paroquia_id', $paroquiaId)->where('phone', $phone)->exists()) {
+                        $phone = trim((string) ($record->telefone2 ?? ''));
+                    }
+                    if ($phone === '') {
+                        $phone = '0';
+                    }
+
+                    $sexo = 3;
+                    if (stripos((string) $record->sexo, 'masc') !== false) {
+                        $sexo = 1;
+                    }
+                    if (stripos((string) $record->sexo, 'fem') !== false) {
+                        $sexo = 2;
+                    }
+
+                    $civilStatus = 0;
+                    $estadoCivil = mb_strtolower((string) $record->estado_civil);
+                    if (str_contains($estadoCivil, 'solt')) $civilStatus = 1;
+                    elseif (str_contains($estadoCivil, 'cas')) $civilStatus = 2;
+                    elseif (str_contains($estadoCivil, 'uni')) $civilStatus = 3;
+                    elseif (str_contains($estadoCivil, 'div')) $civilStatus = 4;
+                    elseif (str_contains($estadoCivil, 'viu')) $civilStatus = 5;
+                    elseif (str_contains($estadoCivil, 'nao') || str_contains($estadoCivil, 'não') || str_contains($estadoCivil, 'decl')) $civilStatus = 0;
+
+                    $newRegister = Register::create([
+                        'name' => $record->nome,
+                        'phone' => $phone,
+                        'address' => $record->endereco,
+                        'address_number' => $record->numero,
+                        'cpf' => $cpf !== '' ? $cpf : null,
+                        'sexo' => $sexo,
+                        'born_date' => $record->data_nascimento,
+                        'age' => $record->data_nascimento ? Carbon::parse($record->data_nascimento)->age : null,
+                        'country' => 'Brasil',
+                        'state' => $record->estado,
+                        'cep' => $record->cep,
+                        'civil_status' => $civilStatus,
+                        'paroquia_id' => $paroquiaId,
+                    ]);
+
+                    $isBatizado = !empty($record->certidao_batismo);
+                    Batismo::syncFromTurma($newRegister->id, $isBatizado);
+
+                    $messages[] = 'Registro Geral criado com sucesso.';
+                } else {
+                    $messages[] = 'Inscrito já possui Registro Geral.';
+                }
+            }
+
+            $record->update(['status' => $request->status]);
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Falha ao aprovar inscrição de Adultos (Registro Geral não criado)', [
+                'inscricao_id' => $record->id,
+                'paroquia_id' => Auth::user()->paroquia_id,
+                'erro' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('warning', 'Não foi possível aprovar: erro ao enviar para o Registro Geral. ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with($messageType, implode(' ', $messages));
     }
 
     public function storeDeadline(Request $request)
