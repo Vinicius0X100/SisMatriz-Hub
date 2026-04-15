@@ -336,6 +336,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Comunicação em Massa
     Route::get('mass-communication', [App\Http\Controllers\MassCommunicationController::class, 'index'])->name('mass-communication.index');
+    Route::get('mass-communication/turmas', [App\Http\Controllers\MassCommunicationController::class, 'turmas'])->name('mass-communication.turmas');
+    Route::get('mass-communication/turmas/{tipo}/{turmaId}/recipients', [App\Http\Controllers\MassCommunicationController::class, 'turmaRecipients'])->name('mass-communication.turmas.recipients');
+    Route::get('mass-communication/turmas/all-recipients', [App\Http\Controllers\MassCommunicationController::class, 'allTurmasRecipients'])->name('mass-communication.turmas.all-recipients');
     Route::post('mass-communication/send', [App\Http\Controllers\MassCommunicationController::class, 'send'])->name('mass-communication.send');
 
     // Calendário Matrimonial
