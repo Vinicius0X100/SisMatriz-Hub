@@ -53,13 +53,11 @@ class MassCommunicationController extends Controller
     private function messageToBlocks(string $message, int $maxBlocks): array
     {
         $message = str_replace(["\r\n", "\r"], "\n", $message);
-        $lines = explode("\n", $message);
+        $parts = preg_split("/\n\s*\n/u", $message) ?: [];
+        $parts = array_map(fn ($p) => trim((string) $p), $parts);
+        $parts = array_values(array_filter($parts, fn ($p) => $p !== ''));
 
-        $lines = array_map(function ($line) {
-            return rtrim((string) $line);
-        }, $lines);
-
-        return array_slice($lines, 0, $maxBlocks);
+        return array_slice($parts, 0, $maxBlocks);
     }
 
     private function canUseTurmasGroup(string $tipo): bool
@@ -276,9 +274,9 @@ class MassCommunicationController extends Controller
         $contentSid = config('services.twilio.content_sid_mass_communication') ?: 'HXd45e8dad964e205eac8c0d89fab4432e';
 
         $rawBlocks = $this->messageToBlocks((string) $messageBody, 3);
-        $totalLines = count(explode("\n", str_replace(["\r\n", "\r"], "\n", (string) $messageBody)));
-        if ($totalLines > 3) {
-            return back()->with('error', 'A mensagem possui mais de 3 linhas. Reduza as quebras de linha para no máximo 3.');
+        $allParagraphs = $this->messageToBlocks((string) $messageBody, 999);
+        if (count($allParagraphs) > 3) {
+            return back()->with('error', 'A mensagem possui mais de 3 parágrafos. Use no máximo 3 blocos separados por linha em branco.');
         }
 
         foreach ($recipients as $recipient) {

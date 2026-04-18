@@ -116,14 +116,14 @@
                             </div>
                             <div class="d-flex align-items-center justify-content-between mt-2">
                                 <div class="text-muted small">
-                                    Quebras de linha: <span class="fw-bold" id="lineCount">1</span>/3
+                                    Parágrafos: <span class="fw-bold" id="lineCount">1</span>/3
                                 </div>
                                 <div class="text-muted small">
-                                    Dica: cada linha vira um bloco do template (máx. 3).
+                                    Dica: separe os blocos com uma linha em branco.
                                 </div>
                             </div>
                             <div class="text-danger small mt-2 d-none" id="lineLimitError">
-                                A mensagem ultrapassou 3 linhas. Remova algumas quebras de linha para enviar.
+                                A mensagem ultrapassou 3 parágrafos. Use no máximo 3 blocos separados por linha em branco.
                             </div>
                         </div>
 
@@ -460,6 +460,12 @@
         const lineLimitErrorEl = document.getElementById('lineLimitError');
         let searchTimeout;
 
+        function getParagraphCount(text) {
+            const normalized = (text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const parts = normalized.split(/\n\s*\n/g).map(p => p.trim()).filter(Boolean);
+            return Math.max(parts.length, 1);
+        }
+
         // --- Functions ---
 
         // Toggle recipient selection
@@ -627,9 +633,8 @@
             }
 
             if (messageInput) {
-                const raw = (messageInput.value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-                const lines = raw.split('\n').length || 1;
-                if (lines > 3) {
+                const count = getParagraphCount(messageInput.value || '');
+                if (count > 3) {
                     e.preventDefault();
                     if (lineLimitErrorEl) lineLimitErrorEl.classList.remove('d-none');
                     messageInput.focus();
@@ -639,11 +644,10 @@
 
         function updateLineCount() {
             if (!messageInput || !lineCountEl) return;
-            const raw = (messageInput.value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            const lines = raw.split('\n').length || 1;
-            lineCountEl.textContent = String(lines);
+            const count = getParagraphCount(messageInput.value || '');
+            lineCountEl.textContent = String(count);
             if (lineLimitErrorEl) {
-                if (lines > 3) lineLimitErrorEl.classList.remove('d-none');
+                if (count > 3) lineLimitErrorEl.classList.remove('d-none');
                 else lineLimitErrorEl.classList.add('d-none');
             }
         }
