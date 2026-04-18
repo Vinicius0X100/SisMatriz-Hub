@@ -17,6 +17,23 @@ use Twilio\Rest\Client;
 
 class MassCommunicationController extends Controller
 {
+    private function sanitizeTwilioVariable(?string $value, string $fallback = ''): string
+    {
+        $value = (string) $value;
+        $value = str_replace(["\r\n", "\r"], "\n", $value);
+        $value = str_replace("\t", '    ', $value);
+        $value = trim($value);
+        if ($value === '') {
+            $value = $fallback;
+        }
+
+        $value = str_replace(['{{', '}}'], ['{', '}'], $value);
+
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
+
+        return $value;
+    }
+
     private function canUseTurmasGroup(string $tipo): bool
     {
         $user = Auth::user();
@@ -249,15 +266,17 @@ class MassCommunicationController extends Controller
                 
                 // Template: HXd45e8dad964e205eac8c0d89fab4432e
                 // Variables: 1: Recipient Name, 2: Sender Name, 3: Message
+                $contentVariables = [
+                    "1" => $this->sanitizeTwilioVariable($recipient->name, 'Paroquiano(a)'),
+                    "2" => $this->sanitizeTwilioVariable($user->name, 'Secretaria Paroquial'),
+                    "3" => $this->sanitizeTwilioVariable($messageBody, 'Mensagem da paróquia'),
+                ];
+
                 $message = $twilio->messages->create($to, [
                     'from' => $from,
                     'messagingServiceSid' => $messagingServiceSid,
                     'contentSid' => 'HXd45e8dad964e205eac8c0d89fab4432e',
-                    'contentVariables' => json_encode([
-                        "1" => $recipient->name,
-                        "2" => $user->name,
-                        "3" => $messageBody
-                    ])
+                    'contentVariables' => json_encode($contentVariables, JSON_UNESCAPED_UNICODE),
                 ]);
 
                 MassCommunication::create([
@@ -272,7 +291,13 @@ class MassCommunicationController extends Controller
                 $successCount++;
 
             } catch (\Exception $e) {
-                Log::error('Mass Communication Error: ' . $e->getMessage());
+                Log::error('Mass Communication Error: ' . $e->getMessage(), [
+                    'recipient_id' => $recipient->id,
+                    'recipient_name' => $recipient->name,
+                    'recipient_phone' => $recipient->phone,
+                    'sender_id' => $user->id,
+                    'content_sid' => 'HXd45e8dad964e205eac8c0d89fab4432e',
+                ]);
                 
                 MassCommunication::create([
                     'sender_id' => $user->id,
