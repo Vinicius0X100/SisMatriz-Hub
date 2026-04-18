@@ -17,11 +17,11 @@ use Twilio\Rest\Client;
 
 class MassCommunicationController extends Controller
 {
-    private function sanitizeTwilioVariable(?string $value, string $fallback = ''): string
+    private function sanitizeTwilioNameVariable(?string $value, string $fallback = ''): string
     {
         $value = (string) $value;
-        $value = str_replace(["\r\n", "\r"], "\n", $value);
-        $value = str_replace("\t", '    ', $value);
+        $value = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $value);
+        $value = preg_replace('/[ \x{00A0}]+/u', ' ', $value) ?? $value;
         $value = trim($value);
         if ($value === '') {
             $value = $fallback;
@@ -32,6 +32,34 @@ class MassCommunicationController extends Controller
         $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
 
         return $value;
+    }
+
+    private function sanitizeTwilioBlockVariable(?string $value, string $fallback = ''): string
+    {
+        $value = (string) $value;
+        $value = str_replace(["\r\n", "\r", "\n"], ' ', $value);
+        $value = str_replace("\t", '    ', $value);
+        $value = trim($value);
+        if ($value === '') {
+            $value = $fallback;
+        }
+
+        $value = str_replace(['{{', '}}'], ['{', '}'], $value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
+
+        return $value;
+    }
+
+    private function messageToBlocks(string $message, int $maxBlocks): array
+    {
+        $message = str_replace(["\r\n", "\r"], "\n", $message);
+        $lines = explode("\n", $message);
+
+        $lines = array_map(function ($line) {
+            return rtrim((string) $line);
+        }, $lines);
+
+        return array_slice($lines, 0, $maxBlocks);
     }
 
     private function canUseTurmasGroup(string $tipo): bool
@@ -245,6 +273,13 @@ class MassCommunicationController extends Controller
         }
 
         $twilio = new Client($sid, $token);
+        $contentSid = config('services.twilio.content_sid_mass_communication') ?: 'HXd45e8dad964e205eac8c0d89fab4432e';
+
+        $rawBlocks = $this->messageToBlocks((string) $messageBody, 3);
+        $totalLines = count(explode("\n", str_replace(["\r\n", "\r"], "\n", (string) $messageBody)));
+        if ($totalLines > 3) {
+            return back()->with('error', 'A mensagem possui mais de 3 linhas. Reduza as quebras de linha para no máximo 3.');
+        }
 
         foreach ($recipients as $recipient) {
             try {
@@ -264,18 +299,19 @@ class MassCommunicationController extends Controller
                 
                 $to = 'whatsapp:+' . $phone;
                 
-                // Template: HXd45e8dad964e205eac8c0d89fab4432e
-                // Variables: 1: Recipient Name, 2: Sender Name, 3: Message
+                // Variables: 1: Recipient Name, 2: Sender Name, 3..5: Message blocks (max 3 linhas)
                 $contentVariables = [
-                    "1" => $this->sanitizeTwilioVariable($recipient->name, 'Paroquiano(a)'),
-                    "2" => $this->sanitizeTwilioVariable($user->name, 'Secretaria Paroquial'),
-                    "3" => $this->sanitizeTwilioVariable($messageBody, 'Mensagem da paróquia'),
+                    "1" => $this->sanitizeTwilioNameVariable($recipient->name, 'Paroquiano(a)'),
+                    "2" => $this->sanitizeTwilioNameVariable($user->name, 'Secretaria Paroquial'),
+                    "3" => $this->sanitizeTwilioBlockVariable($rawBlocks[0] ?? '', ' '),
+                    "4" => $this->sanitizeTwilioBlockVariable($rawBlocks[1] ?? '', ' '),
+                    "5" => $this->sanitizeTwilioBlockVariable($rawBlocks[2] ?? '', ' '),
                 ];
 
                 $message = $twilio->messages->create($to, [
                     'from' => $from,
                     'messagingServiceSid' => $messagingServiceSid,
-                    'contentSid' => 'HXd45e8dad964e205eac8c0d89fab4432e',
+                    'contentSid' => $contentSid,
                     'contentVariables' => json_encode($contentVariables, JSON_UNESCAPED_UNICODE),
                 ]);
 
@@ -296,7 +332,9 @@ class MassCommunicationController extends Controller
                     'recipient_name' => $recipient->name,
                     'recipient_phone' => $recipient->phone,
                     'sender_id' => $user->id,
-                    'content_sid' => 'HXd45e8dad964e205eac8c0d89fab4432e',
+                    'content_sid' => $contentSid,
+                    'msg_has_newlines' => preg_match("/\r|\n/", (string) $messageBody) === 1,
+                    'msg_len' => mb_strlen((string) $messageBody),
                 ]);
                 
                 MassCommunication::create([
@@ -312,8 +350,12 @@ class MassCommunicationController extends Controller
             }
         }
 
-        if ($successCount == 0 && $failCount > 0) {
+        if ($successCount === 0 && $failCount > 0) {
             return back()->with('error', 'Falha ao enviar mensagens. Verifique os logs.');
+        }
+
+        if ($failCount > 0) {
+            return back()->with('warning', "Mensagens enviadas: {$successCount}. Falhas: {$failCount}. Verifique os logs para detalhes.");
         }
 
         return back()->with('success', "Mensagens enviadas: {$successCount}. Falhas: {$failCount}.");

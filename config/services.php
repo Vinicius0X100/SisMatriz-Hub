@@ -45,6 +45,7 @@ return [
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
         'messaging_service_sid' => env('TWILIO_MESSAGING_SERVICE_SID'),
         'content_sid_acolitos' => env('TWILIO_CONTENT_SID_ACOLITOS'),
+        'content_sid_mass_communication' => env('TWILIO_CONTENT_SID_MASS_COMMUNICATION'),
     ],
 
     'notification_api' => [

@@ -25,6 +25,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
+    
+    @if(session('warning'))
+    <div class="alert alert-warning alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('warning') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
     <div class="row g-4">
         <!-- Left Column: Registers List -->
@@ -106,6 +113,17 @@
                                 <div>
                                     As variáveis <strong>Nome do Destinatário</strong> e <strong>Seu Nome</strong> serão inseridas automaticamente pelo template.
                                 </div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mt-2">
+                                <div class="text-muted small">
+                                    Quebras de linha: <span class="fw-bold" id="lineCount">1</span>/3
+                                </div>
+                                <div class="text-muted small">
+                                    Dica: cada linha vira um bloco do template (máx. 3).
+                                </div>
+                            </div>
+                            <div class="text-danger small mt-2 d-none" id="lineLimitError">
+                                A mensagem ultrapassou 3 linhas. Remova algumas quebras de linha para enviar.
                             </div>
                         </div>
 
@@ -437,6 +455,9 @@
         const searchInput = document.getElementById('searchInput');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const tableContent = document.getElementById('table-content');
+        const messageInput = document.getElementById('message');
+        const lineCountEl = document.getElementById('lineCount');
+        const lineLimitErrorEl = document.getElementById('lineLimitError');
         let searchTimeout;
 
         // --- Functions ---
@@ -602,8 +623,35 @@
             if (selectedRecipients.size === 0) {
                 e.preventDefault();
                 alert('Por favor, selecione pelo menos um destinatário.');
+                return;
+            }
+
+            if (messageInput) {
+                const raw = (messageInput.value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                const lines = raw.split('\n').length || 1;
+                if (lines > 3) {
+                    e.preventDefault();
+                    if (lineLimitErrorEl) lineLimitErrorEl.classList.remove('d-none');
+                    messageInput.focus();
+                }
             }
         });
+
+        function updateLineCount() {
+            if (!messageInput || !lineCountEl) return;
+            const raw = (messageInput.value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = raw.split('\n').length || 1;
+            lineCountEl.textContent = String(lines);
+            if (lineLimitErrorEl) {
+                if (lines > 3) lineLimitErrorEl.classList.remove('d-none');
+                else lineLimitErrorEl.classList.add('d-none');
+            }
+        }
+
+        if (messageInput) {
+            messageInput.addEventListener('input', updateLineCount);
+            updateLineCount();
+        }
 
         const groupModalEl = canGroup ? document.getElementById('groupSelectModal') : null;
         const confirmAllModalEl = canGroup ? document.getElementById('confirmAllTurmaModal') : null;
