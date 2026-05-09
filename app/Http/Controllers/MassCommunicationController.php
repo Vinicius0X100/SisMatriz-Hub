@@ -17,27 +17,10 @@ use Twilio\Rest\Client;
 
 class MassCommunicationController extends Controller
 {
-    private function sanitizeTwilioNameVariable(?string $value, string $fallback = ''): string
+    private function sanitizeTwilioVariable(?string $value, string $fallback = ''): string
     {
         $value = (string) $value;
-        $value = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $value);
-        $value = preg_replace('/[ \x{00A0}]+/u', ' ', $value) ?? $value;
-        $value = trim($value);
-        if ($value === '') {
-            $value = $fallback;
-        }
-
-        $value = str_replace(['{{', '}}'], ['{', '}'], $value);
-
-        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
-
-        return $value;
-    }
-
-    private function sanitizeTwilioBlockVariable(?string $value, string $fallback = ''): string
-    {
-        $value = (string) $value;
-        $value = str_replace(["\r\n", "\r", "\n"], ' ', $value);
+        $value = str_replace(["\r\n", "\r"], "\n", $value);
         $value = str_replace("\t", '    ', $value);
         $value = trim($value);
         if ($value === '') {
@@ -45,19 +28,27 @@ class MassCommunicationController extends Controller
         }
 
         $value = str_replace(['{{', '}}'], ['{', '}'], $value);
+
         $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
 
         return $value;
     }
 
-    private function messageToBlocks(string $message, int $maxBlocks): array
+    private function extractMessageParagraphs(string $message): array
     {
         $message = str_replace(["\r\n", "\r"], "\n", $message);
-        $parts = preg_split("/\n\s*\n/u", $message) ?: [];
-        $parts = array_map(fn ($p) => trim((string) $p), $parts);
-        $parts = array_values(array_filter($parts, fn ($p) => $p !== ''));
+        $parts = explode("\n", $message);
 
-        return array_slice($parts, 0, $maxBlocks);
+        $paragraphs = [];
+        foreach ($parts as $part) {
+            $part = trim((string) $part);
+            if ($part === '') {
+                continue;
+            }
+            $paragraphs[] = $part;
+        }
+
+        return $paragraphs;
     }
 
     private function canUseTurmasGroup(string $tipo): bool
@@ -256,28 +247,29 @@ class MassCommunicationController extends Controller
 
         $user = Auth::user();
         $messageBody = $request->message;
+        $paragraphs = $this->extractMessageParagraphs($messageBody);
+        if (count($paragraphs) === 0) {
+            return back()->with('error', 'A mensagem precisa ter pelo menos 1 parágrafo.');
+        }
+        if (count($paragraphs) > 3) {
+            return back()->with('error', 'A mensagem pode ter no máximo 3 parágrafos. Separe os parágrafos usando quebras de linha.');
+        }
         $recipients = Register::whereIn('id', $request->recipients)->get();
         
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
         $messagingServiceSid = config('services.twilio.messaging_service_sid');
         $from = config('services.twilio.whatsapp_from');
+        $contentSid = config('services.twilio.content_sid_mass_communication');
         
         $successCount = 0;
         $failCount = 0;
 
-        if (!$sid || !$token || !$messagingServiceSid) {
+        if (!$sid || !$token || !$messagingServiceSid || !$contentSid) {
             return back()->with('error', 'Twilio não está configurado corretamente.');
         }
 
         $twilio = new Client($sid, $token);
-        $contentSid = config('services.twilio.content_sid_mass_communication') ?: 'HXd45e8dad964e205eac8c0d89fab4432e';
-
-        $rawBlocks = $this->messageToBlocks((string) $messageBody, 3);
-        $allParagraphs = $this->messageToBlocks((string) $messageBody, 999);
-        if (count($allParagraphs) > 3) {
-            return back()->with('error', 'A mensagem possui mais de 3 parágrafos. Use no máximo 3 blocos separados por linha em branco.');
-        }
 
         foreach ($recipients as $recipient) {
             try {
@@ -297,13 +289,12 @@ class MassCommunicationController extends Controller
                 
                 $to = 'whatsapp:+' . $phone;
                 
-                // Variables: 1: Recipient Name, 2: Sender Name, 3..5: Message blocks (max 3 linhas)
                 $contentVariables = [
-                    "1" => $this->sanitizeTwilioNameVariable($recipient->name, 'Paroquiano(a)'),
-                    "2" => $this->sanitizeTwilioNameVariable($user->name, 'Secretaria Paroquial'),
-                    "3" => $this->sanitizeTwilioBlockVariable($rawBlocks[0] ?? '', ' '),
-                    "4" => $this->sanitizeTwilioBlockVariable($rawBlocks[1] ?? '', ' '),
-                    "5" => $this->sanitizeTwilioBlockVariable($rawBlocks[2] ?? '', ' '),
+                    "1" => $this->sanitizeTwilioVariable($recipient->name, 'Paroquiano(a)'),
+                    "2" => $this->sanitizeTwilioVariable($user->name, 'Secretaria Paroquial'),
+                    "3" => $this->sanitizeTwilioVariable($paragraphs[0] ?? '', ''),
+                    "4" => $this->sanitizeTwilioVariable($paragraphs[1] ?? '', ''),
+                    "5" => $this->sanitizeTwilioVariable($paragraphs[2] ?? '', ''),
                 ];
 
                 $message = $twilio->messages->create($to, [
@@ -331,8 +322,6 @@ class MassCommunicationController extends Controller
                     'recipient_phone' => $recipient->phone,
                     'sender_id' => $user->id,
                     'content_sid' => $contentSid,
-                    'msg_has_newlines' => preg_match("/\r|\n/", (string) $messageBody) === 1,
-                    'msg_len' => mb_strlen((string) $messageBody),
                 ]);
                 
                 MassCommunication::create([
@@ -348,12 +337,8 @@ class MassCommunicationController extends Controller
             }
         }
 
-        if ($successCount === 0 && $failCount > 0) {
+        if ($successCount == 0 && $failCount > 0) {
             return back()->with('error', 'Falha ao enviar mensagens. Verifique os logs.');
-        }
-
-        if ($failCount > 0) {
-            return back()->with('warning', "Mensagens enviadas: {$successCount}. Falhas: {$failCount}. Verifique os logs para detalhes.");
         }
 
         return back()->with('success', "Mensagens enviadas: {$successCount}. Falhas: {$failCount}.");
