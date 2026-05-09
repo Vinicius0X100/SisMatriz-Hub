@@ -33,6 +33,9 @@
 
                 <form method="POST" action="{{ route('login.post') }}">
                     @csrf
+                    @if(!empty($redirect_to))
+                        <input type="hidden" name="redirect_to" value="{{ $redirect_to }}">
+                    @endif
                     <div class="mb-3">
                         <label for="user" class="form-label text-secondary small fw-bold text-uppercase">Usuário</label>
                         <input type="text" class="form-control" id="user" name="user" placeholder="Seu usuário de acesso" required autofocus value="{{ old('user') }}">
