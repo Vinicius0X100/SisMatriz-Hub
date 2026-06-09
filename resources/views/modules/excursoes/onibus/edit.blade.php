@@ -53,6 +53,30 @@
                     </div>
 
                     <div class="col-md-6">
+                        <label for="motorista" class="form-label fw-bold text-muted small">Nome do Motorista</label>
+                        <input type="text" class="form-control rounded-pill @error('motorista') is-invalid @enderror" id="motorista" name="motorista" value="{{ old('motorista', $onibus->motorista) }}">
+                        @error('motorista')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="placa" class="form-label fw-bold text-muted small">Placa do Ônibus</label>
+                        <input type="text" class="form-control rounded-pill @error('placa') is-invalid @enderror" id="placa" name="placa" value="{{ old('placa', $onibus->placa) }}">
+                        @error('placa')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="empresa" class="form-label fw-bold text-muted small">Empresa Fornecedora</label>
+                        <input type="text" class="form-control rounded-pill @error('empresa') is-invalid @enderror" id="empresa" name="empresa" value="{{ old('empresa', $onibus->empresa) }}">
+                        @error('empresa')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
                         <label for="local_saida" class="form-label fw-bold text-muted small">Local de Saída</label>
                         <input type="text" class="form-control rounded-pill @error('local_saida') is-invalid @enderror" id="local_saida" name="local_saida" value="{{ old('local_saida', $onibus->local_saida) }}">
                         @error('local_saida')

@@ -131,7 +131,11 @@
         </div>
         
         <div class="footer">
-            Saída: {{ $onibus->local_saida }} - {{ $onibus->horario_saida->format('d/m/Y H:i') }} | Chegue com 30 minutos de antecedência.
+            Saída: {{ $onibus->horario_saida->format('d/m/Y H:i') }} 
+            @if($onibus->horario_retorno)
+                | Retorno: {{ $onibus->horario_retorno->format('d/m/Y H:i') }}
+            @endif
+            | Chegue com 30 minutos de antecedência.
         </div>
     </div>
     

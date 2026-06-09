@@ -51,8 +51,15 @@
                 <td style="border: none; width: 50%; vertical-align: top;">
                     <strong>Responsável pelo Ônibus:</strong> {{ $onibus->responsavel ?? 'Não informado' }} <br>
                     <strong>Telefone do Responsável:</strong> {{ $onibus->telefone_responsavel ?? 'Não informado' }} <br>
-                    <strong>Motorista:</strong> {{ $onibus->motorista ?? 'Não informado' }} <br>
-                    <strong>Placa:</strong> {{ $onibus->placa ?? 'Não informado' }}
+                    @if($onibus->empresa)
+                        <strong>Empresa:</strong> {{ $onibus->empresa }} <br>
+                    @endif
+                    @if($onibus->motorista)
+                        <strong>Motorista:</strong> {{ $onibus->motorista }} <br>
+                    @endif
+                    @if($onibus->placa)
+                        <strong>Placa:</strong> {{ $onibus->placa }}
+                    @endif
                 </td>
                 <td style="border: none; width: 50%; vertical-align: top;">
                     <strong>Saída:</strong> {{ $onibus->local_saida ?? 'Não informado' }} <br>

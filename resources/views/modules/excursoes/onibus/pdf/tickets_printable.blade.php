@@ -112,12 +112,14 @@
                     <div class="row">
                         <div class="col">
                             <div class="label">Saída</div>
-                            <div class="value">{{ $onibus->local_saida }}</div>
-                        </div>
-                        <div class="col">
-                            <div class="label">Horário</div>
                             <div class="value">{{ $onibus->horario_saida ? $onibus->horario_saida->format('d/m/Y H:i') : '--:--' }}</div>
                         </div>
+                        @if($onibus->horario_retorno)
+                        <div class="col">
+                            <div class="label">Retorno</div>
+                            <div class="value">{{ $onibus->horario_retorno->format('d/m/Y H:i') }}</div>
+                        </div>
+                        @endif
                     </div>
 
                     @if($assento->menor)

@@ -64,7 +64,7 @@
             <img src="{{ public_path('images/logo.png') }}" height="50" onerror="this.style.display='none'">
         </div>
         <h1>SisMatriz</h1>
-        <p>Email: contato@sismatriz.online | Telefone: {{ $parishPhone }}</p>
+        <p>Email: contato@sacratech.com | Telefone: {{ $parishPhone }}</p>
     </div>
 
     <div class="obs-box">
