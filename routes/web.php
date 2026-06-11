@@ -83,6 +83,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     });
 
     // Excursões
+    Route::post('excursoes/{excursao}/toggle-status', [App\Http\Controllers\ExcursaoController::class, 'toggleStatus'])->name('excursoes.toggle-status');
     Route::resource('excursoes', App\Http\Controllers\ExcursaoController::class)->parameters([
         'excursoes' => 'excursao'
     ]);

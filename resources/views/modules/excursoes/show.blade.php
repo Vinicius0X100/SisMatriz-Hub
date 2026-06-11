@@ -39,13 +39,24 @@
 
                     <div class="mb-3">
                         <label class="small text-muted fw-bold text-uppercase">Status</label>
-                        <p class="mb-0">
-                            @if($excursao->finalizada)
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">Finalizada</span>
-                            @else
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Ativa</span>
-                            @endif
-                        </p>
+                        <div class="form-check form-switch" id="show-status-cell-{{ $excursao->id }}">
+                            <input 
+                                class="form-check-input show-toggle-switch" 
+                                type="checkbox" 
+                                role="switch" 
+                                id="show-toggle-{{ $excursao->id }}" 
+                                {{ !$excursao->finalizada ? 'checked' : '' }} 
+                                data-url="{{ route('excursoes.toggle-status', $excursao) }}" 
+                                data-excursao-id="{{ $excursao->id }}" 
+                                data-finalizada="{{ $excursao->finalizada ? 'true' : 'false' }}">
+                            <label 
+                                class="form-check-label" 
+                                for="show-toggle-{{ $excursao->id }}" id="show-status-label-{{ $excursao->id }}">
+                                <span class="badge {{ $excursao->finalizada ? 'bg-primary bg-opacity-10 text-primary' : 'bg-success bg-opacity-10 text-success' }} rounded-pill px-3" id="show-badge-{{ $excursao->id }}">
+                                    {{ $excursao->finalizada ? 'Finalizada' : 'Ativa' }}
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -164,16 +175,134 @@
     </div>
 </div>
 
+<!-- Modal Confirmar Alteração de Status -->
+<div class="modal fade" id="toggleStatusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary">Alterar Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block mb-3 text-primary">
+                    <i class="bi bi-question-circle-fill fs-1"></i>
+                </div>
+                <h4 class="fw-bold mb-2">Tem certeza?</h4>
+                <p class="text-muted mb-0" id="show-toggleStatusText">
+                    Você está prestes a alterar o status desta excursão.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" id="show-cancelToggleBtn" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="show-confirmToggleBtn">Sim, Alterar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    function confirmDeleteOnibus(url, numero) {
-        const form = document.getElementById('deleteOnibusForm');
-        const numeroSpan = document.getElementById('deleteOnibusNumero');
-        
-        form.action = url;
-        numeroSpan.textContent = numero;
-        
-        const modal = new bootstrap.Modal(document.getElementById('deleteOnibusModal'));
-        modal.show();
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Show page DOM fully loaded');
+
+        function confirmDeleteOnibus(url, numero) {
+            const form = document.getElementById('deleteOnibusForm');
+            const numeroSpan = document.getElementById('deleteOnibusNumero');
+            
+            form.action = url;
+            numeroSpan.textContent = numero;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteOnibusModal'));
+            modal.show();
+        }
+
+        window.confirmDeleteOnibus = confirmDeleteOnibus;
+
+        let pendingShowToggleData = null;
+
+        function confirmToggleStatusShow(url, excursaoId, currentFinalizada) {
+            console.log('confirmToggleStatusShow called with:', { url, excursaoId, currentFinalizada });
+            // First, temporarily revert the toggle while we confirm
+            const toggleInput = document.getElementById(`show-toggle-${excursaoId}`);
+            toggleInput.checked = currentFinalizada === 'true' ? false : true;
+
+            pendingShowToggleData = {
+                url: url,
+                excursaoId: excursaoId,
+                currentFinalizada: currentFinalizada
+            };
+
+            const toggleStatusText = document.getElementById('show-toggleStatusText');
+            toggleStatusText.textContent = currentFinalizada === 'true' 
+                ? 'Você está prestes a marcar esta excursão como Ativa.'
+                : 'Você está prestes a marcar esta excursão como Finalizada.';
+
+            const modalElement = document.getElementById('toggleStatusModal');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+
+        // Add event listener for toggle switches using event delegation
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('show-toggle-switch')) {
+                console.log('Show toggle switch changed');
+                const url = e.target.dataset.url;
+                const excursaoId = e.target.dataset.excursaoId;
+                const currentFinalizada = e.target.dataset.finalizada;
+                confirmToggleStatusShow(url, excursaoId, currentFinalizada);
+            }
+        });
+
+        document.getElementById('show-confirmToggleBtn').addEventListener('click', function() {
+            console.log('Show confirm button clicked');
+            if (!pendingShowToggleData) return;
+
+            const { url, excursaoId } = pendingShowToggleData;
+            const toggleInput = document.getElementById(`show-toggle-${excursaoId}`);
+            const badge = document.getElementById(`show-badge-${excursaoId}`);
+
+            // Disable button and show loading state
+            const confirmBtn = document.getElementById('show-confirmToggleBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processando...';
+
+            axios.post(url)
+                .then(response => {
+                    console.log('Show axios response:', response.data);
+                    if (response.data.success) {
+                        // Update the UI
+                        toggleInput.checked = !response.data.finalizada;
+                        toggleInput.dataset.finalizada = response.data.finalizada ? 'true' : 'false';
+                        badge.textContent = response.data.status_text;
+                        badge.className = `badge ${response.data.status_badge_class} rounded-pill px-3`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Show axios error:', error);
+                    alert('Ocorreu um erro ao alterar o status.');
+                })
+                .finally(() => {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = 'Sim, Alterar';
+                    const modalElement = document.getElementById('toggleStatusModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    modal.hide();
+                });
+        });
+
+        // Revert toggle if canceled
+        document.getElementById('show-cancelToggleBtn').addEventListener('click', function() {
+            console.log('Show cancel button clicked');
+            if (!pendingShowToggleData) return;
+            const toggleInput = document.getElementById(`show-toggle-${pendingShowToggleData.excursaoId}`);
+            toggleInput.checked = pendingShowToggleData.currentFinalizada === 'true' ? false : true;
+            pendingShowToggleData = null;
+        });
+
+        // Handle modal close
+        document.getElementById('toggleStatusModal').addEventListener('hidden.bs.modal', function() {
+            console.log('Show modal closed');
+            pendingShowToggleData = null;
+        });
+    });
 </script>
 @endsection

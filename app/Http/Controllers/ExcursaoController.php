@@ -126,4 +126,24 @@ class ExcursaoController extends Controller
 
         return redirect()->route('excursoes.index')->with('success', 'Excursão excluída com sucesso!');
     }
+
+    public function toggleStatus(Request $request, Excursao $excursao)
+    {
+        $user = Auth::user();
+        if ($user->paroquia_id && $excursao->paroquia_id != $user->paroquia_id) {
+            return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+        }
+
+        // Toggle the finalizada status
+        $excursao->finalizada = !$excursao->finalizada;
+        $excursao->finalizada_at = $excursao->finalizada ? now() : null;
+        $excursao->save();
+
+        return response()->json([
+            'success' => true,
+            'finalizada' => $excursao->finalizada,
+            'status_text' => $excursao->finalizada ? 'Finalizada' : 'Ativa',
+            'status_badge_class' => $excursao->finalizada ? 'bg-primary bg-opacity-10 text-primary' : 'bg-success bg-opacity-10 text-success',
+        ]);
+    }
 }
