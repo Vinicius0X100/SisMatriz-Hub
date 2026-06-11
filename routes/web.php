@@ -39,8 +39,9 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
+    Route::match(['post', 'put'], '/profile', [ProfileController::class, 'update'])
+    ->name('profile.update');
     // Settings
     Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings/privacy', [App\Http\Controllers\SettingsController::class, 'updatePrivacy'])->name('settings.update.privacy');
