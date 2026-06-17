@@ -32,6 +32,13 @@ class CheckOnboarding
             return $next($request);
         }
 
+        // Permitir que o app Android atualize o perfil/avatar mesmo durante onboarding
+        // Sem isso, o POST /profile é bloqueado quando accepted_photo == 0,
+        // criando um loop: o app nunca consegue enviar a foto para desbloquear o acesso
+        if ($request->routeIs('profile') || $request->routeIs('profile.update')) {
+            return $next($request);
+        }
+
         // 1. Verificar Troca de Senha
         if ($user->is_pass_change == 0) {
             if ($request->routeIs('setup.password') || $request->routeIs('setup.password.update')) {
