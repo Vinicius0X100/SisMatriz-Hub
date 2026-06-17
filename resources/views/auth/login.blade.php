@@ -31,6 +31,13 @@
                     </div>
                 @endif
 
+                @if (session('consent_rejected'))
+                    <div class="alert alert-warning py-3 rounded-3 small d-flex gap-2 align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill text-warning mt-1 flex-shrink-0"></i>
+                        <span>{{ session('consent_rejected') }}</span>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login.post') }}">
                     @csrf
                     @if(!empty($redirect_to))

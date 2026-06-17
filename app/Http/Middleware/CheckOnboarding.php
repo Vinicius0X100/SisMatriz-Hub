@@ -40,7 +40,15 @@ class CheckOnboarding
             return redirect()->route('setup.password');
         }
 
-        // 2. Verificar Boas Vindas / Foto
+        // 2. Verificar Termo de Consentimento (LGPD)
+        if ($user->user_consent == 0) {
+            if ($request->routeIs('setup.termos') || $request->routeIs('setup.termos.aceitar') || $request->routeIs('setup.termos.recusar')) {
+                return $next($request);
+            }
+            return redirect()->route('setup.termos');
+        }
+
+        // 3. Verificar Boas Vindas / Foto
         if ($user->accepted_photo == 0) {
             if ($request->routeIs('setup.welcome') || $request->routeIs('setup.welcome.update') || $request->routeIs('setup.welcome.skip')) {
                 return $next($request);
@@ -48,7 +56,7 @@ class CheckOnboarding
             return redirect()->route('setup.welcome');
         }
 
-        // 3. Se tudo estiver ok, mas tentar acessar páginas de setup, redirecionar para dashboard
+        // 4. Se tudo estiver ok, mas tentar acessar páginas de setup, redirecionar para dashboard
         if ($request->routeIs('setup.*')) {
             return redirect()->route('dashboard');
         }

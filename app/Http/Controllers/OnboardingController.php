@@ -25,8 +25,45 @@ class OnboardingController extends Controller
         $user->is_pass_change = 1;
         $user->save();
 
-        return redirect()->route('setup.welcome');
+        return redirect()->route('setup.termos');
     }
+
+    // ─── Termos de Consentimento ──────────────────────────────────────────────
+
+    public function showTermos()
+    {
+        $user = Auth::user();
+        $user->load('paroquia');
+        return view('setup.termos', compact('user'));
+    }
+
+    public function acceptTermos(Request $request)
+    {
+        $user = Auth::user();
+        $user->user_consent = 1;
+        $user->save();
+
+        // Se ainda não enviou foto, vai para o welcome; caso contrário, para o dashboard
+        if ($user->accepted_photo == 0) {
+            return redirect()->route('setup.welcome');
+        }
+
+        return redirect()->route('dashboard');
+    }
+
+    public function rejectTermos(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with(
+            'consent_rejected',
+            'Você recusou os Termos de Consentimento. O acesso ao sistema não é permitido sem a aceitação do termo. Por favor, entre em contato com o administrador caso tenha dúvidas.'
+        );
+    }
+
+    // ─── Welcome / Foto de Perfil ─────────────────────────────────────────────
 
     public function showWelcome()
     {

@@ -24,6 +24,9 @@ use App\Http\Controllers\ProfileController;
 Route::middleware(['auth'])->group(function () {
     Route::get('/setup/password', [OnboardingController::class, 'showPasswordForm'])->name('setup.password');
     Route::post('/setup/password', [OnboardingController::class, 'updatePassword'])->name('setup.password.update');
+    Route::get('/setup/termos', [OnboardingController::class, 'showTermos'])->name('setup.termos');
+    Route::post('/setup/termos/aceitar', [OnboardingController::class, 'acceptTermos'])->name('setup.termos.aceitar');
+    Route::post('/setup/termos/recusar', [OnboardingController::class, 'rejectTermos'])->name('setup.termos.recusar');
     Route::get('/setup/welcome', [OnboardingController::class, 'showWelcome'])->name('setup.welcome');
     Route::post('/setup/welcome', [OnboardingController::class, 'updateWelcome'])->name('setup.welcome.update');
     Route::post('/setup/welcome/skip', [OnboardingController::class, 'skipWelcome'])->name('setup.welcome.skip');

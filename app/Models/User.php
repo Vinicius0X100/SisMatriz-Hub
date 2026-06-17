@@ -30,6 +30,7 @@ class User extends Authenticatable
         'last_attempt',
         'avatar',
         'accepted_photo',
+        'user_consent',
         'paroquia_id',
         'created_at',
         'timezone',
