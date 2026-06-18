@@ -49,7 +49,12 @@
                                 ->orderBy('created_at', 'desc')
                                 ->get();
                                 
-                            $totalNotifications = $reminders->count() + $messages->count() + $protocolNotifications->count();
+                            $processoNotifications = \App\Models\ProcessoNotificacao::where('user_id', Auth::id())
+                                ->where('is_read', false)
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+                                
+                            $totalNotifications = $reminders->count() + $messages->count() + $protocolNotifications->count() + $processoNotifications->count();
                         @endphp
                         @if($totalNotifications > 0)
                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
@@ -88,6 +93,22 @@
                                     <div class="d-flex align-items-start gap-2">
                                         <div class="position-relative">
                                             <i class="bi bi-file-earmark-text text-primary mt-1 fs-5"></i>
+                                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ $notification->title }}</div>
+                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $notification->message }}</div>
+                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                            <!-- Processo Notifications -->
+                            @foreach($processoNotifications as $notification)
+                                <a href="{{ route('processos.notificacao.ler', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="position-relative">
+                                            <i class="bi bi-diagram-3-fill text-warning mt-1 fs-5"></i>
                                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
                                         </div>
                                         <div>

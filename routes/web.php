@@ -40,6 +40,17 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/dashboard/update-pin-style', [DashboardController::class, 'updatePinStyle'])->name('dashboard.update-pin-style');
     Route::get('/dashboard/online-users', [DashboardController::class, 'getOnlineUsers'])->name('dashboard.online-users');
 
+    // Processos
+    Route::get('processos', [\App\Http\Controllers\ProcessoController::class, 'index'])->name('processos.index');
+    Route::post('processos', [\App\Http\Controllers\ProcessoController::class, 'store'])->name('processos.store');
+    Route::get('processos/usuarios-por-grupo', [\App\Http\Controllers\ProcessoController::class, 'getUsersByGrupo'])->name('processos.users-by-grupo');
+    Route::get('processos/usuarios-busca', [\App\Http\Controllers\ProcessoController::class, 'searchUsers'])->name('processos.users-search');
+    Route::get('processos/notificacao/{id}', [\App\Http\Controllers\ProcessoController::class, 'lerNotificacao'])->name('processos.notificacao.ler');
+    Route::get('processos/{id}/timeline', [\App\Http\Controllers\ProcessoController::class, 'timeline'])->name('processos.timeline');
+    Route::post('processos/{id}/dar-andamento', [\App\Http\Controllers\ProcessoController::class, 'darAndamento'])->name('processos.dar-andamento');
+    Route::get('processos/{id}/tramitar', [\App\Http\Controllers\ProcessoController::class, 'showTramitacao'])->name('processos.tramitar');
+    Route::post('processos/{id}/tramitar', [\App\Http\Controllers\ProcessoController::class, 'storeTramitacao'])->name('processos.tramitar.store');
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
 
