@@ -11,10 +11,12 @@
             </h2>
             <p class="text-muted small mb-0">Gerencie e tramite os processos paroquiais.</p>
         </div>
-        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
-                data-bs-toggle="modal" data-bs-target="#novoProcessoModal">
-            <i class="bi bi-plus-lg me-2"></i> Novo Processo
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
+                    data-bs-toggle="modal" data-bs-target="#novoProcessoModal">
+                <i class="bi bi-plus-lg me-2"></i> Novo Processo
+            </button>
+        </div>
     </div>
 
     {{-- Alertas de sessão --}}
@@ -31,14 +33,15 @@
         </div>
     @endif
 
-    {{-- Filtros dinâmicos --}}
+    {{-- Area de Filtros e Tabela --}}
     <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-3">
+        <div class="card-body p-4">
             <form id="filtrosForm" method="GET" action="{{ route('processos.index') }}">
-                <div class="row g-3 align-items-center">
+                <input type="hidden" name="sort_by" id="sortBy" value="{{ $sortBy ?? '' }}">
+                <input type="hidden" name="sort_dir" id="sortDir" value="{{ $sortDir ?? 'desc' }}">
 
-                    {{-- Checkboxes --}}
-                    <div class="col-12 col-md-auto">
+                <div class="row g-3 mb-4 align-items-end">
+                    <div class="col-12 col-md-12 mb-2">
                         <div class="d-flex flex-wrap gap-3">
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input filter-trigger" type="checkbox"
@@ -61,187 +64,190 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-md">
-                        <div class="row g-2">
-                            {{-- Busca --}}
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control form-control-sm rounded-3 filter-trigger"
-                                       name="busca" id="filtroBusca"
-                                       value="{{ $filtroBusca }}"
-                                       placeholder="Protocolo, nome, descrição..."
-                                       data-delay="500">
-                            </div>
-                            {{-- Assunto --}}
-                            <div class="col-sm-3">
-                                <select class="form-select form-select-sm rounded-3 filter-trigger" name="assunto" id="filtroAssunto">
-                                    <option value="">Todos os assuntos</option>
-                                    <option value="pascom"      {{ $filtroAssunto == 'pascom'      ? 'selected' : '' }}>PASCOM</option>
-                                    <option value="compra"      {{ $filtroAssunto == 'compra'      ? 'selected' : '' }}>Compra</option>
-                                    <option value="autorizacao" {{ $filtroAssunto == 'autorizacao' ? 'selected' : '' }}>Autorização</option>
-                                    <option value="oficio"      {{ $filtroAssunto == 'oficio'      ? 'selected' : '' }}>Ofício</option>
-                                    <option value="manutencao"  {{ $filtroAssunto == 'manutencao'  ? 'selected' : '' }}>Manutenção</option>
-                                    <option value="outro"       {{ $filtroAssunto == 'outro'       ? 'selected' : '' }}>Outro</option>
-                                </select>
-                            </div>
-                            {{-- Status --}}
-                            <div class="col-sm-3">
-                                <select class="form-select form-select-sm rounded-3 filter-trigger" name="status" id="filtroStatus">
-                                    <option value="">Todos os status</option>
-                                    <option value="0" {{ $filtroStatus === '0' ? 'selected' : '' }}>Pendente</option>
-                                    <option value="1" {{ $filtroStatus === '1' ? 'selected' : '' }}>Em Processo</option>
-                                    <option value="2" {{ $filtroStatus === '2' ? 'selected' : '' }}>Finalizado</option>
-                                    <option value="3" {{ $filtroStatus === '3' ? 'selected' : '' }}>Concluído</option>
-                                    <option value="4" {{ $filtroStatus === '4' ? 'selected' : '' }}>Cancelado</option>
-                                </select>
-                            </div>
-                            {{-- Prioridade --}}
-                            <div class="col-sm-2">
-                                <select class="form-select form-select-sm rounded-3 filter-trigger" name="prioridade" id="filtroPrioridade">
-                                    <option value="">Prioridade</option>
-                                    <option value="4" {{ $filtroPrioridade == '4' ? 'selected' : '' }}>Urgente</option>
-                                    <option value="3" {{ $filtroPrioridade == '3' ? 'selected' : '' }}>Alta</option>
-                                    <option value="2" {{ $filtroPrioridade == '2' ? 'selected' : '' }}>Normal</option>
-                                    <option value="1" {{ $filtroPrioridade == '1' ? 'selected' : '' }}>Baixa</option>
-                                </select>
-                            </div>
+                    {{-- Busca --}}
+                    <div class="col-md-3">
+                        <label for="filtroBusca" class="form-label fw-bold text-muted small">Pesquisar</label>
+                        <div class="position-relative">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" id="filtroBusca" name="busca" class="form-control ps-5 rounded-pill" placeholder="Protocolo, nome, descrição..." value="{{ $filtroBusca }}" style="height: 45px;">
                         </div>
                     </div>
+                    
+                    {{-- Assunto --}}
+                    <div class="col-md-2">
+                        <label for="filtroAssunto" class="form-label fw-bold text-muted small">Assunto</label>
+                        <select id="filtroAssunto" name="assunto" class="form-select rounded-pill filter-trigger" style="height: 45px;">
+                            <option value="">Todos</option>
+                            <option value="pascom"      {{ $filtroAssunto == 'pascom'      ? 'selected' : '' }}>PASCOM</option>
+                            <option value="compra"      {{ $filtroAssunto == 'compra'      ? 'selected' : '' }}>Compra</option>
+                            <option value="autorizacao" {{ $filtroAssunto == 'autorizacao' ? 'selected' : '' }}>Autorização</option>
+                            <option value="oficio"      {{ $filtroAssunto == 'oficio'      ? 'selected' : '' }}>Ofício</option>
+                            <option value="manutencao"  {{ $filtroAssunto == 'manutencao'  ? 'selected' : '' }}>Manutenção</option>
+                            <option value="outro"       {{ $filtroAssunto == 'outro'       ? 'selected' : '' }}>Outro</option>
+                        </select>
+                    </div>
 
+                    {{-- Status --}}
+                    <div class="col-md-2">
+                        <label for="filtroStatus" class="form-label fw-bold text-muted small">Status</label>
+                        <select id="filtroStatus" name="status" class="form-select rounded-pill filter-trigger" style="height: 45px;">
+                            <option value="">Todos</option>
+                            <option value="0" {{ $filtroStatus === '0' ? 'selected' : '' }}>Pendente</option>
+                            <option value="1" {{ $filtroStatus === '1' ? 'selected' : '' }}>Em Processo</option>
+                            <option value="2" {{ $filtroStatus === '2' ? 'selected' : '' }}>Finalizado</option>
+                            <option value="3" {{ $filtroStatus === '3' ? 'selected' : '' }}>Concluído</option>
+                            <option value="4" {{ $filtroStatus === '4' ? 'selected' : '' }}>Cancelado</option>
+                        </select>
+                    </div>
+
+                    {{-- Prioridade --}}
+                    <div class="col-md-2">
+                        <label for="filtroPrioridade" class="form-label fw-bold text-muted small">Prioridade</label>
+                        <select id="filtroPrioridade" name="prioridade" class="form-select rounded-pill filter-trigger" style="height: 45px;">
+                            <option value="">Todas</option>
+                            <option value="4" {{ $filtroPrioridade == '4' ? 'selected' : '' }}>Urgente</option>
+                            <option value="3" {{ $filtroPrioridade == '3' ? 'selected' : '' }}>Alta</option>
+                            <option value="2" {{ $filtroPrioridade == '2' ? 'selected' : '' }}>Normal</option>
+                            <option value="1" {{ $filtroPrioridade == '1' ? 'selected' : '' }}>Baixa</option>
+                        </select>
+                    </div>
+
+                    <!-- Ações em Massa -->
+                    <div class="col-md-3 text-end d-flex justify-content-end">
+                        <div class="dropdown">
+                            <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center justify-content-center" style="height: 45px;" type="button" id="bulkActions" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                                Ações em Massa
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="bulkActions">
+                                <li><a class="dropdown-item text-danger" href="#" onclick="confirmBulkDelete()"><i class="bi bi-trash me-2"></i> Excluir Selecionados</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </form>
-        </div>
-    </div>
 
-    {{-- Tabela de Processos --}}
-    @if($processos->isEmpty())
-        <div class="text-center py-5">
-            <i class="bi bi-diagram-3 text-muted" style="font-size: 4rem;"></i>
-            <h4 class="text-muted mt-3">Nenhum processo encontrado</h4>
-            <p class="text-muted small">Ajuste os filtros ou clique em "Novo Processo".</p>
-        </div>
-    @else
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="px-4 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Protocolo</th>
-                            <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Assunto</th>
-                            <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Solicitante</th>
-                            <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Prioridade</th>
-                            <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Status</th>
-                            <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Responsável</th>
-                            <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Prazo</th>
-                            <th class="px-4 py-3 text-muted small fw-bold text-uppercase text-end" style="font-size:.75rem;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($processos as $processo)
-                            @php
-                                $podeIniciar = \App\Http\Controllers\ProcessoController::ASSUNTO_GRUPOS[$processo->assunto] ?? 'administracao';
-                                $podeIniciarGrupo = in_array($podeIniciar, $userGrupos);
-                                $souResponsavelAtual = $processo->responsavel_atual_user_id === Auth::id();
-                                $podeDarAndamento = $podeIniciarGrupo || $souResponsavelAtual
-                                    || ($processo->tramitacoes->last() && $processo->tramitacoes->last()->para_user_id === Auth::id());
-                                $jaEncerrado = in_array($processo->status, [3, 4]);
-                            @endphp
-                            <tr class="{{ $souResponsavelAtual ? 'table-primary bg-opacity-10' : '' }}">
-                                {{-- Protocolo --}}
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if(!$podeIniciarGrupo && !$souResponsavelAtual)
-                                            <i class="bi bi-lock-fill text-warning" title="Somente a área responsável pode iniciar a tramitação"></i>
-                                        @endif
-                                        <span class="fw-bold font-monospace text-dark small">{{ $processo->protocolo }}</span>
+            {{-- Tabela de Processos --}}
+            @if($processos->isEmpty())
+                <div class="text-center py-5">
+                    <i class="bi bi-diagram-3 text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">Nenhum processo encontrado</h4>
+                    <p class="text-muted small">Ajuste os filtros ou clique em "Novo Processo".</p>
+                </div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" width="40" class="text-center px-3 py-3">
+                                    <div class="form-check d-flex justify-content-center mb-0">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
                                     </div>
-                                    <div class="text-muted" style="font-size:.7rem;">{{ $processo->created_at->format('d/m/Y H:i') }}</div>
-                                </td>
-
-                                {{-- Assunto --}}
-                                <td class="px-3 py-3">
-                                    <span class="badge {{ $processo->assunto_badge_class }} px-2 py-1">
-                                        {{ $processo->assunto_label }}
-                                    </span>
-                                </td>
-
-                                {{-- Solicitante --}}
-                                <td class="px-3 py-3">
-                                    <div class="fw-semibold text-dark small">{{ $processo->nome_solicitante }}</div>
-                                    <div class="text-muted" style="font-size:.75rem;">{{ $processo->cargo_funcao }}</div>
-                                </td>
-
-                                {{-- Prioridade --}}
-                                <td class="px-3 py-3">
-                                    <span class="badge {{ $processo->prioridade_badge_class }} px-2 py-1">
-                                        {{ $processo->prioridade_label }}
-                                    </span>
-                                </td>
-
-                                {{-- Status --}}
-                                <td class="px-3 py-3">
-                                    <span class="badge {{ $processo->status_badge_class }} px-2 py-1">
-                                        {{ $processo->status_label }}
-                                    </span>
-                                </td>
-
-                                {{-- Responsável --}}
-                                <td class="px-3 py-3">
-                                    @if($processo->responsavelAtual)
-                                        <div class="d-flex align-items-center gap-2">
-                                            @php
-                                                $r = $processo->responsavelAtual;
-                                                $rName = $r->name ?? $r->user;
-                                                $rParts = explode(' ', trim($rName));
-                                                $rInitials = strtoupper(substr($rParts[0], 0, 1));
-                                                if(count($rParts) > 1) $rInitials .= strtoupper(substr(end($rParts), 0, 1));
-                                            @endphp
-                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
-                                                 style="width:28px;height:28px;font-size:.7rem;">{{ $rInitials }}</div>
-                                            <span class="small text-dark text-truncate" style="max-width:100px;">{{ $rName }}</span>
+                                </th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="protocolo" style="font-size:.75rem;">Protocolo <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="assunto" style="font-size:.75rem;">Assunto <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="nome_solicitante" style="font-size:.75rem;">Solicitante <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="prioridade" style="font-size:.75rem;">Prioridade <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="status" style="font-size:.75rem;">Status <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase" style="font-size:.75rem;">Responsável</th>
+                                <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="data_limite" style="font-size:.75rem;">Prazo <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="px-4 py-3 text-muted small fw-bold text-uppercase text-end" style="font-size:.75rem;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($processos as $processo)
+                                @php
+                                    $podeIniciar = \App\Http\Controllers\ProcessoController::ASSUNTO_GRUPOS[$processo->assunto] ?? 'administracao';
+                                    $podeIniciarGrupo = in_array($podeIniciar, $userGrupos);
+                                    $souResponsavelAtual = $processo->responsavel_atual_user_id === Auth::id();
+                                    $podeDarAndamento = $podeIniciarGrupo || $souResponsavelAtual
+                                        || ($processo->tramitacoes->last() && $processo->tramitacoes->last()->para_user_id === Auth::id());
+                                    $jaEncerrado = in_array($processo->status, [2, 4]); // Removido status 3 (Concluído não exclui)
+                                @endphp
+                                <tr class="{{ $souResponsavelAtual ? 'table-primary bg-opacity-10' : '' }}">
+                                    <td class="text-center px-3 py-3">
+                                        <div class="form-check d-flex justify-content-center mb-0">
+                                            <input class="form-check-input row-checkbox" type="checkbox" value="{{ $processo->id }}">
                                         </div>
-                                    @else
-                                        @if($processo->status == 3)
-                                            <span class="badge bg-warning text-dark px-2 py-1 fw-normal rounded-pill">
-                                                <i class="bi bi-person-fill-up me-1"></i>Pendente do solicitante aprovar
+                                    </td>
+                                    {{-- Protocolo --}}
+                                    <td class="px-3 py-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if(!$podeIniciarGrupo && !$souResponsavelAtual)
+                                                <i class="bi bi-lock-fill text-warning" title="Somente a área responsável pode iniciar a tramitação"></i>
+                                            @endif
+                                            <a href="{{ url('processos') }}/{{ $processo->id }}/timeline" class="text-decoration-none fw-bold font-monospace small">{{ $processo->protocolo }}</a>
+                                        </div>
+                                        <div class="text-muted" style="font-size:.7rem;">{{ $processo->created_at->format('d/m/Y H:i') }}</div>
+                                    </td>
+
+                                    {{-- Assunto --}}
+                                    <td class="px-3 py-3">
+                                        <span class="badge {{ $processo->assunto_badge_class }} px-2 py-1 rounded-pill fw-normal">
+                                            {{ $processo->assunto_label }}
+                                        </span>
+                                    </td>
+
+                                    {{-- Solicitante --}}
+                                    <td class="px-3 py-3">
+                                        <div class="fw-semibold text-dark small text-truncate" style="max-width: 150px;">{{ $processo->nome_solicitante }}</div>
+                                        <div class="text-muted" style="font-size:.75rem;">{{ $processo->cargo_funcao }}</div>
+                                    </td>
+
+                                    {{-- Prioridade --}}
+                                    <td class="px-3 py-3">
+                                        <span class="badge {{ $processo->prioridade_badge_class }} px-2 py-1 rounded-pill">
+                                            {{ $processo->prioridade_label }}
+                                        </span>
+                                    </td>
+
+                                    {{-- Status --}}
+                                    <td class="px-3 py-3">
+                                        <span class="badge {{ $processo->status_badge_class }} px-2 py-1 fw-normal rounded-pill">
+                                            {{ $processo->status_label }}
+                                        </span>
+                                    </td>
+
+                                    {{-- Responsável --}}
+                                    <td class="px-3 py-3">
+                                        @if($processo->responsavelAtual)
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-person-check me-1 text-success"></i>
+                                                <span class="small text-dark text-truncate" style="max-width:100px;">{{ $processo->responsavelAtual->name ?? $processo->responsavelAtual->user }}</span>
+                                            </div>
+                                        @else
+                                            @if(in_array($processo->status, [2, 4]))
+                                                <span class="text-muted small">—</span>
+                                            @elseif($processo->status == 3)
+                                                <span class="badge bg-warning text-dark px-2 py-1 fw-normal rounded-pill">
+                                                    <i class="bi bi-person-fill-up me-1"></i>Pendente do solicitante
+                                                </span>
+                                            @else
+                                                <span class="text-muted small">
+                                                    <i class="bi bi-hourglass-split me-1"></i>Aguardando
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </td>
+
+                                    {{-- Prazo --}}
+                                    <td class="px-3 py-3">
+                                        @if($processo->data_limite)
+                                            @php $vencido = $processo->data_limite->isPast() && !in_array($processo->status, [2,3,4]); @endphp
+                                            <span class="small {{ $vencido ? 'text-danger fw-bold' : 'text-muted' }}">
+                                                @if($vencido)<i class="bi bi-exclamation-triangle-fill me-1"></i>@endif
+                                                {{ $processo->data_limite->format('d/m/Y') }}
                                             </span>
                                         @else
-                                            <span class="text-muted small">
-                                                <i class="bi bi-hourglass-split me-1"></i>Aguardando
-                                            </span>
+                                            <span class="text-muted small">—</span>
                                         @endif
-                                    @endif
-                                </td>
+                                    </td>
 
-                                {{-- Prazo --}}
-                                <td class="px-3 py-3">
-                                    @if($processo->data_limite)
-                                        @php $vencido = $processo->data_limite->isPast() && !in_array($processo->status, [2,3,4]); @endphp
-                                        <span class="small {{ $vencido ? 'text-danger fw-bold' : 'text-muted' }}">
-                                            @if($vencido)<i class="bi bi-exclamation-triangle-fill me-1"></i>@endif
-                                            {{ $processo->data_limite->format('d/m/Y') }}
-                                        </span>
-                                    @else
-                                        <span class="text-muted small">—</span>
-                                    @endif
-                                </td>
-
-                                {{-- Ações --}}
-                                <td class="px-4 py-3 text-end">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        {{-- Visualizar Processo --}}
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-secondary rounded-pill btn-visualizar"
-                                                data-id="{{ $processo->id }}"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#visualizarModal"
-                                                title="Visualizar Processo">
-                                            <i class="bi bi-eye me-1"></i> Visualizar
-                                        </button>
-
+                                    {{-- Ações --}}
+                                    <td class="px-4 py-3 text-end text-nowrap">
                                         {{-- Dar Andamento --}}
-                                        @if(!$jaEncerrado && $podeDarAndamento)
+                                        @if(!in_array($processo->status, [2, 4, 3]) && $podeDarAndamento)
                                             <button type="button"
-                                                    class="btn btn-sm btn-primary rounded-pill btn-dar-andamento"
+                                                    class="btn btn-sm btn-primary rounded-pill btn-dar-andamento px-3 me-1"
                                                     data-id="{{ $processo->id }}"
                                                     data-protocolo="{{ $processo->protocolo }}"
                                                     data-bs-toggle="modal"
@@ -249,23 +255,39 @@
                                                     title="Dar Andamento">
                                                 <i class="bi bi-arrow-right-circle me-1"></i> Dar Andamento
                                             </button>
-                                        @elseif(!$jaEncerrado)
-                                            <span class="btn btn-sm btn-light border rounded-pill disabled text-muted"
+                                        @elseif(!in_array($processo->status, [2, 4, 3]))
+                                            <span class="btn btn-sm btn-light border rounded-pill disabled text-muted px-3 me-1"
                                                   title="Somente a área responsável pode tramitar inicialmente">
                                                 <i class="bi bi-lock-fill me-1"></i> Restrito
                                             </span>
                                         @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <div class="mt-4">{{ $processos->links() }}</div>
-    @endif
+                                        <button type="button"
+                                                class="btn btn-sm btn-light border rounded-pill btn-visualizar px-3 ms-1 text-primary fw-semibold"
+                                                data-id="{{ $processo->id }}"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#visualizarModal"
+                                                title="Visualizar Processo">
+                                            <i class="bi bi-eye me-1"></i> Visualizar
+                                        </button>
+
+                                        {{-- Excluir Processo (Somente Finalizado/Cancelado) --}}
+                                        @if($jaEncerrado)
+                                            <button class="btn btn-sm btn-light border rounded-pill text-danger ms-1" onclick="confirmDelete({{ $processo->id }})" title="Excluir Processo">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4">{{ $processos->links() }}</div>
+            @endif
+        </div>
+    </div>
 </div>
 
 {{-- ================================================================ --}}
@@ -340,120 +362,177 @@
     </div>
 </div>
 
-{{-- ================================================================ --}}
-{{-- Modal: Novo Processo Interno                                       --}}
-{{-- ================================================================ --}}
-<div class="modal fade" id="novoProcessoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-0 bg-primary text-white">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-plus-circle-fill fs-4"></i>
-                    <h5 class="modal-title fw-bold">Novo Processo Interno</h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('processos.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body p-4">
-                    <div class="alert alert-light border-primary border-start border-4 shadow-sm mb-4">
-                        <div class="d-flex gap-2">
-                            <i class="bi bi-info-circle-fill text-primary fs-5 flex-shrink-0 mt-1"></i>
-                            <div>
-                                <h6 class="fw-bold text-primary mb-1">Processo Interno</h6>
-                                <p class="small text-muted mb-0">
-                                    O processo será registrado com seu nome e cargo. Uma tramitação de abertura será criada automaticamente.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Assunto <span class="text-danger">*</span></label>
-                            <select name="assunto" class="form-select rounded-3" required>
-                                <option value="">Selecione...</option>
-                                <option value="pascom">PASCOM</option>
-                                <option value="compra">Compra</option>
-                                <option value="autorizacao">Autorização</option>
-                                <option value="oficio">Ofício</option>
-                                <option value="manutencao">Manutenção</option>
-                                <option value="outro">Outro</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small">Prioridade <span class="text-danger">*</span></label>
-                            <select name="prioridade" class="form-select rounded-3" required>
-                                <option value="2" selected>Normal</option>
-                                <option value="1">Baixa</option>
-                                <option value="3">Alta</option>
-                                <option value="4">Urgente</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold small">Prazo</label>
-                            <input type="date" name="data_limite" class="form-control rounded-3">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold small">Descrição <span class="text-danger">*</span></label>
-                            <textarea name="descricao" class="form-control rounded-3" rows="4" required
-                                      placeholder="Descreva detalhadamente o processo..."></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold small">Anexos (opcional)</label>
-                            <div class="p-4 border border-2 border-dashed rounded-4 bg-light text-center position-relative">
-                                <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2 d-block"></i>
-                                <span class="fw-bold text-dark d-block mb-1">Arraste ou clique para selecionar</span>
-                                <span class="small text-muted d-block mb-3">PDF, Imagens, Word, Excel — sem vídeos (máx. 50 arquivos)</span>
-                                <input class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
-                                       style="cursor:pointer;" type="file"
-                                       name="arquivos[]" multiple
-                                       accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.7z">
-                            </div>
-                            <div id="novoArquivosList" class="mt-2 small text-muted"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 bg-light px-4 py-3">
-                    <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
-                        <i class="bi bi-send-fill me-2"></i> Criar Processo
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@include('modules.processos.partials.modal-novo-processo')
 
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
-    // ── Filtros dinâmicos ─────────────────────────────────────────────────
-    let searchTimer = null;
 
     @if(request()->has('show_processo'))
     setTimeout(() => {
         const visualizarModalEl = document.getElementById('visualizarModal');
         const dummyBtn = document.createElement('button');
         dummyBtn.dataset.id = "{{ request('show_processo') }}";
+        
+        // Passa o dummyBtn como relatedTarget para que o evento 'show.bs.modal' dispare corretamente
         const myModal = new bootstrap.Modal(visualizarModalEl);
+        
+        // Listener temporário que vai fechar e limpar a URL quando o modal for fechado (melhorando UX)
+        visualizarModalEl.addEventListener('hidden.bs.modal', function() {
+            const url = new URL(window.location);
+            url.searchParams.delete('show_processo');
+            window.history.replaceState({}, '', url);
+        }, { once: true });
+
         myModal.show(dummyBtn);
     }, 100);
     @endif
 
+    // ── Preservação de Checkboxes (Local Storage) ─────────────────────────
+    const STORAGE_KEY = 'processos_selected_ids';
+    let globalSelectedIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const bulkActionsBtn = document.getElementById('bulkActions');
+
+    function updateBulkActionsButton() {
+        if(bulkActionsBtn) {
+            bulkActionsBtn.disabled = globalSelectedIds.size === 0;
+            const badge = globalSelectedIds.size > 0 ? ` <span class="badge bg-danger ms-1">${globalSelectedIds.size}</span>` : '';
+            bulkActionsBtn.innerHTML = `Ações em Massa${badge}`;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(globalSelectedIds)));
+    }
+
+    if (rowCheckboxes.length > 0) {
+        rowCheckboxes.forEach(cb => {
+            if(globalSelectedIds.has(cb.value)) cb.checked = true;
+            cb.addEventListener('change', function() {
+                if(this.checked) globalSelectedIds.add(this.value);
+                else globalSelectedIds.delete(this.value);
+                updateBulkActionsButton();
+                updateSelectAllState();
+            });
+        });
+    }
+
+    function updateSelectAllState() {
+        if(!selectAllCheckbox) return;
+        const allChecked = Array.from(rowCheckboxes).every(c => c.checked);
+        const someChecked = Array.from(rowCheckboxes).some(c => c.checked);
+        selectAllCheckbox.checked = allChecked && rowCheckboxes.length > 0;
+        selectAllCheckbox.indeterminate = someChecked && !allChecked;
+    }
+
+    if(selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+                if(this.checked) globalSelectedIds.add(cb.value);
+                else globalSelectedIds.delete(cb.value);
+            });
+            updateBulkActionsButton();
+        });
+        updateSelectAllState();
+    }
+    updateBulkActionsButton();
+
+    // ── Exclusão Individual ───────────────────────────────────────────────
+    window.confirmDelete = function(id) {
+        Swal.fire({
+            title: 'Você tem certeza?',
+            text: "O histórico completo de trâmites e arquivos será excluído permanentemente. Isso não pode ser desfeito!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`{{ url('processos') }}/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                }).then(res => res.json()).then(data => {
+                    Swal.fire('Excluído!', data.message, 'success').then(() => location.reload());
+                }).catch(err => {
+                    Swal.fire('Erro!', 'Ocorreu um erro ao excluir.', 'error');
+                });
+            }
+        });
+    };
+
+    // ── Exclusão Múltipla ─────────────────────────────────────────────────
+    window.confirmBulkDelete = function() {
+        const ids = Array.from(globalSelectedIds);
+        if(ids.length === 0) return;
+
+        Swal.fire({
+            title: 'Excluir Selecionados?',
+            text: `Tem certeza de que deseja excluir os ${ids.length} processos selecionados (somente os finalizados/cancelados serão apagados)? O histórico completo de trâmites e arquivos deles será perdido!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`{{ route('processos.bulk-delete') }}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ ids })
+                }).then(res => res.json()).then(data => {
+                    globalSelectedIds.clear();
+                    localStorage.removeItem(STORAGE_KEY);
+                    Swal.fire('Excluídos!', data.message, 'success').then(() => location.reload());
+                }).catch(err => {
+                    Swal.fire('Erro!', 'Ocorreu um erro ao excluir.', 'error');
+                });
+            }
+        });
+    };
+
+    // ── Ordenação ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.sortable').forEach(el => {
+        el.addEventListener('click', function() {
+            const sortField = this.dataset.sort;
+            const currentSort = document.getElementById('sortBy').value;
+            let currentDir = document.getElementById('sortDir').value;
+
+            if (currentSort === sortField) {
+                currentDir = currentDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentDir = 'asc';
+            }
+
+            document.getElementById('sortBy').value = sortField;
+            document.getElementById('sortDir').value = currentDir;
+            document.getElementById('filtrosForm').submit();
+        });
+    });
+
+    // ── Filtros dinâmicos (Submissão e Debounce) ──────────────────────────
+    let searchTimer = null;
     function submitFiltros() {
         document.getElementById('filtrosForm').submit();
     }
 
-    // Selects e checkboxes: submitem imediatamente
     document.querySelectorAll('.filter-trigger:not([data-delay])').forEach(el => {
         el.addEventListener('change', submitFiltros);
     });
 
-    // Campo de busca: debounce 500ms
     const buscaEl = document.getElementById('filtroBusca');
     if (buscaEl) {
         buscaEl.addEventListener('input', function () {
@@ -483,7 +562,6 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.text())
         .then(html => {
             container.innerHTML = html;
-            // Tenta pegar o protocolo do HTML carregado
             const protoEl = container.querySelector('[data-protocolo]');
             if (protoEl) protocolo.textContent = protoEl.dataset.protocolo;
         })
@@ -494,42 +572,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Modal Confirmar Dar Andamento ─────────────────────────────────────
     const andamentoModal = document.getElementById('confirmarAndamentoModal');
-    andamentoModal.addEventListener('show.bs.modal', function (e) {
-        const btn = e.relatedTarget;
-        const id  = btn.dataset.id;
-        const protocolo = btn.dataset.protocolo;
+    if (andamentoModal) {
+        andamentoModal.addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            const id  = btn.dataset.id;
+            const protocolo = btn.dataset.protocolo;
 
-        document.getElementById('andamentoProtocolo').textContent = protocolo ? `(${protocolo})` : '';
-        document.getElementById('formDarAndamento').action = `/processos/${id}/dar-andamento`;
-    });
-
-    // ── Preview de arquivos no modal Novo Processo ────────────────────────
-    const novoInput = document.querySelector('[name="arquivos[]"]');
-    if (novoInput) {
-        novoInput.addEventListener('change', function () {
-            const list = document.getElementById('novoArquivosList');
-            list.innerHTML = '';
-            if (!this.files.length) return;
-            const ul = document.createElement('ul');
-            ul.className = 'list-unstyled mb-0';
-            Array.from(this.files).forEach(f => {
-                const li = document.createElement('li');
-                li.className = 'd-flex align-items-center mb-1';
-                li.innerHTML = `<i class="bi bi-check-circle-fill text-success me-2"></i>
-                    ${f.name} <span class="text-muted ms-2">(${formatBytes(f.size)})</span>`;
-                ul.appendChild(li);
-            });
-            list.appendChild(ul);
+            document.getElementById('andamentoProtocolo').textContent = protocolo ? `(${protocolo})` : '';
+            document.getElementById('formDarAndamento').action = `/processos/${id}/dar-andamento`;
         });
-    }
-
-    function formatBytes(b) {
-        if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
-        if (b >= 1024)    return (b / 1024).toFixed(1) + ' KB';
-        return b + ' B';
     }
 });
 </script>
-
-@include('modules.processos.partials.modal-preview-anexo')
 @endsection

@@ -41,7 +41,7 @@ class ProcessoParoquial extends Model
 
     public function tramitacoes()
     {
-        return $this->hasMany(ProcessoTramitacao::class, 'processo_id')->orderBy('created_at', 'asc');
+        return $this->hasMany(ProcessoTramitacao::class, 'processo_id')->orderBy('id', 'asc');
     }
 
     public function ultimaTramitacao()

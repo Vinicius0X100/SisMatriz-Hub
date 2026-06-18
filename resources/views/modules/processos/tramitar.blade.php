@@ -403,6 +403,19 @@
                             </div>
                         </div>
 
+                        {{-- Mensagem de Cancelamento (Encerrar Processo) --}}
+                        <div id="msgCancelamentoSolicitante" class="alert border-danger bg-danger bg-opacity-10 shadow-sm rounded-4 mb-4" style="display:none;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle bg-danger bg-opacity-25 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-x-circle-fill text-danger fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-danger-emphasis mb-1">Encerramento do Processo</h6>
+                                    <p class="mb-0 small text-danger-emphasis">O processo será encerrado permanentemente. Deixe uma mensagem abaixo justificando o cancelamento, ela será exibida ao solicitante inicial.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- Para: Grupo ou Pessoa --}}
                         <div class="mb-4" id="encaminharParaContainerWrapper">
                             <label class="form-label fw-bold">Encaminhar Para <span class="text-danger">*</span></label>
@@ -552,13 +565,23 @@ document.addEventListener('DOMContentLoaded', function () {
             
             const encaminharWrap = document.getElementById('encaminharParaContainerWrapper');
             const msgDevolucao   = document.getElementById('msgDevolucaoSolicitante');
-            if(val === '2' || val === '3') {
+            const msgCancelamento = document.getElementById('msgCancelamentoSolicitante');
+
+            if(val === '2' || val === '3' || val === '4') {
                 encaminharWrap.style.display = 'none';
-                if(msgDevolucao) msgDevolucao.style.display = 'block';
                 document.getElementById('selectParaGrupo').removeAttribute('required');
+
+                if (val === '4') {
+                    if(msgDevolucao) msgDevolucao.style.display = 'none';
+                    if(msgCancelamento) msgCancelamento.style.display = 'block';
+                } else {
+                    if(msgDevolucao) msgDevolucao.style.display = 'block';
+                    if(msgCancelamento) msgCancelamento.style.display = 'none';
+                }
             } else {
                 encaminharWrap.style.display = 'block';
                 if(msgDevolucao) msgDevolucao.style.display = 'none';
+                if(msgCancelamento) msgCancelamento.style.display = 'none';
                 if(document.getElementById('paraGrupo').checked) {
                     document.getElementById('selectParaGrupo').setAttribute('required', '');
                 }
@@ -566,15 +589,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Iniciar com estado correto caso já carregue Concluído ou Finalizado
+    // Iniciar com estado correto caso já carregue Concluído, Finalizado ou Cancelado
     const currentStatus = document.getElementById('statusProcessoInput').value;
     const encaminharWrap = document.getElementById('encaminharParaContainerWrapper');
     const msgDevolucao   = document.getElementById('msgDevolucaoSolicitante');
-    if(currentStatus === '2' || currentStatus === '3') {
+    const msgCancelamento = document.getElementById('msgCancelamentoSolicitante');
+
+    if(currentStatus === '2' || currentStatus === '3' || currentStatus === '4') {
         if(encaminharWrap) encaminharWrap.style.display = 'none';
-        if(msgDevolucao) msgDevolucao.style.display = 'block';
         const selectPG = document.getElementById('selectParaGrupo');
         if(selectPG) selectPG.removeAttribute('required');
+
+        if (currentStatus === '4') {
+            if(msgDevolucao) msgDevolucao.style.display = 'none';
+            if(msgCancelamento) msgCancelamento.style.display = 'block';
+        } else {
+            if(msgDevolucao) msgDevolucao.style.display = 'block';
+            if(msgCancelamento) msgCancelamento.style.display = 'none';
+        }
     }
 
     // ── Para: Grupo ou Pessoa ─────────────────────────────────────────────

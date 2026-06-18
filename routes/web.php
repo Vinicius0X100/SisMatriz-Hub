@@ -43,6 +43,8 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Processos
     Route::get('processos', [\App\Http\Controllers\ProcessoController::class, 'index'])->name('processos.index');
     Route::post('processos', [\App\Http\Controllers\ProcessoController::class, 'store'])->name('processos.store');
+    Route::delete('processos/bulk-delete', [\App\Http\Controllers\ProcessoController::class, 'bulkDestroy'])->name('processos.bulk-delete');
+    Route::delete('processos/{id}', [\App\Http\Controllers\ProcessoController::class, 'destroy'])->name('processos.destroy');
     Route::get('processos/usuarios-por-grupo', [\App\Http\Controllers\ProcessoController::class, 'getUsersByGrupo'])->name('processos.users-by-grupo');
     Route::get('processos/usuarios-busca', [\App\Http\Controllers\ProcessoController::class, 'searchUsers'])->name('processos.users-search');
     Route::get('processos/notificacao/{id}', [\App\Http\Controllers\ProcessoController::class, 'lerNotificacao'])->name('processos.notificacao.ler');

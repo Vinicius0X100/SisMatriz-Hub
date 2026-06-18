@@ -87,10 +87,18 @@ class ProcessoController extends Controller
         $userGrupos = $this->getUserGrupos($user);
 
         $query = ProcessoParoquial::where('paroquia_id', $paroquiaId)
-            ->with(['responsavelAtual', 'ultimaTramitacao.deUser'])
-            ->orderByRaw('FIELD(status, 0, 1, 3, 2, 4)')
-            ->orderBy('prioridade', 'desc')
-            ->orderBy('created_at', 'desc');
+            ->with(['responsavelAtual', 'ultimaTramitacao.deUser']);
+
+        $sortBy  = $request->input('sort_by');
+        $sortDir = $request->input('sort_dir', 'desc');
+
+        if ($sortBy && in_array($sortBy, ['protocolo', 'nome_solicitante', 'prioridade', 'status', 'data_limite', 'created_at'])) {
+            $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderByRaw('FIELD(status, 0, 1, 3, 2, 4)')
+                ->orderBy('prioridade', 'desc')
+                ->orderBy('created_at', 'desc');
+        }
 
         // Filtro: minha pastoral/movimento
         if ($minhaPastoral) {
@@ -129,6 +137,9 @@ class ProcessoController extends Controller
 
         $processos = $query->paginate(25)->withQueryString();
 
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+
         return view('modules.processos.index', compact(
             'processos',
             'minhaPastoral',
@@ -137,8 +148,51 @@ class ProcessoController extends Controller
             'filtroStatus',
             'filtroPrioridade',
             'filtroBusca',
-            'userGrupos'
+            'userGrupos',
+            'sortBy',
+            'sortDir'
         ));
+    }
+
+    /**
+     * Exclui um processo permanentemente (somente se status = 2 ou 4).
+     */
+    public function destroy($id)
+    {
+        $processo = ProcessoParoquial::where('paroquia_id', Auth::user()->paroquia_id)->findOrFail($id);
+
+        if (!in_array($processo->status, [2, 4])) {
+            return response()->json(['message' => 'Apenas processos finalizados ou cancelados podem ser excluídos.'], 403);
+        }
+
+        // Apagar arquivos do storage
+        Storage::disk('public')->deleteDirectory('uploads/processos/' . $processo->id);
+        Storage::disk('public')->deleteDirectory('uploads/processos/tramitacoes/' . $processo->id);
+
+        $processo->delete();
+
+        return response()->json(['message' => 'Processo excluído com sucesso.']);
+    }
+
+    /**
+     * Exclui múltiplos processos.
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        
+        $processos = ProcessoParoquial::where('paroquia_id', Auth::user()->paroquia_id)
+            ->whereIn('id', $ids)
+            ->whereIn('status', [2, 4])
+            ->get();
+
+        foreach ($processos as $processo) {
+            Storage::disk('public')->deleteDirectory('uploads/processos/' . $processo->id);
+            Storage::disk('public')->deleteDirectory('uploads/processos/tramitacoes/' . $processo->id);
+            $processo->delete();
+        }
+
+        return response()->json(['message' => count($processos) . ' processos excluídos com sucesso.']);
     }
 
     /**
@@ -208,7 +262,7 @@ class ProcessoController extends Controller
                 'arquivos',
                 'responsavelAtual',
                 'tramitacoes' => function ($q) {
-                    $q->with(['deUser', 'paraUser', 'arquivos', 'mencao.deUser'])->orderBy('created_at', 'asc');
+                    $q->with(['deUser', 'paraUser', 'arquivos', 'mencao.deUser'])->orderBy('id', 'asc');
                 },
             ])
             ->findOrFail($id);
@@ -263,7 +317,7 @@ class ProcessoController extends Controller
                 'arquivos',
                 'responsavelAtual',
                 'tramitacoes' => function ($q) {
-                    $q->with(['deUser', 'paraUser', 'arquivos'])->orderBy('created_at', 'asc');
+                    $q->with(['deUser', 'paraUser', 'arquivos'])->orderBy('id', 'asc');
                 },
             ])
             ->findOrFail($id);
@@ -303,7 +357,16 @@ class ProcessoController extends Controller
             'status_processo'        => 'required|integer|in:0,1,2,3,4',
             'para_tipo'              => 'required|in:grupo,usuario',
             'para_grupo'             => 'nullable|string',
-            'para_user_id'           => 'nullable|integer|exists:users,id',
+            'para_user_id'           => [
+                'nullable',
+                'integer',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    if ($value == Auth::id()) {
+                        $fail('Você não pode encaminhar o processo para si mesmo.');
+                    }
+                }
+            ],
             'mencao_tramitacao_id'   => 'nullable|integer|exists:processos_tramitacoes,id',
             'tramitacao_id'          => 'nullable|integer|exists:processos_tramitacoes,id',
             'arquivos.*'             => 'nullable|file|max:51200',
@@ -409,7 +472,7 @@ class ProcessoController extends Controller
         $user  = Auth::user();
         $busca = $request->input('q');
 
-        $query = User::where(function($q) use ($user) {
+        $query = User::where('id', '!=', $user->id)->where(function($q) use ($user) {
             $q->where(function($q2) use ($user) {
                 $q2->where('paroquia_id', $user->paroquia_id)->where('status', 1);
             })->orWhere('rule', 'like', '%"1"%')
@@ -453,6 +516,7 @@ class ProcessoController extends Controller
 
         $users = User::where('paroquia_id', $user->paroquia_id)
             ->where('status', 1)
+            ->where('id', '!=', $user->id)
             ->get()
             ->filter(fn($u) => !empty(array_intersect($u->roles, $roles)))
             ->map(fn($u) => [
