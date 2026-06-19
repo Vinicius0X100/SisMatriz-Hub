@@ -11,7 +11,8 @@ use App\Models\ProcessoTramitacao;
 use App\Models\ProcessoTramitacaoArquivo;
 use App\Models\ProcessoNotificacao;
 use App\Models\User;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ProcessoTramitadoMail;
 class ProcessoController extends Controller
 {
     // ── Constantes ────────────────────────────────────────────────────────
@@ -430,7 +431,7 @@ class ProcessoController extends Controller
 
         $processo->save();
 
-        // Disparar notificações
+        // Disparar notificações e E-mails
         if ($request->input('para_tipo') === 'usuario' && $tramitacao->para_user_id) {
             ProcessoNotificacao::create([
                 'user_id'       => $tramitacao->para_user_id,
@@ -440,6 +441,12 @@ class ProcessoController extends Controller
                 'message'       => $user->name . ' enviou o processo para você.',
                 'is_read'       => false,
             ]);
+
+            $paraUser = User::find($tramitacao->para_user_id);
+            if ($paraUser && $paraUser->email) {
+                Mail::to($paraUser->email)->send(new ProcessoTramitadoMail($processo, $tramitacao));
+            }
+
         } elseif ($request->input('para_tipo') === 'grupo' && $tramitacao->para_grupo) {
             // Notifica todos os usuários do grupo
             $grupoRoles = self::GRUPOS_PASTORAIS[$tramitacao->para_grupo]['roles'] ?? [];
@@ -456,6 +463,10 @@ class ProcessoController extends Controller
                         'message'       => $user->name . ' encaminhou o processo para ' . (self::GRUPOS_PASTORAIS[$tramitacao->para_grupo]['label'] ?? 'seu grupo') . '.',
                         'is_read'       => false,
                     ]);
+
+                    if ($u->email) {
+                        Mail::to($u->email)->send(new ProcessoTramitadoMail($processo, $tramitacao));
+                    }
                 }
             }
         }
