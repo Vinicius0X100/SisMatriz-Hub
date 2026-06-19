@@ -444,7 +444,8 @@ class ProcessoController extends Controller
 
             $paraUser = User::find($tramitacao->para_user_id);
             if ($paraUser && $paraUser->email) {
-                Mail::to($paraUser->email)->send(new ProcessoTramitadoMail($processo, $tramitacao));
+                $nome = $paraUser->name ?? $paraUser->user;
+                Mail::to($paraUser->email)->send(new ProcessoTramitadoMail($processo, $tramitacao, $nome));
             }
 
         } elseif ($request->input('para_tipo') === 'grupo' && $tramitacao->para_grupo) {
@@ -465,7 +466,8 @@ class ProcessoController extends Controller
                     ]);
 
                     if ($u->email) {
-                        Mail::to($u->email)->send(new ProcessoTramitadoMail($processo, $tramitacao));
+                        $nome = $u->name ?? $u->user;
+                        Mail::to($u->email)->send(new ProcessoTramitadoMail($processo, $tramitacao, $nome));
                     }
                 }
             }

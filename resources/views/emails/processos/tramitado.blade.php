@@ -1,19 +1,17 @@
 <x-mail::message>
-# Olá!
+# Olá {{ $nomeDestinatario }},
 
-Você tem um novo andamento de processo no **SisMatriz**. 
-O processo **{{ $processo->protocolo }}** acaba de ser encaminhado para você (ou para seu grupo pastoral).
+O usuário **{{ $tramitacao->deUser->name ?? 'Sistema' }}** ({{ $tramitacao->de_cargo_label }}) acaba de encaminhar o processo **{{ $processo->protocolo }}** para a sua responsabilidade (ou para o seu grupo pastoral).
 
 <x-mail::panel>
-**Detalhes do Processo:**
+**Resumo do Processo:**
 - **Protocolo:** {{ $processo->protocolo }}
 - **Assunto:** {{ strtoupper($processo->assunto) }}
 - **Solicitante:** {{ $processo->nome_solicitante }}
-- **Prazo:** {{ $processo->data_limite ? $processo->data_limite->format('d/m/Y') : 'Não definido' }}
+- **Prazo estipulado:** {{ $processo->data_limite ? $processo->data_limite->format('d/m/Y') : 'Sem prazo definido' }}
 
-**Mensagem de Encaminhamento:**
+**Mensagem do Encaminhamento:**
 > *{{ $tramitacao->descricao ?: 'Sem descrição adicional.' }}*
-*(Enviado por {{ $tramitacao->deUser->name ?? 'Sistema' }})*
 </x-mail::panel>
 
 Para assumir o processo, visualizar todos os anexos e registrar novos andamentos, acesse o SisMatriz clicando no botão abaixo:
@@ -23,5 +21,12 @@ Acessar Processo
 </x-mail::button>
 
 Atenciosamente,<br>
-{{ config('app.name') }}
+Equipe {{ config('app.name') }}
+
+<x-slot:footer>
+<x-mail::footer>
+O SisMatriz é um serviço fornecido pela Sacratech.<br>
+© {{ date('Y') }} Sacratech Softwares LTDA. Todos os direitos reservados.
+</x-mail::footer>
+</x-slot:footer>
 </x-mail::message>

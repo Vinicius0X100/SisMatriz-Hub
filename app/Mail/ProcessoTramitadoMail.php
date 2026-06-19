@@ -19,15 +19,17 @@ class ProcessoTramitadoMail extends Mailable implements ShouldQueue
     public $processo;
     public $tramitacao;
     public $url;
+    public $nomeDestinatario;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(ProcessoParoquial $processo, ProcessoTramitacao $tramitacao)
+    public function __construct(ProcessoParoquial $processo, ProcessoTramitacao $tramitacao, $nomeDestinatario)
     {
         $this->processo = $processo;
         $this->tramitacao = $tramitacao;
         $this->url = url('/processos?show_processo=' . $processo->id);
+        $this->nomeDestinatario = $nomeDestinatario;
     }
 
     /**
