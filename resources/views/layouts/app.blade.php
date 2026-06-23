@@ -314,6 +314,30 @@
                     });
             }
 
+            // Mark all notifications as read when dropdown is opened
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            if (notificationDropdown) {
+                notificationDropdown.addEventListener('show.bs.dropdown', function () {
+                    // Remove red badges immediately for visual feedback
+                    const outerBadge = notificationDropdown.querySelector('.bg-danger');
+                    if (outerBadge) outerBadge.remove();
+                    
+                    const innerBadge = document.querySelector('.dropdown-menu[aria-labelledby="notificationDropdown"] .badge');
+                    if (innerBadge) innerBadge.remove();
+
+                    // Optional: remove red dots from list items
+                    document.querySelectorAll('#notificationList .bg-danger').forEach(dot => dot.remove());
+
+                    fetch('{{ route("notifications.markAllRead") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    }).catch(err => console.error('Error marking notifications as read:', err));
+                });
+            }
+
             // Mega Menu Search
             const megaSearch = document.getElementById('megaMenuSearch');
             if (megaSearch) {

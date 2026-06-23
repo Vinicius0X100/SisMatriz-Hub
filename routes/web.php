@@ -431,4 +431,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/site-tools/gallery/upload', [App\Http\Controllers\SiteToolsController::class, 'uploadGallery'])->name('site-tools.gallery.upload');
     Route::get('/site-tools/paroquia-ajustes', [App\Http\Controllers\SiteToolsController::class, 'paroquiaAjustes'])->name('site-tools.paroquia-ajustes');
     Route::post('/site-tools/paroquia-ajustes', [App\Http\Controllers\SiteToolsController::class, 'saveParoquiaAjustes'])->name('site-tools.paroquia-ajustes.save');
+
+    // Notificações
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
 });
