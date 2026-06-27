@@ -34,7 +34,7 @@ Route::middleware('web')->get('/profile-data', function (Request $request) {
 });
 
 // Novas rotas do módulo Vicentinos
-Route::middleware('auth:web')->prefix('vicentinos')->group(function () {
+Route::middleware(['web', 'auth:web'])->prefix('vicentinos')->group(function () {
     Route::get('/apuracoes', [VicentinoApiController::class, 'getApuracoes']);
     Route::get('/fichas', [VicentinoApiController::class, 'getFichas']);
 });
