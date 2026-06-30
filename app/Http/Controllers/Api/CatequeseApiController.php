@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Register;
 
 // Models Eucaristia
 use App\Models\TurmaEucaristia;
@@ -193,5 +194,60 @@ class CatequeseApiController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Retorna o histórico completo de presenças e faltas de um aluno em uma turma.
+     * Suporta filtros opcionais: ?status=present|absent, ?start_date=YYYY-MM-DD, ?end_date=YYYY-MM-DD
+     */
+    public function getAttendanceHistory(Request $request, $tipo, $turma_id, $student_id)
+    {
+        $models = $this->resolveModels($tipo);
+        $turmaClass = $models['turma'];
+        $faltaClass = $models['falta'];
+
+        $turma = $turmaClass::findOrFail($turma_id);
+
+        if ($turma->paroquia_id != Auth::user()->paroquia_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $student = Register::findOrFail($student_id);
+
+        $query = $faltaClass::where('turma_id', $turma_id)
+                            ->where('aluno_id', $student_id);
+
+        // Filtro por status: ?status=present ou ?status=absent
+        if ($request->filled('status')) {
+            if ($request->status === 'present') {
+                $query->where('status', 1);
+            } elseif ($request->status === 'absent') {
+                $query->where('status', 0);
+            }
+        }
+
+        // Filtro por intervalo de datas
+        if ($request->filled('start_date')) {
+            $query->whereDate('data_aula', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('data_aula', '<=', $request->end_date);
+        }
+
+        $history = $query->orderBy('data_aula', 'desc')
+                         ->get(['id', 'data_aula', 'title', 'status']);
+
+        $presencas = $history->where('status', 1)->count();
+        $faltas    = $history->where('status', 0)->count();
+
+        return response()->json([
+            'turma_id'  => $turma->id,
+            'turma'     => $turma->turma,
+            'student_id'=> $student->id,
+            'student'   => $student->name,
+            'presencas' => $presencas,
+            'faltas'    => $faltas,
+            'history'   => $history->values(),
+        ]);
     }
 }
