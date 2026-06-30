@@ -96,18 +96,32 @@ class CatequeseApiController extends Controller
                     ->where('aluno_id', $student->register_id)
                     ->where('data_aula', $date)
                     ->first();
-                
+
+                // Totais gerais do aluno na turma (independente da data selecionada)
+                $presencas = $faltaClass::where('turma_id', $id)
+                    ->where('aluno_id', $student->register_id)
+                    ->where('status', 1)
+                    ->count();
+
+                $faltas = $faltaClass::where('turma_id', $id)
+                    ->where('aluno_id', $student->register_id)
+                    ->where('status', 0)
+                    ->count();
+
                 return [
-                    'id' => $student->register->id ?? null,
-                    'name' => $student->register->name ?? 'Sem Nome',
-                    'status' => $falta ? $falta->status : 0,
-                    'title' => $falta ? $falta->title : '',
+                    'id'        => $student->register->id ?? null,
+                    'name'      => $student->register->name ?? 'Sem Nome',
+                    'status'    => $falta ? $falta->status : 0,
+                    'title'     => $falta ? $falta->title : '',
+                    'presencas' => $presencas,
+                    'faltas'    => $faltas,
                 ];
             })
             // Remover caso o aluno tenha tido o cadastro excluido
             ->filter(function($s) { return !is_null($s['id']); })
             ->sortBy('name')
             ->values();
+
 
         return response()->json([
             'turma_id' => $turma->id,
