@@ -32,7 +32,7 @@ return [
     ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'url' => '/avisos', 'allowed_roles' => ['*']],
     ['name' => 'Comunicação em massa', 'icon' => 'broadcast', 'url' => '/mass-communication', 'allowed_roles' => ['1', '111', '3', '13', '7', '12', '17']],
     ['name' => 'Chat', 'icon' => 'chat-dots', 'url' => '/chat', 'allowed_roles' => ['3', '7', '17', '12', '13', '6', '8', '9', '10', '4', '16']],
-    ['name' => 'Excursões', 'icon' => 'bus-front', 'url' => '/excursoes', 'allowed_roles' => []],
+    ['name' => 'Excursões', 'icon' => 'bus-front', 'url' => '/excursoes', 'allowed_roles' => ['17']],
     ['name' => 'Registros gerais', 'icon' => 'journal-text', 'url' => '/registers', 'allowed_roles' => ['3', '7', '6', '9', '4']],
     ['name' => 'Membros Pascom', 'icon' => 'people-fill', 'url' => '/pascom/membros', 'allowed_roles' => ['1', '111', '9']],
     ['name' => 'Postagens Pascom', 'icon' => 'images', 'url' => '/pascom/postagens', 'allowed_roles' => ['1', '111', '9', '10']],

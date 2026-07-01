@@ -84,7 +84,8 @@ class User extends Authenticatable
                     13  => 'Catequista - Crisma',
                     14  => 'Dizimista',
                     15  => 'Gerencia de Estoque/Inventário e Salas e Espaços',
-                    16  => 'Coordenador - Matrimônio (Visualizar e Imprimir fichas apenas)'
+                    16  => 'Coordenador - Matrimônio (Visualizar e Imprimir fichas apenas)',
+                    17  => 'Organizador de Eventos/Excursões',
     ];
 
     public function paroquia()

@@ -23,12 +23,15 @@ class AssentoVendido extends Model
         'posicao',
         'embarque_ida',
         'embarque_volta',
+        'validado_em',
+        'validado_por',
     ];
 
     protected $casts = [
         'menor' => 'boolean',
         'embarque_ida' => 'boolean',
         'embarque_volta' => 'boolean',
+        'validado_em' => 'datetime',
     ];
 
     public function onibus()
@@ -42,5 +45,15 @@ class AssentoVendido extends Model
         // Based on routes/web.php: Route::resource('registers', RegisterController::class);
         // I should check if Register model exists.
         return $this->belongsTo(Register::class, 'register_id');
+    }
+
+    public function validadoPor()
+    {
+        return $this->belongsTo(User::class, 'validado_por');
+    }
+
+    public function isValidado(): bool
+    {
+        return !is_null($this->validado_em);
     }
 }

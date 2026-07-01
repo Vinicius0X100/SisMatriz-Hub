@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservaCalendarController;
 use App\Http\Controllers\Api\VicentinoApiController;
-
 use App\Http\Controllers\Api\CatequeseApiController;
 
 Route::get('/user', function (Request $request) {
@@ -48,4 +47,14 @@ Route::middleware(['web', 'auth:web'])->prefix('catequese')->group(function () {
     Route::post('/{tipo}/turmas/attendance/save', [CatequeseApiController::class, 'saveAttendance']);
     Route::post('/{tipo}/turmas/attendance/save-bulk', [CatequeseApiController::class, 'saveBulkAttendance']);
     Route::get('/{tipo}/turmas/{turma_id}/attendance-history/{student_id}', [CatequeseApiController::class, 'getAttendanceHistory']);
+});
+
+// Rotas de API para validação de bilhetes de Excursão
+Route::middleware(['web', 'auth:web'])->prefix('excursoes')->group(function () {
+    // Consulta bilhete pelo ID do assento (decodificado do QR Code)
+    Route::get('/bilhete/{id}', [\App\Http\Controllers\Api\ExcursaoApiController::class, 'consultarBilhete']);
+    // Valida (marca como usado) o bilhete
+    Route::post('/bilhete/{id}/validar', [\App\Http\Controllers\Api\ExcursaoApiController::class, 'validarBilhete']);
+    // Lista os bilhetes validados de um ônibus
+    Route::get('/{excursao}/onibus/{onibus}/validados', [\App\Http\Controllers\Api\ExcursaoApiController::class, 'listarValidados']);
 });

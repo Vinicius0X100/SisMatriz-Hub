@@ -69,7 +69,7 @@ class OnibusController extends Controller
             abort(403);
         }
         
-        $onibus->load('assentosVendidos');
+        $onibus->load(['assentosVendidos', 'assentosVendidos.validadoPor']);
         
         // Prepare seats grid
         $seats = [];

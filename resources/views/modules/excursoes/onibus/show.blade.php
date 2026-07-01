@@ -48,6 +48,13 @@
                                             <small class="d-block text-truncate fw-bold text-dark mb-1" title="{{ $assento->passageiro_nome }}">
                                                 {{ explode(' ', $assento->passageiro_nome)[0] }}
                                             </small>
+                                            <div class="mb-1">
+                                                @if($assento->validado_em)
+                                                    <span class="badge bg-success bg-opacity-15 text-success" style="font-size: 0.65rem;"><i class="bi bi-check-circle-fill"></i> Validado</span>
+                                                @else
+                                                    <span class="badge bg-warning bg-opacity-15 text-warning" style="font-size: 0.65rem;"><i class="bi bi-clock"></i> Pendente</span>
+                                                @endif
+                                            </div>
                                             <div class="d-flex justify-content-center gap-1">
                                                 <button type="button" class="btn btn-xs btn-outline-secondary rounded-circle" data-bs-toggle="modal" data-bs-target="#viewSeatModal{{ $i }}">
                                                     <i class="bi bi-eye"></i>
@@ -272,6 +279,31 @@
                                                 </div>
                                             </div>
                                             @endif
+
+                                            {{-- Status de Validação --}}
+                                            <div class="mt-4 pt-3 border-top">
+                                                <h6 class="fw-bold text-secondary text-uppercase small mb-3">Status do Bilhete</h6>
+                                                @if($assento->validado_em)
+                                                    <div class="d-flex align-items-center p-3 rounded-3 bg-success bg-opacity-10">
+                                                        <div class="text-success me-3"><i class="bi bi-check-circle-fill fs-3"></i></div>
+                                                        <div>
+                                                            <span class="fw-bold text-success d-block">Bilhete Validado</span>
+                                                            <small class="text-muted d-block">em {{ $assento->validado_em->format('d/m/Y H:i') }}</small>
+                                                            @if($assento->validadoPor)
+                                                                <small class="text-muted d-block">por {{ $assento->validadoPor->name }}</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <div class="d-flex align-items-center p-3 rounded-3 bg-warning bg-opacity-10">
+                                                        <div class="text-warning me-3"><i class="bi bi-clock-fill fs-3"></i></div>
+                                                        <div>
+                                                            <span class="fw-bold text-warning d-block">Aguardando Validação</span>
+                                                            <small class="text-muted">Bilhete ainda não foi escaneado</small>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -288,6 +320,11 @@
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
                     <h5 class="fw-bold text-secondary mb-3">Resumo</h5>
+                    @php
+                        $totalVendidos = $onibus->assentosVendidos->count();
+                        $totalValidados = $onibus->assentosVendidos->filter(fn($a) => !is_null($a->validado_em))->count();
+                        $totalPendentes = $totalVendidos - $totalValidados;
+                    @endphp
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
                             Capacidade Total
@@ -295,15 +332,45 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
                             Vendidos
-                            <span class="badge bg-danger rounded-pill">{{ $onibus->assentosVendidos->count() }}</span>
+                            <span class="badge bg-danger rounded-pill">{{ $totalVendidos }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
                             Livres
-                            <span class="badge bg-success rounded-pill">{{ $onibus->capacidade - $onibus->assentosVendidos->count() }}</span>
+                            <span class="badge bg-success rounded-pill">{{ $onibus->capacidade - $totalVendidos }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-top mt-2 pt-2">
+                            <span><i class="bi bi-check-circle-fill text-success me-1"></i> Validados</span>
+                            <span class="badge bg-success rounded-pill">{{ $totalValidados }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
+                            <span><i class="bi bi-clock-fill text-warning me-1"></i> Pendentes</span>
+                            <span class="badge bg-warning rounded-pill">{{ $totalPendentes }}</span>
                         </li>
                     </ul>
                 </div>
             </div>
+
+            @if($totalValidados > 0)
+            <div class="card border-0 shadow-sm rounded-4 mt-3">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i>Bilhetes Validados</h5>
+                    <ul class="list-group list-group-flush">
+                        @foreach($onibus->assentosVendidos->filter(fn($a) => !is_null($a->validado_em))->sortByDesc('validado_em') as $av)
+                        <li class="list-group-item bg-transparent px-0 py-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-secondary me-1">{{ str_pad($av->poltrona, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <strong class="small">{{ $av->passageiro_nome }}</strong>
+                                    <small class="d-block text-muted" style="font-size: 0.72rem;">{{ $av->validado_em->format('d/m H:i') }}</small>
+                                </div>
+                                <span class="badge bg-success bg-opacity-15 text-success"><i class="bi bi-check-circle-fill"></i></span>
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
