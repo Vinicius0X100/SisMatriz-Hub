@@ -17,6 +17,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         
         $middleware->validateCsrfTokens(except: [
             'api/catequese/*',
+            'api/excursoes/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
