@@ -71,11 +71,17 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
+    Route::get('/chat/search-new', [App\Http\Controllers\ChatController::class, 'searchNewUsers'])->name('chat.search-new');
+    Route::get('/chat/requests', [App\Http\Controllers\ChatController::class, 'getPendingRequests'])->name('chat.requests');
+    Route::post('/chat/request/send', [App\Http\Controllers\ChatController::class, 'sendRequest'])->name('chat.request.send');
+    Route::post('/chat/request/accept', [App\Http\Controllers\ChatController::class, 'acceptRequest'])->name('chat.request.accept');
+    Route::post('/chat/request/reject', [App\Http\Controllers\ChatController::class, 'rejectRequest'])->name('chat.request.reject');
     Route::get('/chat/messages/{userId}', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
     Route::post('/chat/block', [App\Http\Controllers\ChatController::class, 'blockUser'])->name('chat.block');
     Route::post('/chat/unblock', [App\Http\Controllers\ChatController::class, 'unblockUser'])->name('chat.unblock');
     Route::post('/chat/clear', [App\Http\Controllers\ChatController::class, 'clearChat'])->name('chat.clear');
+    Route::post('/chat/toggle-pin', [App\Http\Controllers\ChatController::class, 'toggleUserPin'])->name('chat.toggle-pin');
 
     Route::prefix('pascom')->group(function () {
         Route::get('membros', [App\Http\Controllers\PascomMembroController::class, 'index'])->name('pascom-membros.index');

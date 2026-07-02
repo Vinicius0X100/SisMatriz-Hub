@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserPin;
 use App\Models\BlockedUser;
 use App\Models\UserAccess;
+use App\Models\UserSolicitation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,9 +31,22 @@ class ChatController extends Controller
             ->pluck('blocked_user_id')
             ->toArray();
 
-        // Get users from the same paroquia, excluding current user
+        // Get friend IDs
+        $friendIds = UserSolicitation::where(function($q) use ($currentUser) {
+                $q->where('requester_id', $currentUser->id)
+                  ->orWhere('receiver_id', $currentUser->id);
+            })
+            ->where('is_accepted', true)
+            ->get()
+            ->map(function($solicitation) use ($currentUser) {
+                return $solicitation->requester_id == $currentUser->id ? $solicitation->receiver_id : $solicitation->requester_id;
+            })
+            ->toArray();
+
+        // Get users from the same paroquia, excluding current user and filtering by friends
         $users = User::where('paroquia_id', $currentUser->paroquia_id)
             ->where('id', '!=', $currentUser->id)
+            ->whereIn('id', $friendIds)
             ->select('id', 'name', 'avatar', 'user', 'hide_name') 
             ->get();
 
@@ -314,5 +328,130 @@ class ChatController extends Controller
             ]);
             return response()->json(['status' => 'pinned']);
         }
+    }
+
+    public function searchNewUsers(Request $request)
+    {
+        $term = $request->query('term');
+        $currentUser = Auth::user();
+        
+        // Get all my solicitations (sent or received)
+        $solicitations = UserSolicitation::where('requester_id', $currentUser->id)
+            ->orWhere('receiver_id', $currentUser->id)
+            ->get();
+            
+        $query = User::where('paroquia_id', $currentUser->paroquia_id)
+            ->where('id', '!=', $currentUser->id)
+            ->select('id', 'name', 'avatar', 'user', 'hide_name');
+            
+        if ($term) {
+            $query->where(function($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('user', 'like', "%{$term}%");
+            });
+        }
+        
+        $users = $query->take(20)->get();
+        
+        $users->map(function($user) use ($solicitations, $currentUser) {
+            $user->display_name = $user->hide_name ? 'Usuário' : ($user->name ?? $user->user);
+            
+            // Check status
+            $solicitation = $solicitations->first(function($s) use ($user) {
+                return $s->requester_id == $user->id || $s->receiver_id == $user->id;
+            });
+            
+            if (!$solicitation) {
+                $user->friend_status = 'none';
+                $user->solicitation_id = null;
+            } elseif ($solicitation->is_accepted) {
+                $user->friend_status = 'friend';
+                $user->solicitation_id = $solicitation->id;
+            } elseif ($solicitation->requester_id == $currentUser->id) {
+                $user->friend_status = 'pending_sent';
+                $user->solicitation_id = $solicitation->id;
+            } else {
+                $user->friend_status = 'pending_received';
+                $user->solicitation_id = $solicitation->id;
+            }
+            return $user;
+        });
+        
+        return response()->json($users);
+    }
+    
+    public function getPendingRequests()
+    {
+        $currentUser = Auth::user();
+        
+        $requests = UserSolicitation::where('receiver_id', $currentUser->id)
+            ->where('is_accepted', false)
+            ->with('requester:id,name,avatar,user,hide_name')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $requests->transform(function($req) {
+            if ($req->requester) {
+                $req->requester->display_name = $req->requester->hide_name ? 'Usuário' : ($req->requester->name ?? $req->requester->user);
+            }
+            return $req;
+        });
+            
+        return response()->json($requests);
+    }
+    
+    public function sendRequest(Request $request)
+    {
+        $request->validate(['user_id' => 'required|exists:users,id']);
+        $currentUser = Auth::user();
+        
+        if ($currentUser->id == $request->user_id) {
+            return response()->json(['error' => 'Não pode adicionar a si mesmo.'], 400);
+        }
+        
+        // Check if exists
+        $existing = UserSolicitation::where(function($q) use ($currentUser, $request) {
+            $q->where('requester_id', $currentUser->id)->where('receiver_id', $request->user_id);
+        })->orWhere(function($q) use ($currentUser, $request) {
+            $q->where('requester_id', $request->user_id)->where('receiver_id', $currentUser->id);
+        })->first();
+        
+        if ($existing) {
+            return response()->json(['error' => 'Solicitação já existe.'], 400);
+        }
+        
+        UserSolicitation::create([
+            'requester_id' => $currentUser->id,
+            'receiver_id' => $request->user_id,
+            'is_accepted' => false,
+            'created_at' => now(),
+        ]);
+        
+        return response()->json(['status' => 'sent']);
+    }
+    
+    public function acceptRequest(Request $request)
+    {
+        $request->validate(['solicitation_id' => 'required|exists:users_solicitations,id']);
+        
+        $solicitation = UserSolicitation::where('id', $request->solicitation_id)
+            ->where('receiver_id', Auth::id())
+            ->firstOrFail();
+            
+        $solicitation->is_accepted = true;
+        $solicitation->save();
+        
+        return response()->json(['status' => 'accepted']);
+    }
+    
+    public function rejectRequest(Request $request)
+    {
+        $request->validate(['solicitation_id' => 'required|exists:users_solicitations,id']);
+        
+        UserSolicitation::where('id', $request->solicitation_id)
+            ->where('receiver_id', Auth::id())
+            ->delete();
+            
+        return response()->json(['status' => 'rejected']);
     }
 }
