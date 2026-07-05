@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservaCalendarController;
 use App\Http\Controllers\Api\VicentinoApiController;
 use App\Http\Controllers\Api\CatequeseApiController;
+use App\Http\Controllers\Api\AcolitoApiController;
 
 Route::get('/user', function (Request $request) {
     return auth()->user();
@@ -57,4 +58,18 @@ Route::middleware(['web', 'auth:web'])->prefix('excursoes')->group(function () {
     Route::post('/bilhete/{id}/validar', [\App\Http\Controllers\Api\ExcursaoApiController::class, 'validarBilhete']);
     // Lista os bilhetes validados de um ônibus
     Route::get('/{excursao}/onibus/{onibus}/validados', [\App\Http\Controllers\Api\ExcursaoApiController::class, 'listarValidados']);
+});
+
+// Rotas de API para o módulo de Acólitos
+Route::middleware(['web', 'auth:web'])->prefix('acolitos')->group(function () {
+    // Lista todas as escalas da paróquia
+    Route::get('/escalas', [AcolitoApiController::class, 'getEscalas']);
+    // Detalhe completo de uma escala com celebrações, acólitos e funções
+    Route::get('/escalas/{id}', [AcolitoApiController::class, 'getEscalaDetalhe']);
+    // Celebrações de uma escala (com filtro opcional por ?dia=<1-31>)
+    Route::get('/escalas/{id}/celebracoes', [AcolitoApiController::class, 'getCelebracoes']);
+    // Dias em que o usuário logado vai servir
+    Route::get('/meus-servicos', [AcolitoApiController::class, 'getMeusServicos']);
+    // Lista de funções cadastradas na paróquia
+    Route::get('/funcoes', [AcolitoApiController::class, 'getFuncoes']);
 });
