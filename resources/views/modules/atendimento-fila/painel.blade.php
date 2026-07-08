@@ -324,7 +324,7 @@
 @vite(['resources/js/app.js'])
 
 @if($fila)
-<script type="module">
+<script>
 const FILA_ID      = {{ $fila->id }};
 const PAROQUIA_ID  = {{ $user->paroquia_id }};
 const CSRF_TOKEN   = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

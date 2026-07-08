@@ -364,6 +364,30 @@
 <!-- Container para Notificações Flutuantes (Toasts) -->
 <div id="toastContainerFila" class="toast-container position-fixed top-0 end-0 p-3 mt-5" style="z-index: 9999;"></div>
 
+<!-- Banner de Chamada do Padre (oculto por padrão) -->
+<div id="bannerChamadaPadre" class="d-none" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9998;">
+    <div class="d-flex align-items-center justify-content-between px-4 py-3 shadow-lg" 
+         style="background: linear-gradient(135deg, #16a34a, #15803d); border-top: 3px solid #4ade80;">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                 style="width:52px; height:52px; background: rgba(255,255,255,0.2); flex-shrink:0;">
+                <i class="bi bi-megaphone-fill text-white" style="font-size: 1.6rem;"></i>
+            </div>
+            <div>
+                <div class="text-white fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; opacity:0.85;">
+                    🔔 O Padre chamou o próximo!
+                </div>
+                <div id="bannerNomeChamado" class="text-white fw-bold" style="font-size: 1.4rem; line-height: 1.2;"></div>
+            </div>
+        </div>
+        <button type="button" onclick="fecharBannerChamada()" 
+                class="btn btn-sm rounded-pill px-3 fw-semibold"
+                style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4);">
+            <i class="bi bi-check-lg me-1"></i> Entendido
+        </button>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -566,7 +590,8 @@ document.addEventListener('DOMContentLoaded', function () {
             .listen('.fila.atualizada', (e) => {
                 console.log('[Fila] Evento recebido:', e);
 
-                if (e.fila_id !== {{ $fila->id }}) return;
+                // Garante comparação correta (ambos como inteiro)
+                if (parseInt(e.fila_id) !== {{ $fila->id }}) return;
 
                 const modal = document.getElementById('modalAdicionarItem');
                 const isModalOpen = modal && modal.classList.contains('show');
@@ -576,35 +601,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                     audio.play().catch(err => console.warn('Autoplay bloqueado:', err));
 
-                    // 2. Mostra Toast na tela da secretária
-                    const toastContainer = document.getElementById('toastContainerFila');
-                    if (toastContainer) {
-                        const toastId = 'toast-' + Date.now();
-                        toastContainer.insertAdjacentHTML('beforeend', `
-                            <div id="${toastId}" class="toast align-items-center text-bg-success border-0 mb-3 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
-                                <div class="d-flex px-2 py-2">
-                                    <div class="toast-body fw-bold fs-5 d-flex align-items-center gap-2">
-                                        <i class="bi bi-megaphone-fill fs-3"></i>
-                                        <span>${e.mensagem}</span>
-                                    </div>
-                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                </div>
-                            </div>
-                        `);
-                        const toastEl = document.getElementById(toastId);
-                        new bootstrap.Toast(toastEl).show();
+                    // 2. Mostra o Banner Persistente na parte inferior da tela
+                    const banner = document.getElementById('bannerChamadaPadre');
+                    const nomeBanner = document.getElementById('bannerNomeChamado');
+                    if (banner && nomeBanner) {
+                        nomeBanner.textContent = e.mensagem;
+                        banner.classList.remove('d-none');
+                        // Pisca suavemente para chamar atenção
+                        banner.style.animation = 'none';
+                        banner.offsetHeight; // reflow
+                        banner.style.animation = 'pulse-banner 0.6s ease 3';
                     }
 
-                    // 3. Recarrega após 5s para atualizar a navbar
+                    // 3. Atualiza a lista da fila após 3s (não recarrega bruscamente)
                     setTimeout(() => {
                         if (!isModalOpen) window.location.reload();
-                    }, 5000);
+                    }, 6000);
 
                 } else {
-                    // Qualquer outra ação: recarregar a tela (item adicionado, removido, etc.)
+                    // Qualquer outra ação (item adicionado, removido, etc.)
                     if (!isModalOpen) window.location.reload();
                 }
             });
     })();
+</script>
+
+<style>
+@keyframes pulse-banner {
+    0%, 100% { opacity: 1; transform: translateY(0); }
+    50% { opacity: 0.85; transform: translateY(-4px); }
+}
+</style>
+
+<script>
+    window.fecharBannerChamada = function() {
+        const banner = document.getElementById('bannerChamadaPadre');
+        if (banner) banner.classList.add('d-none');
+    };
 </script>
 @endpush
