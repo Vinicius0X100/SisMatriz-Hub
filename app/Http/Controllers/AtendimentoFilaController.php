@@ -202,7 +202,7 @@ class AtendimentoFilaController extends Controller
                 $item->nome,
                 Carbon::parse($fila->data)->format('d/m/Y'),
                 $item->hora_agendada,
-                $paroquia?->par_name ?? 'Paróquia'
+                $paroquia?->name ?? 'Paróquia'
             );
 
             $item->update(['whatsapp_enviado' => true]);

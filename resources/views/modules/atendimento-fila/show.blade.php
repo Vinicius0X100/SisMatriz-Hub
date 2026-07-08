@@ -3,6 +3,9 @@
 @section('title', 'Gerenciar Fila — ' . $fila->data->format('d/m/Y'))
 
 @section('content')
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
@@ -516,30 +519,24 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<script type="module">
+<script>
     const pusherKey = "{{ env('PUSHER_APP_KEY', '') }}";
-    if (pusherKey) {
-        import('laravel-echo').then(({ default: Echo }) => {
-            import('pusher-js').then((Pusher) => {
-                window.Pusher = Pusher.default;
-                const echo = new Echo({
-                    broadcaster: 'pusher',
-                    key: pusherKey,
-                    cluster: "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}",
-                    forceTLS: true,
-                });
-                echo.channel(`paroquia.{{ $fila->paroquia_id }}.fila`)
-                    .listen('.fila.atualizada', (e) => {
-                        if (e.fila_id === {{ $fila->id }}) {
-                            // Se o modal estiver aberto, não recarrega agressivamente
-                            const modal = document.getElementById('modalAdicionarItem');
-                            if (!modal.classList.contains('show')) {
-                                window.location.reload();
-                            }
-                        }
-                    });
-            });
+    if (pusherKey && typeof window.Echo !== 'undefined') {
+        const echo = new window.Echo({
+            broadcaster: 'pusher',
+            key: pusherKey,
+            cluster: "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}",
+            forceTLS: true,
         });
+        echo.channel(`paroquia.{{ $fila->paroquia_id }}.fila`)
+            .listen('.fila.atualizada', (e) => {
+                if (e.fila_id === {{ $fila->id }}) {
+                    const modal = document.getElementById('modalAdicionarItem');
+                    if (!modal.classList.contains('show')) {
+                        window.location.reload();
+                    }
+                }
+            });
     }
 </script>
 @endpush

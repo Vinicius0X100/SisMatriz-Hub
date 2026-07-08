@@ -7,6 +7,8 @@
     <title>Painel de Atendimento — {{ $fila ? $fila->data->format('d/m/Y') : 'Sem fila ativa' }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
     @vite(['resources/css/app.scss'])
     <style>
         :root {
@@ -456,9 +458,11 @@ async function inicializarEcho() {
             return;
         }
 
-        const { default: Echo } = await import('laravel-echo');
-        const Pusher = (await import('pusher-js')).default;
-        window.Pusher = Pusher;
+        if (typeof window.Echo === 'undefined' || typeof window.Pusher === 'undefined') {
+            console.warn('Pusher ou Echo não estão definidos globalmente. Usando polling.');
+            iniciarPolling();
+            return;
+        }
 
         const echo = new Echo({
             broadcaster: 'pusher',
