@@ -339,6 +339,24 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Resultado Busca -->
+<div class="modal fade" id="modalResultadoBusca" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold text-dark mb-0">Confirmar Pessoa Encontrada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+                <div class="list-group list-group-flush" id="listaPessoasEncontradas">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -382,6 +400,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         cpfFeedback.textContent = 'Buscando...';
         cpfFeedback.className = 'form-text text-muted';
+        
+        btnBuscarCpf.disabled = true;
+        btnBuscarCpf.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
 
         fetch(`{{ route('atendimento-fila.buscar-pessoa') }}?q=${encodeURIComponent(query)}`, {
             headers: {
@@ -391,19 +412,43 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(r => r.json())
         .then(data => {
-            if (data.found) {
-                modalNome.value = data.nome;
-                modalTelefone.value = data.telefone || '';
-                registerId.value = data.register_id;
-                cpfFeedback.textContent = '✓ Pessoa encontrada no Registro Geral.';
-                cpfFeedback.className = 'form-text text-success';
+            btnBuscarCpf.disabled = false;
+            btnBuscarCpf.innerHTML = '<i class="bi bi-search"></i>';
+
+            if (data.found && data.registers.length > 0) {
+                const lista = document.getElementById('listaPessoasEncontradas');
+                lista.innerHTML = '';
+                
+                data.registers.forEach(p => {
+                    lista.innerHTML += `
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 border-bottom">
+                            <div>
+                                <h6 class="mb-1 fw-bold text-primary">${p.nome}</h6>
+                                <p class="mb-0 text-muted small mt-2">
+                                    <i class="bi bi-person-vcard me-1"></i> CPF: <b>${p.cpf || 'Não informado'}</b> <br>
+                                    <i class="bi bi-envelope me-1"></i> E-mail: <b>${p.email || 'Não informado'}</b> <br>
+                                    <i class="bi bi-calendar me-1"></i> Nasc: <b>${p.nascimento}</b>
+                                </p>
+                            </div>
+                            <button type="button" class="btn btn-primary rounded-pill px-4" onclick="selecionarPessoa(${p.id}, '${p.nome.replace(/'/g, "\\'")}', '${p.telefone || ''}')">Confirmar</button>
+                        </div>
+                    `;
+                });
+                
+                new bootstrap.Modal(document.getElementById('modalResultadoBusca')).show();
+                cpfFeedback.textContent = 'Escolha a pessoa na lista para confirmar.';
+                cpfFeedback.className = 'form-text text-primary';
             } else {
+                modalNome.value = '';
+                modalTelefone.value = '';
                 registerId.value = '';
-                cpfFeedback.textContent = data.message || 'CPF não encontrado.';
-                cpfFeedback.className = 'form-text text-warning';
+                cpfFeedback.textContent = data.message || 'Pessoa não encontrada.';
+                cpfFeedback.className = 'form-text text-danger';
             }
         })
         .catch(() => {
+            btnBuscarCpf.disabled = false;
+            btnBuscarCpf.innerHTML = '<i class="bi bi-search"></i>';
             cpfFeedback.textContent = 'Erro ao buscar. Tente novamente.';
             cpfFeedback.className = 'form-text text-danger';
         });
@@ -439,7 +484,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('confirmGenericBtn').addEventListener('click', function() {
         if (currentFormIdToSubmit) {
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Aguarde...';
             document.getElementById(currentFormIdToSubmit).submit();
+        }
+    });
+
+    window.selecionarPessoa = function(id, nome, telefone) {
+        document.getElementById('registerId').value = id;
+        document.getElementById('modalNome').value = nome;
+        document.getElementById('modalTelefone').value = telefone;
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalResultadoBusca')).hide();
+        const cpfFeedback = document.getElementById('cpfFeedback');
+        cpfFeedback.textContent = '✓ Pessoa confirmada e selecionada.';
+        cpfFeedback.className = 'form-text text-success fw-bold';
+    };
+
+    // Spinner Global em Form Submit
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn && !submitBtn.disabled) {
+            submitBtn.disabled = true;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.setAttribute('data-original-text', originalText);
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Aguarde...';
         }
     });
 });

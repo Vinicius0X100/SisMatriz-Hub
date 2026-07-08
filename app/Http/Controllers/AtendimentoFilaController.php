@@ -239,22 +239,30 @@ class AtendimentoFilaController extends Controller
             return response()->json(['found' => false, 'message' => 'Digite pelo menos 3 caracteres.']);
         }
 
-        $register = \App\Models\Register::where('paroquia_id', $user->paroquia_id)
+        $registers = \App\Models\Register::where('paroquia_id', $user->paroquia_id)
             ->where(function ($query) use ($q) {
                 $query->where('cpf', $q)
                       ->orWhere('name', 'like', '%' . $q . '%');
             })
-            ->first(['id', 'name', 'phone']);
+            ->limit(10)
+            ->get(['id', 'name', 'phone', 'cpf', 'email', 'born_date']);
 
-        if (!$register) {
+        if ($registers->isEmpty()) {
             return response()->json(['found' => false, 'message' => 'Nenhum registro encontrado.']);
         }
 
         return response()->json([
-            'found'       => true,
-            'register_id' => $register->id,
-            'nome'        => $register->name,
-            'telefone'    => $register->phone,
+            'found'     => true,
+            'registers' => $registers->map(function ($r) {
+                return [
+                    'id'         => $r->id,
+                    'nome'       => $r->name,
+                    'telefone'   => $r->phone,
+                    'cpf'        => $r->cpf,
+                    'email'      => $r->email,
+                    'nascimento' => $r->born_date ? $r->born_date->format('d/m/Y') : 'Não informada',
+                ];
+            })
         ]);
     }
 
