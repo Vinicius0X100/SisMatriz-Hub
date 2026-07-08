@@ -546,9 +546,16 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-    (function() {
+    (async function() {
+        // Aguarda window.Echo ser definido pelo bundle Vite (até 3s)
+        let tentativas = 0;
+        while (typeof window.Echo === 'undefined' && tentativas < 30) {
+            await new Promise(r => setTimeout(r, 100));
+            tentativas++;
+        }
+
         if (typeof window.Echo === 'undefined') {
-            console.warn('[Fila] window.Echo não disponível. Recarregue a página.');
+            console.warn('[Fila] window.Echo não disponível após 3s. Sem tempo real.');
             return;
         }
 

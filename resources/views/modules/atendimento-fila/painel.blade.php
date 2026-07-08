@@ -446,47 +446,60 @@ window.chamarProximo = function() {
 // -----------------------------------------------------------------------
 
 async function inicializarEcho() {
+    const pusherKey     = "{{ env('PUSHER_APP_KEY', '') }}";
+    const pusherCluster = "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}";
+
+    if (!pusherKey) {
+        console.warn('[Painel] Pusher não configurado. Usando polling.');
+        iniciarPolling();
+        return;
+    }
+
+    // Aguarda window.Echo (definido pelo bundle Vite/bootstrap.js)
+    // com até 3 segundos de tolerância para o módulo carregar
+    let tentativas = 0;
+    while (typeof window.Echo === 'undefined' && tentativas < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        tentativas++;
+    }
+
+    if (typeof window.Echo === 'undefined') {
+        console.warn('[Painel] window.Echo não disponível após aguardar. Usando polling.');
+        iniciarPolling();
+        return;
+    }
+
     try {
-        const pusherKey     = "{{ env('PUSHER_APP_KEY', '') }}";
-        const pusherCluster = "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}";
-
-        if (!pusherKey) {
-            console.warn('Pusher não configurado. Usando polling.');
-            iniciarPolling();
-            return;
-        }
-
-        if (typeof window.Echo === 'undefined') {
-            console.warn('[Painel] window.Echo não disponível.');
-            iniciarPolling();
-            return;
-        }
-
         const echo = window.Echo;
 
         echo.channel(`paroquia.${PAROQUIA_ID}.fila`)
             .listen('.fila.atualizada', (e) => {
-                console.log('[Echo] Evento recebido:', e);
-                if (e.fila_id === FILA_ID) {
+                console.log('[Painel] Evento recebido:', e);
+                if (parseInt(e.fila_id) === FILA_ID) {
                     carregarDados();
                 }
             });
 
         // Status de conexão
         echo.connector.pusher.connection.bind('connected', () => {
-            console.log('[Echo] Conectado ao Pusher!');
+            console.log('[Painel] Conectado ao Pusher!');
             atualizarStatusConexao(true);
         });
         echo.connector.pusher.connection.bind('disconnected', () => {
             atualizarStatusConexao(false);
-            iniciarPolling(); // fallback se desconectar
+            iniciarPolling();
         });
         echo.connector.pusher.connection.bind('error', (err) => {
-            console.error('[Echo] Erro de conexão:', err);
+            console.error('[Painel] Erro de conexão:', err);
         });
 
+        // Se já está conectado (conexão reutilizada), marca como ativo imediatamente
+        if (echo.connector.pusher.connection.state === 'connected') {
+            atualizarStatusConexao(true);
+        }
+
     } catch (e) {
-        console.warn('Echo não disponível, usando polling:', e);
+        console.warn('[Painel] Erro ao inicializar Echo:', e);
         iniciarPolling();
     }
 }
