@@ -447,7 +447,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         Route::get('/', [App\Http\Controllers\AtendimentoFilaController::class, 'index'])->name('index');
         Route::get('/criar', [App\Http\Controllers\AtendimentoFilaController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\AtendimentoFilaController::class, 'store'])->name('store');
-        Route::get('/buscar-cpf', [App\Http\Controllers\AtendimentoFilaController::class, 'buscarPorCpf'])->name('buscar-cpf');
+        Route::get('/buscar-pessoa', [App\Http\Controllers\AtendimentoFilaController::class, 'buscarPessoa'])->name('buscar-pessoa');
         Route::get('/painel', [App\Http\Controllers\AtendimentoFilaController::class, 'painel'])->name('painel');
 
         // Rotas dinâmicas com {id}

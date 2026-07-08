@@ -224,7 +224,7 @@ class AtendimentoFilaController extends Controller
     /**
      * Busca registro por CPF para auto-preencher o formulário de agendado.
      */
-    public function buscarPorCpf(Request $request)
+    public function buscarPessoa(Request $request)
     {
         if (!$this->verificarPermissao()) {
             return response()->json(['found' => false], 403);
@@ -233,18 +233,21 @@ class AtendimentoFilaController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $cpf = preg_replace('/\D/', '', $request->input('cpf', ''));
+        $q = trim($request->input('q', ''));
 
-        if (strlen($cpf) < 11) {
-            return response()->json(['found' => false, 'message' => 'CPF inválido.']);
+        if (strlen($q) < 3) {
+            return response()->json(['found' => false, 'message' => 'Digite pelo menos 3 caracteres.']);
         }
 
-        $register = Register::where('paroquia_id', $user->paroquia_id)
-            ->where('cpf', $cpf)
+        $register = \App\Models\Register::where('paroquia_id', $user->paroquia_id)
+            ->where(function ($query) use ($q) {
+                $query->where('cpf', $q)
+                      ->orWhere('name', 'like', '%' . $q . '%');
+            })
             ->first(['id', 'name', 'phone']);
 
         if (!$register) {
-            return response()->json(['found' => false, 'message' => 'CPF não encontrado no Registro Geral.']);
+            return response()->json(['found' => false, 'message' => 'Nenhum registro encontrado.']);
         }
 
         return response()->json([

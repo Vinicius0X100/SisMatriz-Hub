@@ -268,11 +268,11 @@
                         </div>
                     </div>
 
-                    <!-- Busca por CPF (só para agendado) -->
+                    <!-- Busca por Nome ou CPF (só para agendado) -->
                     <div class="mb-3 d-none" id="campoCpf">
-                        <label for="cpfBusca" class="form-label fw-semibold">Buscar por CPF <small class="text-muted">(auto-preenche nome e telefone)</small></label>
+                        <label for="cpfBusca" class="form-label fw-semibold">Buscar Pessoa <small class="text-muted">(auto-preenche nome e telefone)</small></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="cpfBusca" placeholder="000.000.000-00" maxlength="14">
+                            <input type="text" class="form-control" id="cpfBusca" placeholder="Nome completo ou CPF" maxlength="100">
                             <button type="button" class="btn btn-outline-primary" id="btnBuscarCpf">
                                 <i class="bi bi-search"></i>
                             </button>
@@ -366,11 +366,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Busca por CPF
+    // Busca por Nome ou CPF
     btnBuscarCpf.addEventListener('click', function () {
-        const cpf = cpfBusca.value.replace(/\D/g, '');
-        if (cpf.length < 11) {
-            cpfFeedback.textContent = 'Informe um CPF válido.';
+        const query = document.getElementById('cpfBusca').value.trim();
+        const cpfFeedback = document.getElementById('cpfFeedback');
+        const modalNome = document.getElementById('modalNome');
+        const modalTelefone = document.getElementById('modalTelefone');
+        const registerId = document.getElementById('registerId');
+
+        if (query.length < 3) {
+            cpfFeedback.textContent = 'Digite pelo menos 3 caracteres para buscar.';
             cpfFeedback.className = 'form-text text-danger';
             return;
         }
@@ -378,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cpfFeedback.textContent = 'Buscando...';
         cpfFeedback.className = 'form-text text-muted';
 
-        fetch(`{{ route('atendimento-fila.buscar-cpf') }}?cpf=${cpf}`, {
+        fetch(`{{ route('atendimento-fila.buscar-pessoa') }}?q=${encodeURIComponent(query)}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
