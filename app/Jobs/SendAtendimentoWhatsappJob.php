@@ -73,6 +73,8 @@ class SendAtendimentoWhatsappJob implements ShouldQueue
         try {
             $twilio = new Client($sid, $token);
 
+            $from = config('services.twilio.whatsapp_from');
+
             $messageOptions = [
                 'messagingServiceSid' => $messagingService,
                 'contentSid'          => $contentSid,
@@ -83,6 +85,10 @@ class SendAtendimentoWhatsappJob implements ShouldQueue
                     '4' => $this->nomeParoquia,
                 ]),
             ];
+
+            if ($from) {
+                $messageOptions['from'] = $from;
+            }
 
             $message = $twilio->messages->create($to, $messageOptions);
 
