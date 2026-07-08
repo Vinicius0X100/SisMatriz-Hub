@@ -440,7 +440,7 @@ class AtendimentoFilaController extends Controller
 
             // Cria notificação na navbar (como Lembrete) para as secretárias e admins da paróquia
             $usuarios = \App\Models\User::where('paroquia_id', $fila->paroquia_id)
-                ->whereIn('role', ['1', '111'])
+                ->whereIn('level', ['1', '111'])
                 ->get();
 
             foreach ($usuarios as $u) {

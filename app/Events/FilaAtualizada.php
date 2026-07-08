@@ -50,6 +50,7 @@ class FilaAtualizada implements ShouldBroadcast
             'fila_id'    => $this->filaId,
             'paroquia_id' => $this->paroquiaId,
             'acao'       => $this->acao,
+            'mensagem'   => $this->mensagem,
         ];
     }
 }
