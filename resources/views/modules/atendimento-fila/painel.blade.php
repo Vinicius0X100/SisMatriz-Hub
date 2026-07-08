@@ -464,7 +464,7 @@ async function inicializarEcho() {
             return;
         }
 
-        const echo = new Echo({
+        const echo = new window.Echo({
             broadcaster: 'pusher',
             key: pusherKey,
             cluster: pusherCluster,

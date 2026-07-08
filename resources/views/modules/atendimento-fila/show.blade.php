@@ -66,6 +66,10 @@
                 </button>
 
                 <!-- Controles de status da fila -->
+                <a href="{{ route('atendimento-fila.painel.fila', $fila->id) }}" class="btn btn-outline-success" target="_blank">
+                    <i class="bi bi-display me-2"></i>Abrir Painel do Padre
+                </a>
+
                 @if($fila->status === \App\Models\AtendimentoFila::STATUS_AGUARDANDO)
                 <form action="{{ route('atendimento-fila.status', $fila->id) }}" method="POST" class="d-inline">
                     @csrf
@@ -75,9 +79,6 @@
                     </button>
                 </form>
                 @elseif($fila->status === \App\Models\AtendimentoFila::STATUS_ATIVA)
-                <a href="{{ route('atendimento-fila.painel.fila', $fila->id) }}" class="btn btn-outline-success" target="_blank">
-                    <i class="bi bi-display me-2"></i>Abrir Painel do Padre
-                </a>
                 <form id="formEncerrarFila" action="{{ route('atendimento-fila.status', $fila->id) }}" method="POST" class="d-inline">
                     @csrf
                     <input type="hidden" name="status" value="2">

@@ -89,11 +89,9 @@
                                 <a href="{{ route('atendimento-fila.show', $fila->id) }}" class="btn btn-sm btn-outline-primary me-1" title="Gerenciar fila">
                                     <i class="bi bi-list-ul"></i>
                                 </a>
-                                @if($fila->status === \App\Models\AtendimentoFila::STATUS_ATIVA)
                                 <a href="{{ route('atendimento-fila.painel.fila', $fila->id) }}" class="btn btn-sm btn-outline-success me-1" title="Abrir painel do padre" target="_blank">
                                     <i class="bi bi-display"></i>
                                 </a>
-                                @endif
                                 <form id="formExcluirFila{{$fila->id}}" action="{{ route('atendimento-fila.destroy', $fila->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
