@@ -524,57 +524,87 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-    const pusherKey = "{{ env('PUSHER_APP_KEY', '') }}";
-    if (pusherKey && typeof window.Echo !== 'undefined') {
-        const echo = new window.Echo({
+    (function() {
+        const pusherKey = "{{ env('PUSHER_APP_KEY', '') }}";
+        const pusherCluster = "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}";
+
+        if (!pusherKey) {
+            console.log('[Fila] Pusher não configurado. Sem tempo real.');
+            return;
+        }
+
+        if (typeof window.Pusher === 'undefined') {
+            console.warn('[Fila] Pusher.js não carregou via CDN.');
+            return;
+        }
+
+        // O IIFE do laravel-echo exporta como var `Echo` (não window.Echo)
+        if (typeof Echo === 'undefined') {
+            console.warn('[Fila] Laravel Echo não carregou via CDN.');
+            return;
+        }
+
+        window.Pusher.logToConsole = false;
+
+        const echo = new Echo({
             broadcaster: 'pusher',
             key: pusherKey,
-            cluster: "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}",
+            cluster: pusherCluster,
             forceTLS: true,
+            Pusher: window.Pusher,
         });
+
+        echo.connector.pusher.connection.bind('connected', () => {
+            console.log('[Fila] Conectado ao Pusher!');
+        });
+
+        echo.connector.pusher.connection.bind('error', (err) => {
+            console.error('[Fila] Erro Pusher:', err);
+        });
+
         echo.channel(`paroquia.{{ $fila->paroquia_id }}.fila`)
             .listen('.fila.atualizada', (e) => {
-                if (e.fila_id === {{ $fila->id }}) {
-                    const modal = document.getElementById('modalAdicionarItem');
-                    const isModalOpen = modal && modal.classList.contains('show');
+                console.log('[Fila] Evento recebido:', e);
 
-                    if (e.acao === 'proximo_chamado' && e.mensagem) {
-                        // 1. Toca som de notificação (beep)
-                        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-                        audio.play().catch(err => console.warn('Autoplay sound blocked:', err));
+                if (e.fila_id !== {{ $fila->id }}) return;
 
-                        // 2. Mostra o balão Toast na tela da secretária
-                        const toastContainer = document.getElementById('toastContainerFila');
-                        if (toastContainer) {
-                            const toastId = 'toast-' + Date.now();
-                            const toastHtml = `
-                                <div id="${toastId}" class="toast align-items-center text-bg-success border-0 mb-3 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="toast-body fw-bold fs-5 d-flex align-items-center gap-2">
-                                            <i class="bi bi-megaphone-fill fs-3"></i> 
-                                            <span>${e.mensagem}</span>
-                                        </div>
-                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                const modal = document.getElementById('modalAdicionarItem');
+                const isModalOpen = modal && modal.classList.contains('show');
+
+                if (e.acao === 'proximo_chamado' && e.mensagem) {
+                    // 1. Toca som de notificação
+                    const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                    audio.play().catch(err => console.warn('Autoplay bloqueado:', err));
+
+                    // 2. Mostra Toast na tela da secretária
+                    const toastContainer = document.getElementById('toastContainerFila');
+                    if (toastContainer) {
+                        const toastId = 'toast-' + Date.now();
+                        toastContainer.insertAdjacentHTML('beforeend', `
+                            <div id="${toastId}" class="toast align-items-center text-bg-success border-0 mb-3 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
+                                <div class="d-flex px-2 py-2">
+                                    <div class="toast-body fw-bold fs-5 d-flex align-items-center gap-2">
+                                        <i class="bi bi-megaphone-fill fs-3"></i>
+                                        <span>${e.mensagem}</span>
                                     </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                                 </div>
-                            `;
-                            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-                            const toastElement = document.getElementById(toastId);
-                            const toast = new bootstrap.Toast(toastElement);
-                            toast.show();
-                        }
-
-                        // 3. Aguarda 4.5 segundos para a pessoa ler e fecha/recarrega a tela (para atualizar a navbar nativamente)
-                        setTimeout(() => {
-                            if (!isModalOpen) window.location.reload();
-                        }, 4500);
-
-                    } else {
-                        // Atualização comum de status (ex: fila foi fechada, alguem adicionado)
-                        if (!isModalOpen) window.location.reload();
+                            </div>
+                        `);
+                        const toastEl = document.getElementById(toastId);
+                        new bootstrap.Toast(toastEl).show();
                     }
+
+                    // 3. Recarrega após 5s para atualizar a navbar
+                    setTimeout(() => {
+                        if (!isModalOpen) window.location.reload();
+                    }, 5000);
+
+                } else {
+                    // Qualquer outra ação: recarregar a tela (item adicionado, removido, etc.)
+                    if (!isModalOpen) window.location.reload();
                 }
             });
-    }
+    })();
 </script>
 @endpush

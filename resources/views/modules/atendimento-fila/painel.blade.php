@@ -453,26 +453,38 @@ async function inicializarEcho() {
         const pusherCluster = "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}";
 
         if (!pusherKey) {
-            // Pusher não configurado — usa polling de fallback
+            console.warn('Pusher não configurado. Usando polling.');
             iniciarPolling();
             return;
         }
 
-        if (typeof window.Echo === 'undefined' || typeof window.Pusher === 'undefined') {
-            console.warn('Pusher ou Echo não estão definidos globalmente. Usando polling.');
+        if (typeof window.Pusher === 'undefined') {
+            console.warn('Pusher.js não carregou. Usando polling.');
             iniciarPolling();
             return;
         }
 
-        const echo = new window.Echo({
+        // O IIFE do laravel-echo exporta como `Echo` (var global), não window.Echo
+        if (typeof Echo === 'undefined') {
+            console.warn('Laravel Echo não carregou. Usando polling.');
+            iniciarPolling();
+            return;
+        }
+
+        // Configurar o Echo com Pusher corretamente
+        window.Pusher.logToConsole = false;
+
+        const echo = new Echo({
             broadcaster: 'pusher',
             key: pusherKey,
             cluster: pusherCluster,
             forceTLS: true,
+            Pusher: window.Pusher,
         });
 
         echo.channel(`paroquia.${PAROQUIA_ID}.fila`)
             .listen('.fila.atualizada', (e) => {
+                console.log('[Echo] Evento recebido:', e);
                 if (e.fila_id === FILA_ID) {
                     carregarDados();
                 }
@@ -480,11 +492,15 @@ async function inicializarEcho() {
 
         // Status de conexão
         echo.connector.pusher.connection.bind('connected', () => {
+            console.log('[Echo] Conectado ao Pusher!');
             atualizarStatusConexao(true);
         });
         echo.connector.pusher.connection.bind('disconnected', () => {
             atualizarStatusConexao(false);
             iniciarPolling(); // fallback se desconectar
+        });
+        echo.connector.pusher.connection.bind('error', (err) => {
+            console.error('[Echo] Erro de conexão:', err);
         });
 
     } catch (e) {
