@@ -23,7 +23,8 @@ class AtendimentoFilaController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        return $user->hasAnyRole(self::ROLES_PERMITIDAS);
+
+        return $user && $user->hasAnyRole(self::ROLES_PERMITIDAS);
     }
 
     // =========================================================================
@@ -440,8 +441,8 @@ class AtendimentoFilaController extends Controller
 
             // Cria notificação na navbar (como Lembrete) para as secretárias e admins da paróquia
             $usuarios = \App\Models\User::where('paroquia_id', $fila->paroquia_id)
-                ->whereIn('level', ['1', '111'])
-                ->get();
+                ->get()
+                ->filter(fn($u) => $u->hasAnyRole(['1', '111']));
 
             foreach ($usuarios as $u) {
                 \App\Models\Lembrete::create([
