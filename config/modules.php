@@ -51,5 +51,6 @@ return [
     ['name' => 'Calendário Matrimonial', 'icon' => 'calendar-heart', 'url' => '/calendario-matrimonio', 'allowed_roles' => ['1', '111']],
     ['name' => 'Campanhas', 'icon' => 'megaphone', 'url' => '/campanhas', 'allowed_roles' => ['1', '111', '11']],
     ['name' => 'Processos', 'icon' => 'diagram-3', 'url' => '/processos', 'allowed_roles' => ['1', '111', '9', '10']],
+    ['name' => 'Fila de Atendimento', 'icon' => 'people-fill', 'url' => '/atendimento-fila', 'allowed_roles' => ['1', '111']],
     ['name' => 'Início', 'icon' => 'house', 'allowed_roles' => ['*']], // Everyone
 ];

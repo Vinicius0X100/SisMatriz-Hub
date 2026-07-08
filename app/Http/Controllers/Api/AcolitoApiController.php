@@ -363,7 +363,10 @@ class AcolitoApiController extends Controller
                     'cal_id'    => $escalado->cal_id,
                     'id'        => $acolito?->id,
                     'name'      => $acolito?->user?->name ?? $acolito?->name ?? 'N/A',
-                    'avatar'    => $acolito?->user?->avatar,
+                    'avatar_url' => $this->resolverAvatarUrl(
+                        $acolito?->user?->avatar,
+                        $acolito?->user?->name ?? $acolito?->name
+                    ),
                     'type'      => $acolito?->type, // 0 = Acólito, 1 = Coroinha
                     'funcao'    => $escalado->funcao
                         ? [
@@ -374,5 +377,20 @@ class AcolitoApiController extends Controller
                 ];
             })->values(),
         ];
+    }
+
+    /**
+     * Monta a URL completa do avatar do usuário.
+     * Segue a mesma lógica da view web (manage.blade.php):
+     *   - Se há avatar: /storage/uploads/avatars/{filename}
+     *   - Fallback:     https://ui-avatars.com/api/?name=<nome>
+     */
+    private function resolverAvatarUrl(?string $avatarFilename, ?string $name): string
+    {
+        if ($avatarFilename) {
+            return url('storage/uploads/avatars/' . $avatarFilename);
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name ?? 'A') . '&background=random';
     }
 }

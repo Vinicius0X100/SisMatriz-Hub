@@ -440,4 +440,27 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
 
     // Notificações
     Route::post('/notifications/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+
+    // Fila de Atendimento
+    Route::prefix('atendimento-fila')->name('atendimento-fila.')->group(function () {
+        // Rotas estáticas (devem vir ANTES das dinâmicas com {id})
+        Route::get('/', [App\Http\Controllers\AtendimentoFilaController::class, 'index'])->name('index');
+        Route::get('/criar', [App\Http\Controllers\AtendimentoFilaController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\AtendimentoFilaController::class, 'store'])->name('store');
+        Route::get('/buscar-cpf', [App\Http\Controllers\AtendimentoFilaController::class, 'buscarPorCpf'])->name('buscar-cpf');
+        Route::get('/painel', [App\Http\Controllers\AtendimentoFilaController::class, 'painel'])->name('painel');
+
+        // Rotas dinâmicas com {id}
+        Route::get('/{id}', [App\Http\Controllers\AtendimentoFilaController::class, 'show'])->name('show');
+        Route::delete('/{id}', [App\Http\Controllers\AtendimentoFilaController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/status', [App\Http\Controllers\AtendimentoFilaController::class, 'alterarStatus'])->name('status');
+        Route::post('/{filaId}/itens', [App\Http\Controllers\AtendimentoFilaController::class, 'adicionarItem'])->name('itens.store');
+        Route::post('/{filaId}/itens/{itemId}/status', [App\Http\Controllers\AtendimentoFilaController::class, 'alterarStatusItem'])->name('itens.status');
+        Route::delete('/{filaId}/itens/{itemId}', [App\Http\Controllers\AtendimentoFilaController::class, 'removerItem'])->name('itens.destroy');
+
+        // Painel do Padre
+        Route::get('/{filaId}/painel', [App\Http\Controllers\AtendimentoFilaController::class, 'painel'])->name('painel.fila');
+        Route::get('/{filaId}/painel-dados', [App\Http\Controllers\AtendimentoFilaController::class, 'painelDados'])->name('painel.dados');
+        Route::post('/{filaId}/chamar-proximo', [App\Http\Controllers\AtendimentoFilaController::class, 'chamarProximo'])->name('chamar-proximo');
+    });
 });

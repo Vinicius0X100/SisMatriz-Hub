@@ -18,7 +18,8 @@
         "simplesoftwareio/simple-qrcode": "^4.2",
         "symfony/brevo-mailer": "^8.0",
         "symfony/http-client": "^8.0",
-        "twilio/sdk": "^8.10"
+        "twilio/sdk": "^8.10",
+        "pusher/pusher-php-server": "^7.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

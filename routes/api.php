@@ -73,3 +73,9 @@ Route::middleware(['web', 'auth:web'])->prefix('acolitos')->group(function () {
     // Lista de funções cadastradas na paróquia
     Route::get('/funcoes', [AcolitoApiController::class, 'getFuncoes']);
 });
+
+// API Pública — Fila de Atendimento (sem autenticação — para uso no site da paróquia)
+// Instruções para IA do site: consultar posição na fila passando ?cpf={apenas_numeros}
+Route::prefix('atendimento')->group(function () {
+    Route::get('/consultar', [\App\Http\Controllers\Api\AtendimentoFilaApiController::class, 'consultar']);
+});

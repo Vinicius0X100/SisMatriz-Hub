@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Events;
+
+use App\Models\AtendimentoFila;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class FilaAtualizada implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public int $filaId;
+    public int $paroquiaId;
+    public string $acao; // 'item_adicionado', 'proximo_chamado', 'item_removido', 'status_alterado'
+
+    public function __construct(int $filaId, int $paroquiaId, string $acao = 'atualizado')
+    {
+        $this->filaId     = $filaId;
+        $this->paroquiaId = $paroquiaId;
+        $this->acao       = $acao;
+    }
+
+    /**
+     * Canal público por paróquia — qualquer tela logada da paróquia pode ouvir.
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new Channel("paroquia.{$this->paroquiaId}.fila"),
+        ];
+    }
+
+    /**
+     * Nome do evento no lado do cliente.
+     */
+    public function broadcastAs(): string
+    {
+        return 'fila.atualizada';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'fila_id'    => $this->filaId,
+            'paroquia_id' => $this->paroquiaId,
+            'acao'       => $this->acao,
+        ];
+    }
+}
