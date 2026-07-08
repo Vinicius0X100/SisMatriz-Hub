@@ -7,7 +7,7 @@
     <title>Painel de Atendimento — {{ $fila ? $fila->data->format('d/m/Y') : 'Sem fila ativa' }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    @vite(['resources/css/app.scss', 'resources/js/app.js'])
+    @vite(['resources/css/app.scss', 'resources/js/app.js', 'resources/js/echo-setup.js'])
     <style>
         :root {
             --painel-bg: #0f172a;
@@ -319,7 +319,7 @@
     @endif
 </div>
 
-@vite(['resources/js/app.js'])
+@vite(['resources/js/app.js', 'resources/js/echo-setup.js'])
 
 @if($fila)
 <script>

@@ -11,7 +11,7 @@
     <!-- Bootstrap Icons (para compatibilidade com módulos existentes) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @viteReactRefresh
-    @vite(['resources/css/app.scss', 'resources/js/app.js'])
+    @vite(['resources/css/app.scss', 'resources/js/app.js', 'resources/js/echo-setup.js'])
     @stack('styles')
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light" data-auth-id="{{ Auth::id() }}">
