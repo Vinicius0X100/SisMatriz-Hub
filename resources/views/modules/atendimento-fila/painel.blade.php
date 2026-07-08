@@ -7,9 +7,7 @@
     <title>Painel de Atendimento — {{ $fila ? $fila->data->format('d/m/Y') : 'Sem fila ativa' }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
-    @vite(['resources/css/app.scss'])
+    @vite(['resources/css/app.scss', 'resources/js/app.js'])
     <style>
         :root {
             --painel-bg: #0f172a;
@@ -458,29 +456,13 @@ async function inicializarEcho() {
             return;
         }
 
-        if (typeof window.Pusher === 'undefined') {
-            console.warn('Pusher.js não carregou. Usando polling.');
+        if (typeof window.Echo === 'undefined') {
+            console.warn('[Painel] window.Echo não disponível.');
             iniciarPolling();
             return;
         }
 
-        // O IIFE do laravel-echo exporta como `Echo` (var global), não window.Echo
-        if (typeof Echo === 'undefined') {
-            console.warn('Laravel Echo não carregou. Usando polling.');
-            iniciarPolling();
-            return;
-        }
-
-        // Configurar o Echo com Pusher corretamente
-        window.Pusher.logToConsole = false;
-
-        const echo = new Echo({
-            broadcaster: 'pusher',
-            key: pusherKey,
-            cluster: pusherCluster,
-            forceTLS: true,
-            Pusher: window.Pusher,
-        });
+        const echo = window.Echo;
 
         echo.channel(`paroquia.${PAROQUIA_ID}.fila`)
             .listen('.fila.atualizada', (e) => {

@@ -3,8 +3,6 @@
 @section('title', 'Gerenciar Fila — ' . $fila->data->format('d/m/Y'))
 
 @section('content')
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
 
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
@@ -549,34 +547,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
     (function() {
-        const pusherKey = "{{ env('PUSHER_APP_KEY', '') }}";
-        const pusherCluster = "{{ env('PUSHER_APP_CLUSTER', 'mt1') }}";
-
-        if (!pusherKey) {
-            console.log('[Fila] Pusher não configurado. Sem tempo real.');
+        if (typeof window.Echo === 'undefined') {
+            console.warn('[Fila] window.Echo não disponível. Recarregue a página.');
             return;
         }
 
-        if (typeof window.Pusher === 'undefined') {
-            console.warn('[Fila] Pusher.js não carregou via CDN.');
-            return;
-        }
-
-        // O IIFE do laravel-echo exporta como var `Echo` (não window.Echo)
-        if (typeof Echo === 'undefined') {
-            console.warn('[Fila] Laravel Echo não carregou via CDN.');
-            return;
-        }
-
-        window.Pusher.logToConsole = false;
-
-        const echo = new Echo({
-            broadcaster: 'pusher',
-            key: pusherKey,
-            cluster: pusherCluster,
-            forceTLS: true,
-            Pusher: window.Pusher,
-        });
+        const echo = window.Echo;
 
         echo.connector.pusher.connection.bind('connected', () => {
             console.log('[Fila] Conectado ao Pusher!');
