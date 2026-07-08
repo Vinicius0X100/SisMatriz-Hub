@@ -16,12 +16,14 @@ class FilaAtualizada implements ShouldBroadcast
     public int $filaId;
     public int $paroquiaId;
     public string $acao; // 'item_adicionado', 'proximo_chamado', 'item_removido', 'status_alterado'
+    public ?string $mensagem;
 
-    public function __construct(int $filaId, int $paroquiaId, string $acao = 'atualizado')
+    public function __construct(int $filaId, int $paroquiaId, string $acao = 'atualizado', ?string $mensagem = null)
     {
         $this->filaId     = $filaId;
         $this->paroquiaId = $paroquiaId;
         $this->acao       = $acao;
+        $this->mensagem   = $mensagem;
     }
 
     /**

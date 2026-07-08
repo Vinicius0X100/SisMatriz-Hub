@@ -360,6 +360,9 @@
     </div>
 </div>
 
+<!-- Container para Notificações Flutuantes (Toasts) -->
+<div id="toastContainerFila" class="toast-container position-fixed top-0 end-0 p-3 mt-5" style="z-index: 9999;"></div>
+
 @endsection
 
 @push('scripts')
@@ -532,8 +535,42 @@ document.addEventListener('DOMContentLoaded', function () {
             .listen('.fila.atualizada', (e) => {
                 if (e.fila_id === {{ $fila->id }}) {
                     const modal = document.getElementById('modalAdicionarItem');
-                    if (!modal.classList.contains('show')) {
-                        window.location.reload();
+                    const isModalOpen = modal && modal.classList.contains('show');
+
+                    if (e.acao === 'proximo_chamado' && e.mensagem) {
+                        // 1. Toca som de notificação (beep)
+                        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                        audio.play().catch(err => console.warn('Autoplay sound blocked:', err));
+
+                        // 2. Mostra o balão Toast na tela da secretária
+                        const toastContainer = document.getElementById('toastContainerFila');
+                        if (toastContainer) {
+                            const toastId = 'toast-' + Date.now();
+                            const toastHtml = `
+                                <div id="${toastId}" class="toast align-items-center text-bg-success border-0 mb-3 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="toast-body fw-bold fs-5 d-flex align-items-center gap-2">
+                                            <i class="bi bi-megaphone-fill fs-3"></i> 
+                                            <span>${e.mensagem}</span>
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                </div>
+                            `;
+                            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                            const toastElement = document.getElementById(toastId);
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                        }
+
+                        // 3. Aguarda 4.5 segundos para a pessoa ler e fecha/recarrega a tela (para atualizar a navbar nativamente)
+                        setTimeout(() => {
+                            if (!isModalOpen) window.location.reload();
+                        }, 4500);
+
+                    } else {
+                        // Atualização comum de status (ex: fila foi fechada, alguem adicionado)
+                        if (!isModalOpen) window.location.reload();
                     }
                 }
             });

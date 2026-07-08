@@ -433,11 +433,29 @@ class AtendimentoFilaController extends Controller
         // Chama o próximo da fila ordenada
         $proximo = $this->getProximoDaFila($fila);
 
+        $mensagem = "Ninguém aguardando na fila.";
         if ($proximo) {
             $proximo->update(['status' => AtendimentoFilaItem::STATUS_EM_ATENDIMENTO]);
+            $mensagem = "Padre chamou: " . $proximo->nome;
+
+            // Cria notificação na navbar (como Lembrete) para as secretárias e admins da paróquia
+            $usuarios = \App\Models\User::where('paroquia_id', $fila->paroquia_id)
+                ->whereIn('role', ['1', '111'])
+                ->get();
+
+            foreach ($usuarios as $u) {
+                \App\Models\Lembrete::create([
+                    'usuario_id' => $u->id,
+                    'descricao'  => $mensagem,
+                    'data_hora'  => now(),
+                    'status'     => 'ativo',
+                    'pref_email' => false,
+                    'pref_sound' => true,
+                ]);
+            }
         }
 
-        broadcast(new FilaAtualizada($fila->id, $fila->paroquia_id, 'proximo_chamado'))->toOthers();
+        broadcast(new FilaAtualizada($fila->id, $fila->paroquia_id, 'proximo_chamado', $mensagem))->toOthers();
 
         return response()->json($this->montarDadosPainel($fila));
     }
