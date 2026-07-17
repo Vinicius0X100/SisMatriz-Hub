@@ -39,6 +39,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('/dashboard/reorder-pins', [DashboardController::class, 'reorderPins'])->name('dashboard.reorder-pins');
     Route::post('/dashboard/update-pin-style', [DashboardController::class, 'updatePinStyle'])->name('dashboard.update-pin-style');
     Route::get('/dashboard/online-users', [DashboardController::class, 'getOnlineUsers'])->name('dashboard.online-users');
+    Route::post('/dashboard/ping', [DashboardController::class, 'ping'])->name('dashboard.ping');
 
     // Processos
     Route::get('processos', [\App\Http\Controllers\ProcessoController::class, 'index'])->name('processos.index');

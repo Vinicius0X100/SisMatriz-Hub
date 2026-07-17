@@ -322,6 +322,22 @@ class DashboardController extends Controller
         }
     }
 
+    public function ping()
+    {
+        $user = Auth::user();
+
+        DB::table('user_access')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'access_date' => Carbon::now()->toDateString(),
+                'access_time' => Carbon::now()->toTimeString(),
+                'device_type' => 1, // 1 = Web (Portal)
+            ]
+        );
+
+        return response()->noContent();
+    }
+
     public function getOnlineUsers()
     {
         $user = Auth::user();
@@ -329,20 +345,19 @@ class DashboardController extends Controller
         $paroquiaId = $user->paroquia_id;
 
         $accesses = UserAccess::with('user')
-            ->where('user_id', '!=', $currentUserId) // Exclude current user
             ->whereHas('user', function ($q) use ($paroquiaId) {
                 $q->where('is_visible', true)
                   ->where('paroquia_id', $paroquiaId);
             })
             ->orderBy('access_date', 'desc')
             ->orderBy('access_time', 'desc')
-            ->limit(30) // Increased limit to ensure we get enough unique users
+            ->limit(50)
             ->get()
             ->unique('user_id')
             ->values()
-            ->take(20); // Show up to 20 users
+            ->take(20);
 
-        $data = $accesses->map(function ($access) {
+        $data = $accesses->map(function ($access) use ($currentUserId) {
             $user = $access->user;
             if (!$user) return null;
 
@@ -354,19 +369,18 @@ class DashboardController extends Controller
             // Handle Hide Name
             if ($user->hide_name) {
                 $displayName = 'Usuário';
-                // Also maybe hide avatar? Or just keep it? User said "hide name". 
-                // Let's keep avatar if it's generic, but if it's a photo it reveals identity.
-                // Usually "Hide Name" implies privacy. Let's force initials or generic avatar if hidden.
-                // But the requirement was specific to "esconder o nome". 
-                // Let's just change the name for now.
+                $roleLabel   = '';
             } else {
                 $displayName = Str::limit($user->name ?? $user->user, 25, '...');
+                $roleLabel   = $user->role_label ?? '';
             }
 
             if ($isOnline) {
-                $statusText = 'Online';
+                $statusText = 'Online agora';
             } elseif ($accessDateTime->isToday()) {
-                $statusText = $accessDateTime->format('H:i');
+                $statusText = 'Hoje às ' . $accessDateTime->format('H:i');
+            } elseif ($accessDateTime->isYesterday()) {
+                $statusText = 'Ontem às ' . $accessDateTime->format('H:i');
             } else {
                 $statusText = $accessDateTime->format('d/m/Y');
             }
@@ -375,24 +389,31 @@ class DashboardController extends Controller
                 ? asset('storage/uploads/avatars/' . $user->avatar)
                 : null;
 
-            $parts = explode(' ', trim($user->name ?? $user->user));
+            $parts    = explode(' ', trim($user->name ?? $user->user));
             $initials = strtoupper(substr($parts[0], 0, 1));
             if (count($parts) > 1) {
                 $initials .= strtoupper(substr(end($parts), 0, 1));
             }
 
             return [
-                'id' => $user->id,
-                'name' => $displayName,
-                'avatar_url' => $avatarUrl,
-                'initials' => $initials,
-                'is_online' => $isOnline,
+                'id'          => $user->id,
+                'name'        => $displayName,
+                'role_label'  => $roleLabel,
+                'avatar_url'  => $avatarUrl,
+                'initials'    => $initials,
+                'is_online'   => $isOnline,
+                'is_me'       => $user->id === $currentUserId,
                 'status_text' => $statusText,
                 'device_type' => $access->device_type,
             ];
         })->filter()->values();
 
-        return response()->json($data);
+        // Ordenar: online primeiro, depois por acesso mais recente
+        $sorted = $data->sortByDesc(function ($u) {
+            return [$u['is_online'] ? 1 : 0];
+        })->values();
+
+        return response()->json($sorted);
     }
 
     public function reorderPins(Request $request)
