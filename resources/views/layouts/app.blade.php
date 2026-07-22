@@ -280,10 +280,15 @@
 
             {{-- Fixed Top Links --}}
             <div class="sidebar-top-fixed">
-                <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <span class="sidebar-icon"><i class="bi bi-house-door-fill"></i></span>
-                    <span class="sidebar-label">Início</span>
-                </a>
+                <div class="sidebar-top-row">
+                    <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" style="flex:1;">
+                        <span class="sidebar-icon"><i class="bi bi-house-door-fill"></i></span>
+                        <span class="sidebar-label">Início</span>
+                    </a>
+                    <button id="sidebarEditBtn" class="sidebar-edit-btn" title="Editar fixados">
+                        <span id="sidebarEditBtnLabel">Editar</span>
+                    </button>
+                </div>
             </div>
 
             {{-- Search --}}
@@ -304,14 +309,21 @@
                         <i class="bi bi-pin-fill me-1" style="font-size: 0.65rem;"></i> Fixados
                     </div>
                     @foreach($globalPinnedModules as $module)
-                        <a href="{{ $module['url'] ?? '#' }}"
-                           class="sidebar-link sidebar-module-link sidebar-pinned-link"
-                           data-module-name="{{ strtolower($module['name']) }}">
-                            <span class="sidebar-icon">
-                                <i class="bi bi-{{ $module['icon'] }}"></i>
-                            </span>
-                            <span class="sidebar-label">{{ $module['name'] }}</span>
-                        </a>
+                        <div class="sidebar-link-wrap"
+                             data-slug="{{ Str::slug($module['name']) }}"
+                             data-pinned="1">
+                            <button class="sidebar-pin-badge sidebar-pin-badge--pinned" tabindex="-1" aria-label="Desafixar {{ $module['name'] }}">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <a href="{{ $module['url'] ?? '#' }}"
+                               class="sidebar-link sidebar-module-link sidebar-pinned-link"
+                               data-module-name="{{ strtolower($module['name']) }}">
+                                <span class="sidebar-icon">
+                                    <i class="bi bi-{{ $module['icon'] }}"></i>
+                                </span>
+                                <span class="sidebar-label">{{ $module['name'] }}</span>
+                            </a>
+                        </div>
                     @endforeach
                 </div>
                 @endif
@@ -322,14 +334,24 @@
                         <div class="sidebar-group" data-group="{{ $letter }}">
                             <div class="sidebar-group-label">{{ $letter }}</div>
                             @foreach($modules as $module)
-                                <a href="{{ $module['url'] ?? '#' }}"
-                                   class="sidebar-link sidebar-module-link"
-                                   data-module-name="{{ strtolower($module['name']) }}">
-                                    <span class="sidebar-icon">
-                                        <i class="bi bi-{{ $module['icon'] }}"></i>
-                                    </span>
-                                    <span class="sidebar-label">{{ $module['name'] }}</span>
-                                </a>
+                                @php $slug = Str::slug($module['name']); @endphp
+                                <div class="sidebar-link-wrap"
+                                     data-slug="{{ $slug }}"
+                                     data-pinned="{{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? '1' : '0' }}">
+                                    <button class="sidebar-pin-badge {{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'sidebar-pin-badge--pinned' : 'sidebar-pin-badge--unpinned' }}"
+                                            tabindex="-1"
+                                            aria-label="{{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'Desafixar' : 'Fixar' }} {{ $module['name'] }}">
+                                        <i class="bi {{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'bi-dash' : 'bi-plus' }}"></i>
+                                    </button>
+                                    <a href="{{ $module['url'] ?? '#' }}"
+                                       class="sidebar-link sidebar-module-link"
+                                       data-module-name="{{ strtolower($module['name']) }}">
+                                        <span class="sidebar-icon">
+                                            <i class="bi bi-{{ $module['icon'] }}"></i>
+                                        </span>
+                                        <span class="sidebar-label">{{ $module['name'] }}</span>
+                                    </a>
+                                </div>
                             @endforeach
                         </div>
                     @endforeach
@@ -396,6 +418,92 @@
         .sidebar-top-fixed {
             flex-shrink: 0;
             padding: 10px 0 6px;
+        }
+
+        .sidebar-top-row {
+            display: flex;
+            align-items: center;
+            padding-right: 6px;
+        }
+
+        /* Editar button */
+        .sidebar-edit-btn {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #0d6efd;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+
+        .sidebar-edit-btn:hover {
+            background: #e7f0ff;
+        }
+
+        .sidebar-edit-btn.edit-active {
+            color: #dc3545;
+        }
+
+        /* Link wrapper for edit mode */
+        .sidebar-link-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Pin badge (hidden by default) */
+        .sidebar-pin-badge {
+            position: absolute;
+            left: 6px;
+            z-index: 10;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.5);
+            transition: opacity 0.18s, transform 0.18s;
+            line-height: 1;
+        }
+
+        .sidebar-pin-badge--pinned {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .sidebar-pin-badge--unpinned {
+            background: #198754;
+            color: #fff;
+        }
+
+        /* Show badges in edit mode */
+        #sidebarNav.edit-mode .sidebar-pin-badge {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        /* Push link to the right to make room for badge */
+        #sidebarNav.edit-mode .sidebar-link {
+            padding-left: 36px;
+        }
+
+        /* Dimmed + no-pointer on link itself in edit mode */
+        #sidebarNav.edit-mode .sidebar-link {
+            pointer-events: none;
+            user-select: none;
         }
 
         /* Pinned modules group (inside scroll) */
@@ -744,10 +852,141 @@
                         group.querySelectorAll('.sidebar-module-link').forEach(function(link) {
                             const name = (link.dataset.moduleName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                             const show = name.includes(term);
-                            link.style.display = show ? '' : 'none';
+                            link.parentElement.style.display = show ? '' : 'none';
                             if (show) visible++;
                         });
                         group.style.display = visible > 0 ? '' : 'none';
+                    });
+                });
+            }
+
+            // =============================================
+            // SIDEBAR EDIT MODE (Apple jiggle + pin/unpin)
+            // =============================================
+            const editBtn   = document.getElementById('sidebarEditBtn');
+            const editLabel = document.getElementById('sidebarEditBtnLabel');
+            const nav       = document.getElementById('sidebarNav');
+            const CSRF      = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const TOGGLE_PIN_URL = '{{ route("dashboard.toggle-pin") }}';
+
+            let editMode = false;
+
+            function setEditMode(active) {
+                editMode = active;
+                if (active) {
+                    nav.classList.add('edit-mode');
+                    editBtn.classList.add('edit-active');
+                    editLabel.textContent = 'Concluído';
+                    // Enable badge buttons
+                    nav.querySelectorAll('.sidebar-pin-badge').forEach(b => b.removeAttribute('tabindex'));
+                } else {
+                    nav.classList.remove('edit-mode');
+                    editBtn.classList.remove('edit-active');
+                    editLabel.textContent = 'Editar';
+                    // Disable badge buttons again
+                    nav.querySelectorAll('.sidebar-pin-badge').forEach(b => b.setAttribute('tabindex', '-1'));
+                }
+            }
+
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    setEditMode(!editMode);
+                });
+            }
+
+            // Close edit mode when clicking outside sidebar
+            document.addEventListener('click', function(e) {
+                if (editMode && !sidebar.contains(e.target)) {
+                    setEditMode(false);
+                }
+            });
+
+            // Pin badge click handler
+            if (nav) {
+                nav.addEventListener('click', function(e) {
+                    const badge = e.target.closest('.sidebar-pin-badge');
+                    if (!badge || !editMode) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const wrap = badge.closest('.sidebar-link-wrap');
+                    if (!wrap) return;
+
+                    const slug    = wrap.dataset.slug;
+                    const isPinned = wrap.dataset.pinned === '1';
+                    const icon    = badge.querySelector('i');
+
+                    // Optimistic UI
+                    badge.disabled = true;
+                    badge.style.opacity = '0.5';
+
+                    fetch(TOGGLE_PIN_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': CSRF
+                        },
+                        body: JSON.stringify({ module_slug: slug })
+                    })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        badge.disabled = false;
+                        badge.style.opacity = '';
+
+                        if (data.status === 'pinned') {
+                            // Update state
+                            wrap.dataset.pinned = '1';
+                            badge.classList.remove('sidebar-pin-badge--unpinned');
+                            badge.classList.add('sidebar-pin-badge--pinned');
+                            if (icon) { icon.className = 'bi bi-dash'; }
+                            badge.setAttribute('aria-label', badge.getAttribute('aria-label').replace('Fixar', 'Desafixar'));
+
+                            // Move wrap to Fixados group (create if not exists)
+                            let pinnedGroup = nav.querySelector('.sidebar-pinned-group');
+                            if (!pinnedGroup) {
+                                pinnedGroup = document.createElement('div');
+                                pinnedGroup.className = 'sidebar-group sidebar-pinned-group';
+                                pinnedGroup.dataset.group = '__pinned__';
+                                pinnedGroup.innerHTML = '<div class="sidebar-group-label"><i class="bi bi-pin-fill me-1" style="font-size:0.65rem;"></i> Fixados</div>';
+                                nav.prepend(pinnedGroup);
+                            }
+                            // Clone the wrap with pinned class
+                            const link = wrap.querySelector('.sidebar-link');
+                            if (link) link.classList.add('sidebar-pinned-link');
+                            // Move to top of pinned group
+                            pinnedGroup.appendChild(wrap);
+
+                        } else {
+                            // Unpinned
+                            wrap.dataset.pinned = '0';
+                            badge.classList.remove('sidebar-pin-badge--pinned');
+                            badge.classList.add('sidebar-pin-badge--unpinned');
+                            if (icon) { icon.className = 'bi bi-plus'; }
+                            badge.setAttribute('aria-label', badge.getAttribute('aria-label').replace('Desafixar', 'Fixar'));
+
+                            const link = wrap.querySelector('.sidebar-link');
+                            if (link) link.classList.remove('sidebar-pinned-link');
+
+                            // Move wrap back to correct letter group in A-Z section
+                            const name = wrap.querySelector('.sidebar-module-link')?.dataset.moduleName || '';
+                            const firstLetter = name.normalize('NFD').replace(/[\u0300-\u036f]/g,'')[0]?.toUpperCase();
+                            let letterGroup = nav.querySelector('.sidebar-group[data-group="' + firstLetter + '"]');
+                            if (letterGroup) {
+                                letterGroup.appendChild(wrap);
+                            } else {
+                                nav.appendChild(wrap);
+                            }
+
+                            // Remove pinned group if empty
+                            const pinnedGroup = nav.querySelector('.sidebar-pinned-group');
+                            if (pinnedGroup && pinnedGroup.querySelectorAll('.sidebar-link-wrap').length === 0) {
+                                pinnedGroup.remove();
+                            }
+                        }
+                    })
+                    .catch(function() {
+                        badge.disabled = false;
+                        badge.style.opacity = '';
                     });
                 });
             }
