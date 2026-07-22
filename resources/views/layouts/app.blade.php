@@ -290,25 +290,6 @@
                 </a>
             </div>
 
-            {{-- Pinned Modules Section (if any) --}}
-            @if(isset($globalPinnedModules) && $globalPinnedModules->count() > 0)
-            <div class="sidebar-pinned-section">
-                <div class="sidebar-group-label">
-                    <i class="bi bi-pin-fill me-1" style="font-size: 0.7rem;"></i> Fixados
-                </div>
-                @foreach($globalPinnedModules as $module)
-                    <a href="{{ $module['url'] ?? '#' }}"
-                       class="sidebar-link sidebar-module-link sidebar-pinned-link"
-                       data-module-name="{{ strtolower($module['name']) }}">
-                        <span class="sidebar-icon">
-                            <i class="bi bi-{{ $module['icon'] }}"></i>
-                        </span>
-                        <span class="sidebar-label">{{ $module['name'] }}</span>
-                    </a>
-                @endforeach
-            </div>
-            @endif
-
             {{-- Search --}}
             <div class="sidebar-search-wrap">
                 <div class="position-relative">
@@ -317,8 +298,29 @@
                 </div>
             </div>
 
-            {{-- Scrollable Modules List --}}
+            {{-- Scrollable area: Pinned + All Modules --}}
             <nav class="sidebar-nav" id="sidebarNav">
+
+                {{-- Pinned Modules (inside scroll) --}}
+                @if(isset($globalPinnedModules) && $globalPinnedModules->count() > 0)
+                <div class="sidebar-group sidebar-pinned-group" data-group="__pinned__">
+                    <div class="sidebar-group-label">
+                        <i class="bi bi-pin-fill me-1" style="font-size: 0.65rem;"></i> Fixados
+                    </div>
+                    @foreach($globalPinnedModules as $module)
+                        <a href="{{ $module['url'] ?? '#' }}"
+                           class="sidebar-link sidebar-module-link sidebar-pinned-link"
+                           data-module-name="{{ strtolower($module['name']) }}">
+                            <span class="sidebar-icon">
+                                <i class="bi bi-{{ $module['icon'] }}"></i>
+                            </span>
+                            <span class="sidebar-label">{{ $module['name'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
+                @endif
+
+                {{-- All modules grouped A-Z --}}
                 @if(isset($globalGroupedModules))
                     @foreach($globalGroupedModules as $letter => $modules)
                         <div class="sidebar-group" data-group="{{ $letter }}">
@@ -336,6 +338,7 @@
                         </div>
                     @endforeach
                 @endif
+
             </nav>
 
         </div>
@@ -400,11 +403,10 @@
             border-bottom: 1px solid #f1f3f5;
         }
 
-        /* Pinned modules section */
-        .sidebar-pinned-section {
-            flex-shrink: 0;
+        /* Pinned modules group (inside scroll) */
+        .sidebar-pinned-group {
             border-bottom: 1px solid #f1f3f5;
-            padding-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .sidebar-pinned-link .sidebar-icon {
