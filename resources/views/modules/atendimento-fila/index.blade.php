@@ -14,102 +14,32 @@
         </nav>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-4 border-0 mb-4" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-            <div><strong>Sucesso!</strong> {{ session('success') }}</div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-4 border-0 mb-4" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-            <div><strong>Erro!</strong> {{ session('error') }}</div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
-    <!-- Ação principal -->
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{{ route('atendimento-fila.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>Nova Fila
-        </a>
-    </div>
-
-    <!-- Tabela de filas -->
     <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-0">
-            @if($filas->isEmpty())
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-people fs-1 mb-3 d-block"></i>
-                    <p class="mb-0">Nenhuma fila criada ainda.</p>
-                    <a href="{{ route('atendimento-fila.create') }}" class="btn btn-sm btn-primary mt-3">Criar primeira fila</a>
+        <div class="card-body p-4">
+            <!-- Barra de Ferramentas -->
+            <div class="row g-3 mb-4 align-items-end">
+                <!-- Pesquisa -->
+                <div class="col-md-4">
+                    <div>
+                        <label for="searchInput" class="form-label fw-bold text-muted small">Pesquisar</label>
+                        <div class="position-relative">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" id="searchInput" class="form-control ps-5 rounded-pill" placeholder="Data da fila..." value="{{ request('search') }}" style="height: 45px;">
+                        </div>
+                    </div>
                 </div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Data</th>
-                            <th>Status</th>
-                            <th>Pessoas na fila</th>
-                            <th class="text-end pe-4">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($filas as $fila)
-                        <tr>
-                            <td class="ps-4 fw-semibold">
-                                {{ $fila->data->format('d/m/Y') }}
-                                @if($fila->data->isToday())
-                                    <span class="badge bg-primary ms-2">Hoje</span>
-                                @endif
-                            </td>
-                            <td>
-                                @php
-                                    $statusClass = match($fila->status) {
-                                        0 => 'secondary',
-                                        1 => 'success',
-                                        2 => 'dark',
-                                        default => 'secondary',
-                                    };
-                                @endphp
-                                <span class="badge bg-{{ $statusClass }}">{{ $fila->status_label }}</span>
-                            </td>
-                            <td>
-                                <span class="fw-semibold">{{ $fila->itens_count }}</span>
-                                <span class="text-muted">pessoa(s)</span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <a href="{{ route('atendimento-fila.show', $fila->id) }}" class="btn btn-sm btn-outline-primary me-1" title="Gerenciar fila">
-                                    <i class="bi bi-list-ul"></i>
-                                </a>
-                                <a href="{{ route('atendimento-fila.painel.fila', $fila->id) }}" class="btn btn-sm btn-outline-success me-1" title="Abrir painel do padre" target="_blank">
-                                    <i class="bi bi-display"></i>
-                                </a>
-                                <form id="formExcluirFila{{$fila->id}}" action="{{ route('atendimento-fila.destroy', $fila->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                </form>
-                                <button type="button" class="btn btn-sm btn-outline-danger" title="Excluir fila" onclick="abrirConfirmacaoGenerica('formExcluirFila{{$fila->id}}', 'Excluir Fila', 'Tem certeza que deseja excluir a fila do dia <b>{{ $fila->data->format('d/m/Y') }}</b> e todos os seus registros? Isso não pode ser desfeito.', 'danger')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+
+                <div class="col-md-8 text-end d-flex gap-2 justify-content-end">
+                    <button class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2" style="height: 45px;" onclick="window.location.href='{{ route('atendimento-fila.create') }}'">
+                        <i class="mdi mdi-plus fs-5"></i> <span class="d-none d-lg-inline">Nova Fila</span>
+                    </button>
+                </div>
             </div>
-            <div class="p-3">
-                {{ $filas->links() }}
+
+            <!-- Tabela e Paginação (AJAX) -->
+            <div id="filas-list">
+                @include('modules.atendimento-fila.partials.list')
             </div>
-            @endif
-        </div>
         </div>
     </div>
 </div>
@@ -127,7 +57,7 @@
             <div class="modal-body pt-0 text-center px-4">
                 <h5 class="fw-bold text-dark mb-3" id="confirmGenericTitle">Confirmar</h5>
                 <p class="mb-4 text-muted" id="confirmGenericMessage">Tem certeza?</p>
-                
+
                 <div class="d-flex flex-column gap-2">
                     <button type="button" id="confirmGenericBtn" class="btn btn-danger w-100 rounded-pill py-2">Sim</button>
                     <button type="button" class="btn btn-light w-100 rounded-pill py-2 text-muted fw-semibold" data-bs-dismiss="modal">Cancelar</button>
@@ -136,33 +66,88 @@
         </div>
     </div>
 </div>
-@endsection
 
-@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    let currentFormIdToSubmit = null;
-    
-    window.abrirConfirmacaoGenerica = function(formId, titulo, mensagem, corBtn) {
-        currentFormIdToSubmit = formId;
-        
-        document.getElementById('confirmGenericTitle').textContent = titulo;
-        document.getElementById('confirmGenericMessage').innerHTML = mensagem;
-        
-        const btn = document.getElementById('confirmGenericBtn');
-        btn.className = `btn btn-${corBtn} w-100 rounded-pill py-2`;
-        
-        const icon = document.getElementById('confirmGenericIcon');
-        icon.className = `mt-3 mb-2 text-${corBtn}`;
-        
-        new bootstrap.Modal(document.getElementById('modalConfirmacaoGenerica')).show();
-    };
+    // Dynamic Search
+    let typingTimer;
+    const doneTypingInterval = 500; // 0.5s
+    const searchInput = document.getElementById('searchInput');
+    const listContainer = document.getElementById('filas-list');
 
-    document.getElementById('confirmGenericBtn').addEventListener('click', function() {
-        if (currentFormIdToSubmit) {
-            document.getElementById(currentFormIdToSubmit).submit();
+    searchInput.addEventListener('input', function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(performSearch, doneTypingInterval);
+    });
+
+    function performSearch() {
+        const query = searchInput.value;
+        const url = new URL(window.location.href);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+
+        // Reset page to 1 on new search
+        url.searchParams.delete('page');
+
+        window.history.pushState({}, '', url);
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            listContainer.innerHTML = html;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Handle pagination clicks via AJAX
+    listContainer.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A' && e.target.closest('.pagination')) {
+            e.preventDefault();
+            const url = e.target.href;
+            window.history.pushState({}, '', url);
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                listContainer.innerHTML = html;
+                window.scrollTo(0, 0);
+            });
         }
     });
-});
+
+    // Modal Confirmacao Generica
+    document.addEventListener('DOMContentLoaded', function() {
+        let currentFormIdToSubmit = null;
+
+        window.abrirConfirmacaoGenerica = function(formId, titulo, mensagem, corBtn) {
+            currentFormIdToSubmit = formId;
+
+            document.getElementById('confirmGenericTitle').textContent = titulo;
+            document.getElementById('confirmGenericMessage').innerHTML = mensagem;
+
+            const btn = document.getElementById('confirmGenericBtn');
+            btn.className = `btn btn-${corBtn} w-100 rounded-pill py-2`;
+
+            const icon = document.getElementById('confirmGenericIcon');
+            icon.className = `mt-3 mb-2 text-${corBtn}`;
+
+            new bootstrap.Modal(document.getElementById('modalConfirmacaoGenerica')).show();
+        };
+
+        document.getElementById('confirmGenericBtn').addEventListener('click', function() {
+            if (currentFormIdToSubmit) {
+                document.getElementById(currentFormIdToSubmit).submit();
+            }
+        });
+    });
 </script>
-@endpush
+@endsection

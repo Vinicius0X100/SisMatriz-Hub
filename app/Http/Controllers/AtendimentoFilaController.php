@@ -43,10 +43,19 @@ class AtendimentoFilaController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $filas = AtendimentoFila::where('paroquia_id', $user->paroquia_id)
-            ->withCount('itens')
-            ->orderBy('data', 'desc')
-            ->paginate(15);
+        $query = AtendimentoFila::where('paroquia_id', $user->paroquia_id)
+            ->withCount('itens');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereDate('data', $search);
+        }
+
+        $filas = $query->orderBy('data', 'desc')->paginate(15);
+
+        if ($request->ajax()) {
+            return view('modules.atendimento-fila.partials.list', compact('filas'))->render();
+        }
 
         return view('modules.atendimento-fila.index', compact('filas'));
     }
