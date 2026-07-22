@@ -19,10 +19,15 @@
     @auth
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm fixed-top">
         <div class="container-fluid px-4">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('dashboard') }}">
-                <img src="{{ asset('images/logo.png') }}" alt="SisMatriz" height="40" class="rounded" onerror="this.style.display='none'">
-                <span class="fw-bold text-dark">SisMatriz</span>
-            </a>
+            <div class="d-flex align-items-center gap-2">
+                <button id="sidebarToggle" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Menu">
+                    <i class="bi bi-layout-sidebar fs-5 text-dark"></i>
+                </button>
+                <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="{{ route('dashboard') }}">
+                    <img src="{{ asset('images/logo.png') }}" alt="SisMatriz" height="38" class="rounded" onerror="this.style.display='none'">
+                    <span class="fw-bold text-dark">SisMatriz</span>
+                </a>
+            </div>
             
             <div class="d-flex align-items-center gap-3">
                 <!-- Notifications Button -->
@@ -268,11 +273,81 @@
     </nav>
     @endauth
 
-    <main class="flex-shrink-0" style="padding-top: 80px;">
+    {{-- Sidebar --}}
+    @auth
+    <aside id="appSidebar">
+        <div class="sidebar-inner">
+
+            {{-- Fixed Top Links --}}
+            <div class="sidebar-top-fixed">
+                <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <span class="sidebar-icon"><i class="bi bi-house-door-fill"></i></span>
+                    <span class="sidebar-label">Início</span>
+                </a>
+                <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <span class="sidebar-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+                    <span class="sidebar-label">Dashboard</span>
+                </a>
+            </div>
+
+            {{-- Pinned Modules Section (if any) --}}
+            @if(isset($globalPinnedModules) && $globalPinnedModules->count() > 0)
+            <div class="sidebar-pinned-section">
+                <div class="sidebar-group-label">
+                    <i class="bi bi-pin-fill me-1" style="font-size: 0.7rem;"></i> Fixados
+                </div>
+                @foreach($globalPinnedModules as $module)
+                    <a href="{{ $module['url'] ?? '#' }}"
+                       class="sidebar-link sidebar-module-link sidebar-pinned-link"
+                       data-module-name="{{ strtolower($module['name']) }}">
+                        <span class="sidebar-icon">
+                            <i class="bi bi-{{ $module['icon'] }}"></i>
+                        </span>
+                        <span class="sidebar-label">{{ $module['name'] }}</span>
+                    </a>
+                @endforeach
+            </div>
+            @endif
+
+            {{-- Search --}}
+            <div class="sidebar-search-wrap">
+                <div class="position-relative">
+                    <i class="bi bi-search sidebar-search-icon"></i>
+                    <input type="text" id="sidebarSearch" class="sidebar-search" placeholder="Pesquisar módulos...">
+                </div>
+            </div>
+
+            {{-- Scrollable Modules List --}}
+            <nav class="sidebar-nav" id="sidebarNav">
+                @if(isset($globalGroupedModules))
+                    @foreach($globalGroupedModules as $letter => $modules)
+                        <div class="sidebar-group" data-group="{{ $letter }}">
+                            <div class="sidebar-group-label">{{ $letter }}</div>
+                            @foreach($modules as $module)
+                                <a href="{{ $module['url'] ?? '#' }}"
+                                   class="sidebar-link sidebar-module-link"
+                                   data-module-name="{{ strtolower($module['name']) }}">
+                                    <span class="sidebar-icon">
+                                        <i class="bi bi-{{ $module['icon'] }}"></i>
+                                    </span>
+                                    <span class="sidebar-label">{{ $module['name'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endforeach
+                @endif
+            </nav>
+
+        </div>
+    </aside>
+    <div id="sidebarOverlay"></div>
+    @endauth
+
+    <main id="appMain" class="flex-shrink-0" style="padding-top: 70px;">
         @yield('content')
     </main>
 
-    <footer class="footer mt-auto py-3 bg-white border-top text-center">
+    <footer id="appFooter" class="footer mt-auto py-3 bg-white border-top text-center">
         <div class="container">
             <span class="text-muted">
                 &copy; {{ date('Y') }} <strong>Sacratech Softwares LTDA</strong>. Todos os direitos reservados.
@@ -281,6 +356,222 @@
             </span>
         </div>
     </footer>
+
+    <style>
+        /* =============================================
+           SIDEBAR
+        ============================================= */
+        :root {
+            --sidebar-width: 260px;
+            --navbar-height: 60px;
+        }
+
+        #appSidebar {
+            position: fixed;
+            top: var(--navbar-height);
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--navbar-height));
+            background: #ffffff;
+            border-right: 1px solid #e9ecef;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.05);
+            z-index: 1020;
+            transform: translateX(-100%);
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #appSidebar.sidebar-open {
+            transform: translateX(0);
+        }
+
+        .sidebar-inner {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Fixed top navigation (Início + Dashboard) */
+        .sidebar-top-fixed {
+            flex-shrink: 0;
+            padding: 10px 0 6px;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        /* Pinned modules section */
+        .sidebar-pinned-section {
+            flex-shrink: 0;
+            border-bottom: 1px solid #f1f3f5;
+            padding-bottom: 6px;
+        }
+
+        .sidebar-pinned-link .sidebar-icon {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .sidebar-pinned-link:hover .sidebar-icon {
+            background: #fde68a;
+            color: #b45309;
+        }
+
+        .sidebar-pinned-link.active .sidebar-icon {
+            background: #dbeafe;
+            color: #0d6efd;
+        }
+
+        /* Search */
+        .sidebar-search-wrap {
+            padding: 14px 14px 10px;
+            border-bottom: 1px solid #f1f3f5;
+            flex-shrink: 0;
+        }
+
+        .sidebar-search {
+            width: 100%;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 7px 12px 7px 34px;
+            font-size: 0.82rem;
+            background: #f8f9fa;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            color: #495057;
+        }
+
+        .sidebar-search:focus {
+            border-color: #86b7fe;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(13,110,253,.1);
+        }
+
+        .sidebar-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+
+        /* Nav */
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #dee2e6 transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #dee2e6;
+            border-radius: 4px;
+        }
+
+        /* Group label */
+        .sidebar-group-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: #adb5bd;
+            text-transform: uppercase;
+            padding: 10px 16px 4px;
+        }
+
+        /* Links */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 14px;
+            margin: 1px 8px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            color: #343a40;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar-link:hover {
+            background: #f1f3f5;
+            color: #0d6efd;
+        }
+
+        .sidebar-link.active {
+            background: #e7f0ff;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .sidebar-icon {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: #f8f9fa;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+            color: #6c757d;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .sidebar-link:hover .sidebar-icon,
+        .sidebar-link.active .sidebar-icon {
+            background: #dbeafe;
+            color: #0d6efd;
+        }
+
+        /* Footer */
+        .sidebar-footer {
+            border-top: 1px solid #f1f3f5;
+            padding: 8px 0;
+            flex-shrink: 0;
+        }
+
+        /* Overlay (mobile) */
+        #sidebarOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 1019;
+            backdrop-filter: blur(2px);
+        }
+
+        #sidebarOverlay.active {
+            display: block;
+        }
+
+        /* Toggle button active state */
+        #sidebarToggle.active {
+            background: #e7f0ff !important;
+            color: #0d6efd;
+        }
+
+        /* Push main content on large screens */
+        @media (min-width: 992px) {
+            #appMain, #appFooter {
+                transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            #appMain.sidebar-pushed,
+            #appFooter.sidebar-pushed {
+                margin-left: var(--sidebar-width);
+            }
+        }
+    </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -368,6 +659,102 @@
                 });
             }
         });
+
+        // =============================================
+        // SIDEBAR
+        // =============================================
+        (function() {
+            const sidebar     = document.getElementById('appSidebar');
+            const overlay     = document.getElementById('sidebarOverlay');
+            const toggleBtn   = document.getElementById('sidebarToggle');
+            const mainEl      = document.getElementById('appMain');
+            const footerEl    = document.getElementById('appFooter');
+            const searchInput = document.getElementById('sidebarSearch');
+
+            if (!sidebar || !toggleBtn) return;
+
+            const STORAGE_KEY = 'sismatriz_sidebar_open';
+            const isLargeScreen = () => window.innerWidth >= 992;
+
+            function openSidebar() {
+                sidebar.classList.add('sidebar-open');
+                toggleBtn.classList.add('active');
+                if (isLargeScreen()) {
+                    mainEl   && mainEl.classList.add('sidebar-pushed');
+                    footerEl && footerEl.classList.add('sidebar-pushed');
+                } else {
+                    overlay && overlay.classList.add('active');
+                }
+                localStorage.setItem(STORAGE_KEY, '1');
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('sidebar-open');
+                toggleBtn.classList.remove('active');
+                mainEl   && mainEl.classList.remove('sidebar-pushed');
+                footerEl && footerEl.classList.remove('sidebar-pushed');
+                overlay  && overlay.classList.remove('active');
+                localStorage.setItem(STORAGE_KEY, '0');
+            }
+
+            // Restore state from localStorage — default is open
+            if (localStorage.getItem(STORAGE_KEY) !== '0') {
+                openSidebar();
+            }
+
+            // Toggle button click
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.contains('sidebar-open') ? closeSidebar() : openSidebar();
+            });
+
+            // Overlay click closes sidebar (mobile)
+            overlay && overlay.addEventListener('click', closeSidebar);
+
+            // Handle resize — push/overlay logic
+            window.addEventListener('resize', function() {
+                if (!isLargeScreen()) {
+                    mainEl   && mainEl.classList.remove('sidebar-pushed');
+                    footerEl && footerEl.classList.remove('sidebar-pushed');
+                    if (sidebar.classList.contains('sidebar-open')) {
+                        overlay && overlay.classList.add('active');
+                    }
+                } else {
+                    overlay && overlay.classList.remove('active');
+                    if (sidebar.classList.contains('sidebar-open')) {
+                        mainEl   && mainEl.classList.add('sidebar-pushed');
+                        footerEl && footerEl.classList.add('sidebar-pushed');
+                    }
+                }
+            });
+
+            // Highlight active link based on current URL
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.sidebar-module-link').forEach(function(link) {
+                try {
+                    const linkPath = new URL(link.href).pathname;
+                    if (linkPath !== '/' && currentPath.startsWith(linkPath)) {
+                        link.classList.add('active');
+                    }
+                } catch(e) {}
+            });
+
+            // Search filter
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const term = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    document.querySelectorAll('.sidebar-group').forEach(function(group) {
+                        let visible = 0;
+                        group.querySelectorAll('.sidebar-module-link').forEach(function(link) {
+                            const name = (link.dataset.moduleName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                            const show = name.includes(term);
+                            link.style.display = show ? '' : 'none';
+                            if (show) visible++;
+                        });
+                        group.style.display = visible > 0 ? '' : 'none';
+                    });
+                });
+            }
+        })();
     </script>
     @stack('scripts')
     @yield('scripts')

@@ -54,7 +54,30 @@ class AppServiceProvider extends ServiceProvider
                 return strtoupper(substr($item['name'], 0, 1));
             });
 
+            // Pinned modules for sidebar sync
+            $pinnedModules = collect([]);
+            if ($user) {
+                $paroquiaId = $user->paroquia_id ?? null;
+                $pinnedRecords = \App\Models\PinnedModule::where('user_id', $user->id)
+                    ->when($paroquiaId, fn($q) => $q->where('paroquia_id', $paroquiaId))
+                    ->orderBy('order', 'asc')
+                    ->get()
+                    ->keyBy('module_slug');
+
+                $pinnedSlugs = $pinnedRecords->keys()->toArray();
+
+                $pinnedModules = $allModules
+                    ->filter(fn($m) => in_array($m['slug'], $pinnedSlugs))
+                    ->map(function ($m) use ($pinnedRecords) {
+                        $m['order'] = $pinnedRecords[$m['slug']]->order ?? 0;
+                        return $m;
+                    })
+                    ->sortBy('order')
+                    ->values();
+            }
+
             $view->with('globalGroupedModules', $groupedModules);
+            $view->with('globalPinnedModules', $pinnedModules);
         });
     }
 }

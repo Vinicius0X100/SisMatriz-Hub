@@ -33,140 +33,178 @@
     </div>
     @endif
 
+    <!-- Shimmer Loader -->
+    <div id="shimmerLoader" class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex gap-3 mb-4 justify-content-end placeholder-glow">
+                <span class="placeholder col-1 rounded-pill"></span>
+                <span class="placeholder col-1 rounded-pill"></span>
+            </div>
+            <div class="calendar-grid">
+                @php $weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']; @endphp
+                @foreach($weekdays as $day)
+                    <div class="text-center text-muted small fw-medium py-2 placeholder-glow">
+                        <span class="placeholder col-6 rounded"></span>
+                    </div>
+                @endforeach
+                
+                @for($i = 0; $i < 35; $i++)
+                    <div class="calendar-day p-3 rounded-4 border border-light bg-white shadow-sm">
+                        <div class="placeholder-glow mb-3"><span class="placeholder col-3 rounded-circle" style="width: 24px; height: 24px;"></span></div>
+                        <div class="placeholder-glow mb-2"><span class="placeholder col-12 rounded-pill" style="height: 18px;"></span></div>
+                        <div class="placeholder-glow"><span class="placeholder col-8 rounded-pill" style="height: 18px;"></span></div>
+                    </div>
+                @endfor
+            </div>
+        </div>
+    </div>
+
     <!-- Calendar Wrapper -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div id="calendarContent" class="card border-0 shadow-sm rounded-4 mb-4 d-none">
         <div class="card-body p-4">
             
             <!-- Legend -->
-            <div class="d-flex gap-3 mb-3 justify-content-end">
+            <div class="d-flex gap-3 mb-4 justify-content-end">
                 <div class="d-flex align-items-center">
-                    <span class="d-inline-block rounded-circle bg-primary me-2" style="width: 10px; height: 10px;"></span>
-                    <span class="small text-muted">Publicado</span>
+                    <span class="d-inline-block rounded-circle bg-primary me-2" style="width: 8px; height: 8px;"></span>
+                    <span class="small text-muted fw-medium">Publicado</span>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="d-inline-block rounded-circle bg-warning me-2" style="width: 10px; height: 10px;"></span>
-                    <span class="small text-muted">Rascunho</span>
+                    <span class="d-inline-block rounded-circle bg-warning me-2" style="width: 8px; height: 8px;"></span>
+                    <span class="small text-muted fw-medium">Rascunho</span>
                 </div>
-            </div>
-
-            <!-- Calendar Grid -->
-    <div class="calendar-grid">
-        <!-- Weekday Headers -->
-        @php
-            $weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
-        @endphp
-        @foreach($weekdays as $day)
-            <div class="text-center text-muted small fw-bold text-uppercase py-2">{{ $day }}</div>
-        @endforeach
-
-        <!-- Empty Cells for start of month -->
-        @php
-            $firstDayOfWeek = \Carbon\Carbon::createFromDate($year, $monthNum, 1)->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
-            $emptyCells = $firstDayOfWeek - 1;
-        @endphp
-        @for($i = 0; $i < $emptyCells; $i++)
-            <div class="calendar-day empty bg-light rounded-3"></div>
-        @endfor
-
-        <!-- Days of Month -->
-        @for($day = 1; $day <= $daysInMonth; $day++)
-            @php
-                $dateKey = $day;
-                $dayCelebrations = $celebrationsByDay[$day] ?? collect();
-                $isWeekend = \Carbon\Carbon::createFromDate($year, $monthNum, $day)->isWeekend();
-                
-                $amIServingToday = false;
-                $myServingCelebrationId = null;
-                if (!$canEdit && $myAcolitoId) {
-                    foreach($dayCelebrations as $cel) {
-                        if ($cel->type !== 'draft' && isset($cel->escalados)) {
-                            foreach($cel->escalados as $escalado) {
-                                if ($escalado->acolito_id == $myAcolitoId) {
-                                    $amIServingToday = true;
-                                    $myServingCelebrationId = $cel->d_id;
-                                    break 2;
-                                }
-                            }
-                        }
-                    }
-                }
-            @endphp
-            <div class="calendar-day {{ $isWeekend ? 'bg-light' : '' }} border rounded-3 p-2 position-relative {{ $amIServingToday ? 'border-success bg-success bg-opacity-10' : '' }}" 
-                 style="min-height: 120px;" 
-                 @if($canEdit) onclick="openCreateModal({{ $day }})" @endif>
-                
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="day-number fw-bold {{ $isWeekend ? 'text-primary' : 'text-secondary' }}">{{ $day }}</span>
-                    @if($amIServingToday)
-                        <span class="badge bg-success rounded-pill shadow-sm animate__animated animate__pulse animate__infinite" 
-                              style="font-size: 0.65rem; cursor: pointer;"
-                              onclick="event.stopPropagation(); openViewModal('{{ $myServingCelebrationId }}')">
-                            <i class="bi bi-person-check-fill me-1"></i> Você servirá aqui
-                        </span>
-                    @endif
-                </div>
-                
-                <!-- Celebrations List -->
-                <div class="mt-2 d-flex flex-column gap-1">
-                    @foreach($dayCelebrations as $cel)
-                        @php
-                            $isDraft = isset($cel->type) && $cel->type === 'draft';
-                            $imInThisOne = false;
-                            
-                            if (!$canEdit && $myAcolitoId && !$isDraft && isset($cel->escalados)) {
-                                foreach($cel->escalados as $escalado) {
-                                    if ($escalado->acolito_id == $myAcolitoId) {
-                                        $imInThisOne = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Show celebration only if I'm in it OR I can edit OR show all for transparency? 
-                            // Request implies showing the badge on the day. Let's show all but highlight mine.
-                            // If user can't edit, they shouldn't see drafts probably? Let's hide drafts for rule 8.
-                            if (!$canEdit && $isDraft) continue;
-
-                            $badgeClass = $isDraft 
-                                ? 'bg-warning bg-opacity-10 text-warning-emphasis border border-warning-subtle' 
-                                : ($imInThisOne ? 'bg-success text-white shadow-sm border border-success' : 'bg-primary bg-opacity-10 text-primary border border-primary-subtle');
-                            
-                            $iconClass = $isDraft ? 'bi-file-earmark-text' : 'bi-clock';
-                        @endphp
-                        <div class="celebration-badge p-1 px-2 rounded-2 {{ $badgeClass }} d-flex align-items-center justify-content-between" 
-                             @if($canEdit) 
-                                onclick="event.stopPropagation(); openEditModal('{{ $cel->d_id }}')"
-                             @else
-                                onclick="event.stopPropagation(); openViewModal('{{ $cel->d_id }}')"
-                             @endif
-                             >
-                            <div class="text-truncate small fw-medium" style="max-width: 85%;">
-                                <i class="bi {{ $iconClass }} me-1"></i>{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }} - {{ $cel->celebration }}
-                            </div>
-                            @if($canEdit)
-                                @if(isset($cel->escalados) && $cel->escalados->count() > 0)
-                                    <span class="badge {{ $isDraft ? 'bg-warning text-dark' : 'bg-primary' }} rounded-pill" style="font-size: 0.6rem;">{{ $cel->escalados->count() }}</span>
-                                @elseif(isset($cel->payload['acolitos']) && count($cel->payload['acolitos']) > 0)
-                                    <span class="badge {{ $isDraft ? 'bg-warning text-dark' : 'bg-primary' }} rounded-pill" style="font-size: 0.6rem;">{{ count($cel->payload['acolitos']) }}</span>
-                                @else
-                                    <i class="bi bi-exclamation-circle-fill {{ $isDraft ? 'text-dark' : 'text-warning' }}" style="font-size: 0.7rem;"></i>
-                                @endif
-                            @elseif($imInThisOne)
-                                <i class="bi bi-eye-fill" style="font-size: 0.7rem;"></i>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-                
-                <!-- Add Button (Visible on Hover) -->
-                @if($canEdit)
-                <div class="add-indicator position-absolute top-50 start-50 translate-middle opacity-0 transition-opacity">
-                    <i class="bi bi-plus-circle-fill fs-3 text-primary"></i>
+                @if($myAcolitoId)
+                <div class="d-flex align-items-center">
+                    <span class="d-inline-block rounded-circle bg-success me-2" style="width: 8px; height: 8px;"></span>
+                    <span class="small text-muted fw-medium">Sua Escala</span>
                 </div>
                 @endif
             </div>
-        @endfor
-    </div>
+
+            <!-- Calendar Grid -->
+            <div class="calendar-grid">
+                <!-- Weekday Headers -->
+                @php
+                    $weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+                @endphp
+                @foreach($weekdays as $day)
+                    <div class="text-center text-secondary small fw-bold text-uppercase py-2 mb-2">{{ $day }}</div>
+                @endforeach
+
+                <!-- Empty Cells for start of month -->
+                @php
+                    $firstDayOfWeek = \Carbon\Carbon::createFromDate($year, $monthNum, 1)->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
+                    $emptyCells = $firstDayOfWeek - 1;
+                @endphp
+                @for($i = 0; $i < $emptyCells; $i++)
+                    <div class="calendar-day empty rounded-4"></div>
+                @endfor
+
+                <!-- Days of Month -->
+                @for($day = 1; $day <= $daysInMonth; $day++)
+                    @php
+                        $dateKey = $day;
+                        $dayCelebrations = $celebrationsByDay[$day] ?? collect();
+                        $isWeekend = \Carbon\Carbon::createFromDate($year, $monthNum, $day)->isWeekend();
+                        
+                        $amIServingToday = false;
+                        $myServingCelebrationId = null;
+                        if (!$canEdit && $myAcolitoId) {
+                            foreach($dayCelebrations as $cel) {
+                                if ($cel->type !== 'draft' && isset($cel->escalados)) {
+                                    foreach($cel->escalados as $escalado) {
+                                        if ($escalado->acolito_id == $myAcolitoId) {
+                                            $amIServingToday = true;
+                                            $myServingCelebrationId = $cel->d_id;
+                                            break 2;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    @endphp
+                    <div class="calendar-day {{ $isWeekend ? 'bg-light bg-opacity-50' : 'bg-white' }} border border-light rounded-4 p-2 shadow-sm position-relative {{ $amIServingToday ? 'border-success border-opacity-50' : '' }}" 
+                         @if($canEdit) onclick="openCreateModal({{ $day }})" @endif>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2 px-1 pt-1">
+                            <span class="day-number fw-bold {{ $amIServingToday ? 'bg-success text-white' : ($isWeekend ? 'text-primary' : 'text-dark') }} rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.95rem;">
+                                {{ $day }}
+                            </span>
+                            @if($amIServingToday)
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill animate__animated animate__pulse animate__infinite d-flex align-items-center border border-success border-opacity-25 shadow-sm" 
+                                      style="font-size: 0.65rem; cursor: pointer; padding: 0.35rem 0.6rem;"
+                                      onclick="event.stopPropagation(); openViewModal('{{ $myServingCelebrationId }}')">
+                                    <i class="bi bi-person-check-fill me-1"></i> Você
+                                </span>
+                            @endif
+                        </div>
+                        
+                        <!-- Celebrations List -->
+                        <div class="celebration-list-container d-flex flex-column gap-1 mt-1">
+                            @foreach($dayCelebrations as $cel)
+                                @php
+                                    $isDraft = isset($cel->type) && $cel->type === 'draft';
+                                    $imInThisOne = false;
+                                    
+                                    if (!$canEdit && $myAcolitoId && !$isDraft && isset($cel->escalados)) {
+                                        foreach($cel->escalados as $escalado) {
+                                            if ($escalado->acolito_id == $myAcolitoId) {
+                                                $imInThisOne = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if (!$canEdit && $isDraft) continue;
+
+                                    $dotColor = $isDraft ? 'bg-warning' : ($imInThisOne ? 'bg-success' : 'bg-primary');
+                                    $badgeBg = $isDraft ? 'bg-warning' : ($imInThisOne ? 'bg-success' : 'bg-primary');
+                                    $iconClass = $isDraft ? 'bi-file-earmark-text' : '';
+                                @endphp
+                                <div class="celebration-item px-2 py-1 rounded-3 d-flex align-items-center justify-content-between {{ $badgeBg }} bg-opacity-10 border border-{{ str_replace('bg-', '', $badgeBg) }} border-opacity-25" 
+                                     title="{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }} - {{ $cel->celebration }}"
+                                     @if($canEdit) 
+                                        onclick="event.stopPropagation(); openEditModal('{{ $cel->d_id }}')"
+                                     @else
+                                        onclick="event.stopPropagation(); openViewModal('{{ $cel->d_id }}')"
+                                     @endif
+                                     >
+                                    <div class="d-flex align-items-center overflow-hidden" style="flex: 1;">
+                                        <span class="d-inline-block rounded-circle {{ $dotColor }} me-2 flex-shrink-0" style="width: 6px; height: 6px;"></span>
+                                        <div class="text-truncate fw-medium text-dark" style="font-size: 0.75rem;">
+                                            @if($iconClass)<i class="bi {{ $iconClass }} text-muted me-1"></i>@endif
+                                            <span class="text-muted me-1">{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }}</span>
+                                            {{ $cel->celebration }}
+                                        </div>
+                                    </div>
+                                    @if($canEdit)
+                                        <div class="ms-2 flex-shrink-0">
+                                        @if(isset($cel->escalados) && $cel->escalados->count() > 0)
+                                            <span class="badge {{ $badgeBg }} rounded-pill" style="font-size: 0.6rem;">{{ $cel->escalados->count() }}</span>
+                                        @elseif(isset($cel->payload['acolitos']) && count($cel->payload['acolitos']) > 0)
+                                            <span class="badge {{ $badgeBg }} rounded-pill" style="font-size: 0.6rem;">{{ count($cel->payload['acolitos']) }}</span>
+                                        @else
+                                            <i class="bi bi-exclamation-circle text-muted" style="font-size: 0.7rem;"></i>
+                                        @endif
+                                        </div>
+                                    @elseif($imInThisOne)
+                                        <i class="bi bi-person-fill text-success ms-2 flex-shrink-0" style="font-size: 0.75rem;"></i>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <!-- Add Button (Visible on Hover) -->
+                        @if($canEdit)
+                        <div class="add-indicator position-absolute opacity-0 transition-opacity" style="top: 8px; right: 8px;">
+                            <div class="bg-light text-primary rounded-circle d-flex align-items-center justify-content-center border" style="width: 26px; height: 26px;">
+                                <i class="bi bi-plus-lg" style="font-size: 0.8rem;"></i>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                @endfor
+            </div>
         </div>
     </div>
 </div>
@@ -312,27 +350,51 @@
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
+        gap: 12px;
     }
     .calendar-day {
+        min-height: 120px;
         transition: all 0.2s ease;
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+    }
+    .calendar-day.empty {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        cursor: default;
     }
     .calendar-day:not(.empty):hover {
-        background-color: #f8f9fa;
-        border-color: var(--bs-primary) !important;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08) !important;
+        border-color: #dee2e6 !important;
     }
     .calendar-day:not(.empty):hover .add-indicator {
-        opacity: 1;
+        opacity: 1 !important;
     }
-    .celebration-badge {
+    .celebration-list-container {
+        flex: 1;
+        overflow-y: auto;
+        margin-right: -4px;
+        padding-right: 4px;
+    }
+    /* Hide scrollbar for a cleaner look unless scrolling */
+    .celebration-list-container::-webkit-scrollbar {
+        width: 4px;
+        background: transparent;
+    }
+    .celebration-list-container:hover::-webkit-scrollbar-thumb {
+        background: #e9ecef;
+        border-radius: 4px;
+    }
+    .celebration-item {
         cursor: pointer;
-        transition: transform 0.1s;
+        transition: all 0.15s ease;
     }
-    .celebration-badge:hover {
+    .celebration-item:hover {
+        background-color: rgba(0,0,0,0.03) !important;
         transform: scale(1.02);
-        background-color: rgba(13, 110, 253, 0.2) !important;
     }
     /* Scrollbar for lists */
     .overflow-auto::-webkit-scrollbar {
@@ -345,6 +407,19 @@
 </style>
 
 <script>
+    // Handle shimmer loader
+    document.addEventListener('DOMContentLoaded', function() {
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+            const shimmer = document.getElementById('shimmerLoader');
+            const content = document.getElementById('calendarContent');
+            if(shimmer && content) {
+                shimmer.classList.add('d-none');
+                content.classList.remove('d-none');
+                content.classList.add('animate__animated', 'animate__fadeIn');
+            }
+        }, 600);
+    });
     // Data passed from backend
     const allAcolytes = @json($acolitos);
     const allFuncoes = @json($funcoes);
