@@ -3,8 +3,8 @@
 @section('content')
 <div class="container-fluid px-4">
     <div class="row">
-        <!-- Main Content (Modules) -->
-        <div class="col-md-9 col-lg-10 position-relative">
+        <!-- Main Content -->
+        <div class="col-12 col-lg-10 position-relative">
             <!-- Shimmer Loading Overlay -->
             <div id="dashboardShimmer" aria-hidden="true">
             <!-- Header shimmer -->
@@ -55,28 +55,6 @@
                 </div>
             </div>
 
-            <!-- Search bar -->
-            <div class="mb-4">
-                <div class="shimmer-block" style="width:100%;height:50px;border-radius:50px;"></div>
-            </div>
-
-            <!-- Pinned section header -->
-            <div class="d-flex align-items-center mb-3">
-                <div class="shimmer-block" style="width:4px;height:22px;border-radius:2px;margin-right:10px;flex-shrink:0;"></div>
-                <div class="shimmer-block" style="width:140px;height:17px;border-radius:6px;"></div>
-            </div>
-
-            <!-- Module cards grid -->
-            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-3">
-                @for($i = 0; $i < 12; $i++)
-                <div class="col">
-                    <div class="shimmer-card p-3 rounded-4 d-flex flex-column align-items-center gap-2" style="min-height:105px;">
-                        <div class="shimmer-block" style="width:62px;height:62px;border-radius:16px;"></div>
-                        <div class="shimmer-block" style="width:75%;height:11px;border-radius:6px;"></div>
-                    </div>
-                </div>
-                @endfor
-            </div>
         </div>
         <!-- /Shimmer -->
 
@@ -386,125 +364,6 @@
             </div>
             @endif
 
-            <!-- Barra de Pesquisa de Módulos -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="module-search-wrap">
-                        <i class="bi bi-search module-search-icon"></i>
-                        <input type="text" id="moduleSearch" class="module-search-input" placeholder="Pesquisar módulos...">
-                        <span class="module-search-hint">Pressione / para focar</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seção de Módulos Fixados -->
-            @if($pinnedModules->count() > 0)
-            <div class="mb-5" id="pinnedSection">
-                <div class="d-flex align-items-center mb-3">
-                    <span class="pinned-section-accent"></span>
-                    <h5 class="fw-bold text-dark mb-0 me-2">
-                        <i class="bi bi-pin-angle-fill text-primary me-2" style="font-size:1rem;"></i>Meus Fixados
-                    </h5>
-                    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary" style="font-size:0.75rem;">{{ $pinnedModules->count() }}</span>
-                </div>
-                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-3">
-                    @foreach($pinnedModules as $module)
-                    <div class="col module-item" data-slug="{{ $module['slug'] }}">
-                        <div class="card h-100 border-0 shadow-sm card-module card-module-pinned text-center position-relative" style="background-color: {{ $module['bg_color'] ?? '#fff' }};">
-
-                            <!-- Star indicator -->
-                            <span class="module-pinned-star">★</span>
-
-                            <!-- Options Dropdown -->
-                            <div class="dropdown position-absolute top-0 end-0 p-1" style="z-index: 20;">
-                                <button class="btn btn-sm btn-link text-muted p-0 module-options-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-3" style="min-width: 200px;">
-                                    <li><h6 class="dropdown-header px-0 text-uppercase small fw-bold">Cor de Fundo</h6></li>
-                                    <li class="mb-3">
-                                        <div class="d-flex gap-1 flex-wrap justify-content-center">
-                                            @foreach(['#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6', '#cfe2ff', '#e0cffc', '#f1aeb5', '#ffe69c', '#d1e7dd', '#cff4fc'] as $color)
-                                                <button class="btn btn-sm border rounded-circle color-btn shadow-sm"
-                                                        style="width: 24px; height: 24px; background-color: {{ $color }};"
-                                                        data-color="{{ $color }}"
-                                                        data-slug="{{ $module['slug'] }}"
-                                                        title="Fundo"></button>
-                                            @endforeach
-                                        </div>
-                                    </li>
-                                    <li><h6 class="dropdown-header px-0 text-uppercase small fw-bold">Cor do Texto</h6></li>
-                                    <li class="mb-3">
-                                        <div class="d-flex gap-1 flex-wrap justify-content-center">
-                                            @foreach(['#212529', '#6c757d', '#0d6efd', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#ffffff'] as $color)
-                                                <button class="btn btn-sm border rounded-circle text-color-btn shadow-sm"
-                                                        style="width: 24px; height: 24px; background-color: {{ $color }};"
-                                                        data-color="{{ $color }}"
-                                                        data-slug="{{ $module['slug'] }}"
-                                                        title="Texto"></button>
-                                            @endforeach
-                                        </div>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-danger small rounded pin-action-btn" href="#" data-slug="{{ $module['slug'] }}">
-                                            <i class="bi bi-pin-angle-fill me-2"></i> Desafixar
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <a href="{{ $module['url'] ?? '#' }}" class="text-decoration-none d-block h-100" style="color: {{ $module['text_color'] ?? '#212529' }};">
-                                <div class="card-body d-flex flex-column align-items-center justify-content-center gap-2 py-3 px-2">
-                                    <div class="module-icon-wrap" style="background: rgba(0,0,0,0.04);">
-                                        <i class="bi bi-{{ $module['icon'] }}" style="font-size: 1.9rem; color: inherit;"></i>
-                                    </div>
-                                    <span class="module-name fw-semibold text-truncate w-100">{{ $module['name'] }}</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Separador com label -->
-            <div class="modules-section-divider">
-                <span class="modules-section-label">
-                    <i class="bi bi-grid-3x3-gap me-1"></i> Todos os Módulos
-                </span>
-            </div>
-            @endif
-
-            <!-- Lista de Todos os Módulos (Agrupados A-Z) -->
-            <div id="allModulesSection">
-                @foreach($groupedModules as $letter => $modules)
-                <div class="mb-4 module-group" data-letter="{{ $letter }}">
-                    <div class="module-letter-chip">{{ $letter }}</div>
-                    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-3">
-                        @foreach($modules as $module)
-                        <div class="col module-item">
-                            <div class="card h-100 border-0 shadow-sm card-module text-center position-relative">
-                                <!-- Pin Button (aparece no hover) -->
-                                <button class="btn pin-btn pin-action-btn" data-slug="{{ $module['slug'] }}" title="{{ $module['is_pinned'] ? 'Desafixar' : 'Fixar' }}">
-                                    <i class="bi {{ $module['is_pinned'] ? 'bi-pin-fill text-primary' : 'bi-pin' }}"></i>
-                                </button>
-
-                                <a href="{{ $module['url'] ?? '#' }}" class="text-decoration-none text-dark d-block h-100">
-                                    <div class="card-body d-flex flex-column align-items-center justify-content-center gap-2 py-3 px-2">
-                                        <div class="module-icon-wrap">
-                                            <i class="bi bi-{{ $module['icon'] }} text-primary" style="font-size: 1.9rem;"></i>
-                                        </div>
-                                        <span class="module-name fw-semibold text-truncate w-100">{{ $module['name'] }}</span>
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endforeach
-            </div>
         </div>
         <!-- /dashboardContent -->
         </div>

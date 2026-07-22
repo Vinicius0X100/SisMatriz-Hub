@@ -284,10 +284,6 @@
                     <span class="sidebar-icon"><i class="bi bi-house-door-fill"></i></span>
                     <span class="sidebar-label">Início</span>
                 </a>
-                <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <span class="sidebar-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
-                    <span class="sidebar-label">Dashboard</span>
-                </a>
             </div>
 
             {{-- Search --}}
@@ -396,11 +392,10 @@
             overflow: hidden;
         }
 
-        /* Fixed top navigation (Início + Dashboard) */
+        /* Fixed top navigation (Início) */
         .sidebar-top-fixed {
             flex-shrink: 0;
             padding: 10px 0 6px;
-            border-bottom: 1px solid #f1f3f5;
         }
 
         /* Pinned modules group (inside scroll) */
