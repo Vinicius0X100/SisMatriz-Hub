@@ -27,6 +27,7 @@ return [
     ['name' => 'Buckets de mídia', 'icon' => 'cloud-arrow-up', 'url' => '/buckets', 'allowed_roles' => ['*']],
     ['name' => 'Inscrições de Crisma', 'icon' => 'pencil-square', 'url' => '/inscricoes-crisma', 'allowed_roles' => ['3', '13']],
     ['name' => 'Inscrições eucaristia', 'icon' => 'pencil-square', 'url' => '/inscricoes-eucaristia', 'allowed_roles' => ['7', '12']],
+    ['name' => 'Inscrições de pré-catequese', 'icon' => 'pencil-square', 'url' => '/inscricoes-pre-catequese', 'allowed_roles' => ['18', '19']],
     ['name' => 'Inscrições de catequese de adultos', 'icon' => 'pencil-square', 'url' => '/inscricoes-catequese-adultos', 'allowed_roles' => ['17']],
     ['name' => 'Solicitações de segunda via', 'icon' => 'file-earmark-plus', 'url' => '/solicitacoes-segunda-via', 'allowed_roles' => ['15']],
     ['name' => 'Avisos paroquiais', 'icon' => 'megaphone', 'url' => '/avisos', 'allowed_roles' => ['*']],

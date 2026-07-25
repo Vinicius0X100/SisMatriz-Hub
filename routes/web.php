@@ -259,6 +259,18 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::resource('inscricoes-eucaristia', App\Http\Controllers\InscricoesEucaristiaController::class);
     Route::resource('docs-eucaristia', App\Http\Controllers\DocsEucaristiaController::class);
 
+    // Inscrições Pré-Catequese
+    Route::get('inscricoes-pre-catequese/search-users', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'searchUsers'])->name('inscricoes-pre-catequese.search-users');
+    Route::post('inscricoes-pre-catequese/share', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'share'])->name('inscricoes-pre-catequese.share');
+    Route::get('inscricoes-pre-catequese/export', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'export'])->name('inscricoes-pre-catequese.export');
+    Route::get('inscricoes-pre-catequese/{id}/print', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'printSingle'])->name('inscricoes-pre-catequese.print-single');
+    Route::post('inscricoes-pre-catequese/bulk-destroy', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'bulkDestroy'])->name('inscricoes-pre-catequese.bulk-destroy');
+    Route::post('inscricoes-pre-catequese/bulk-print', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'bulkPrint'])->name('inscricoes-pre-catequese.bulk-print');
+    Route::put('inscricoes-pre-catequese/{id}/status', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'updateStatus'])->name('inscricoes-pre-catequese.update-status');
+    Route::post('inscricoes-pre-catequese/deadline', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'storeDeadline'])->name('inscricoes-pre-catequese.store-deadline');
+    Route::post('inscricoes-pre-catequese/tax-config', [App\Http\Controllers\InscricoesPreCatequeseController::class, 'storeTaxConfig'])->name('inscricoes-pre-catequese.store-tax-config');
+    Route::resource('inscricoes-pre-catequese', App\Http\Controllers\InscricoesPreCatequeseController::class);
+
     // Acólitos e Coroinhas
     Route::get('acolitos/search-registers', [App\Http\Controllers\AcolitoController::class, 'searchRegisters'])->name('acolitos.search-registers');
     Route::post('acolitos/check-user', [App\Http\Controllers\AcolitoController::class, 'checkUser'])->name('acolitos.check-user');

@@ -86,6 +86,8 @@ class User extends Authenticatable
                     15  => 'Gerencia de Estoque/Inventário e Salas e Espaços',
                     16  => 'Coordenador - Matrimônio (Visualizar e Imprimir fichas apenas)',
                     17  => 'Organizador de Eventos/Excursões',
+                    18  => 'Coordenador(a) de Pré-Catequese/Catequese Infantil',
+                    19  => 'Catequista de Pré-Catequese/Catequese Infantil',
     ];
 
     public function paroquia()
