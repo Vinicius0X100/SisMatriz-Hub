@@ -302,7 +302,7 @@ class InscricoesPreCatequeseController extends Controller
 
             foreach ($attachments as $att) {
                 if ($att) {
-                    $fullPath = storage_path('app/public/uploads/certidoes/pre_catequese/' . $att);
+                    $fullPath = storage_path('app/public/uploads/certidoes/' . $att);
 
                     Log::info("Processing attachment: {$att}");
                     Log::info("Full path: {$fullPath}");
@@ -426,7 +426,7 @@ class InscricoesPreCatequeseController extends Controller
                     $record->numero,
                     $record->cep,
                     $record->estado,
-                    $record->certidao_batismo ? asset('storage/uploads/certidoes/pre_catequese/' . $record->certidao_batismo) : '',
+                    $record->certidao_batismo ? asset('storage/uploads/certidoes/' . $record->certidao_batismo) : '',
                     $record->comprovante_pagamento ? asset('storage/uploads/comprovantes/pre_catequese/' . $record->comprovante_pagamento) : '',
                     $dtCriado
                 ], ';');

@@ -283,7 +283,7 @@
                                 [
                                     'title' => 'Certidão de Batismo',
                                     'file'  => $record->certidao_batismo,
-                                    'path'  => 'storage/uploads/certidoes/pre_catequese/',
+                                    'path'  => 'storage/uploads/certidoes/',
                                     'icon'  => 'bi-droplet',
                                     'color' => 'primary'
                                 ],

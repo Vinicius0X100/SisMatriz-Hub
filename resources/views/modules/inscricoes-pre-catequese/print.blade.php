@@ -263,7 +263,7 @@
                     @if($record->certidao_batismo)
                         @php
                             $ext         = strtolower(pathinfo($record->certidao_batismo, PATHINFO_EXTENSION));
-                            $batismoPath = storage_path('app/public/uploads/certidoes/pre_catequese/' . $record->certidao_batismo);
+                            $batismoPath = storage_path('app/public/uploads/certidoes/' . $record->certidao_batismo);
                         @endphp
                         @if(in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && file_exists($batismoPath))
                         <div class="attachment-item">
