@@ -89,6 +89,17 @@ class EscalaGeneratorService
             }
         }
 
+        // Mapping ISO day of week to string used in horarios_celebracoes table
+        $diasSemanaNomes = [
+            1 => 'Segunda-feira',
+            2 => 'Terça-feira',
+            3 => 'Quarta-feira',
+            4 => 'Quinta-feira',
+            5 => 'Sexta-feira',
+            6 => 'Sábado',
+            7 => 'Domingo'
+        ];
+
         // Descobrir as datas do mês atual
         $daysInMonth = Carbon::createFromDate($year, $monthNum, 1)->daysInMonth;
         
@@ -97,9 +108,10 @@ class EscalaGeneratorService
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $date = Carbon::createFromDate($year, $monthNum, $day);
             $dayOfWeek = $date->dayOfWeekIso; // 1 (Monday) to 7 (Sunday)
+            $nomeDia = $diasSemanaNomes[$dayOfWeek];
 
             // Tem regra e tem horário?
-            $horariosDoDia = $horarios->where('dia_semana', $dayOfWeek);
+            $horariosDoDia = $horarios->where('dia_semana', $nomeDia);
             $regraDoDia = $regras->get($dayOfWeek);
 
             if ($horariosDoDia->isNotEmpty() && $regraDoDia) {
