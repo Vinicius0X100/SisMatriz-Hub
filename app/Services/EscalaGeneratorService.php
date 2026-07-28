@@ -82,8 +82,10 @@ class EscalaGeneratorService
 
         // Tracker para max frequencia no mes atual
         $currentMonthCounts = [];
+        $currentMonthHours = [];
         foreach ($acolitosAtivos as $a) {
             $currentMonthCounts[$a->id] = 0;
+            $currentMonthHours[$a->id] = [];
             if (!isset($escaladoCounts[$a->id])) {
                 $escaladoCounts[$a->id] = 0;
             }
@@ -126,13 +128,15 @@ class EscalaGeneratorService
                     // Selecionar Acolitos (type 0)
                     $this->selectMembers(
                         $acolitosList, $qtdAcolitos, $maxServes, $currentMonthCounts, 
-                        $escaladoCounts, $selecionados, null, $funcoes
+                        $escaladoCounts, $selecionados, null, $funcoes, false,
+                        $currentMonthHours, $horario->horario
                     );
 
                     // Selecionar Coroinhas (type 1)
                     $this->selectMembers(
                         $coroinhasList, $qtdCoroinhas, $maxServes, $currentMonthCounts, 
-                        $escaladoCounts, $selecionados, $regraDoDia->coroinha_funcao_id, $funcoes, true
+                        $escaladoCounts, $selecionados, $regraDoDia->coroinha_funcao_id, $funcoes, true,
+                        $currentMonthHours, $horario->horario
                     );
 
                     // Preparar payload para o Draft
@@ -155,7 +159,7 @@ class EscalaGeneratorService
         return $celebrationsToCreate;
     }
 
-    private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false)
+    private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false, &$currentMonthHours = null, $currentHora = null)
     {
         if ($qtdNeeded <= 0 || $availableMembers->isEmpty()) return;
 
@@ -175,9 +179,18 @@ class EscalaGeneratorService
         }
 
         // Ordenar por menos vezes escalado no mês atual (desempate aleatório)
-        $eligible = $eligible->shuffle()->sortBy(function($member) use ($currentMonthCounts, $escaladoCounts) {
+        $eligible = $eligible->shuffle()->sortBy(function($member) use ($currentMonthCounts, $escaladoCounts, $currentMonthHours, $currentHora) {
             // Peso principal: contagem no mês atual; secundário: histórico
-            return ($currentMonthCounts[$member->id] * 10) + $escaladoCounts[$member->id];
+            $score = ($currentMonthCounts[$member->id] * 10) + $escaladoCounts[$member->id];
+            
+            // Penalidade imensa se já serviu neste exato horário neste mês (evita repetir o mesmo horário)
+            if ($currentMonthHours !== null && $currentHora !== null) {
+                if (in_array($currentHora, $currentMonthHours[$member->id])) {
+                    $score += 10000;
+                }
+            }
+            
+            return $score;
         })->take($qtdNeeded);
 
         foreach ($eligible as $member) {
@@ -202,6 +215,9 @@ class EscalaGeneratorService
             // Incrementar contadores
             $currentMonthCounts[$member->id]++;
             $escaladoCounts[$member->id]++;
+            if ($currentMonthHours !== null && $currentHora !== null) {
+                $currentMonthHours[$member->id][] = $currentHora;
+            }
         }
     }
 }
