@@ -37,9 +37,14 @@
                 </form>
                 
                 @if(Auth::user()->rule != 8)
-                <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createEscalaModal">
-                    <i class="bi bi-plus-lg me-2"></i>Nova Escala
-                </button>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('acolitos.escalas.regras.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-gear me-2"></i>Regras Automáticas
+                    </a>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createEscalaModal">
+                        <i class="bi bi-plus-lg me-2"></i>Nova Escala
+                    </button>
+                </div>
                 @endif
             </div>
 

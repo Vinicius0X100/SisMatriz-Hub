@@ -641,6 +641,230 @@ class AcolitoEscalaController extends Controller
     }
 
     /**
+     * Preview automatic scale generation
+     */
+    public function previewAutomatic(Request $request, $id, \App\Services\EscalaGeneratorService $generatorService)
+    {
+        if (Auth::user()->rule == 8) {
+            return response()->json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+        }
+
+        $escala = Escala::where('es_id', $id)
+                        ->where('paroquia_id', Auth::user()->paroquia_id)
+                        ->first();
+
+        if (!$escala) {
+            return response()->json(['success' => false, 'message' => 'Escala não encontrada.'], 404);
+        }
+
+        $entidade = Entidade::where('paroquia_id', Auth::user()->paroquia_id)
+                            ->where('ent_name', $escala->church)
+                            ->first();
+
+        if (!$entidade) {
+            return response()->json(['success' => false, 'message' => 'Comunidade vinculada à escala não encontrada para gerar regras.']);
+        }
+
+        try {
+            // Retorna apenas a pré-visualização (array de payloads)
+            $preview = $generatorService->generate($escala, $entidade->ent_id, Auth::user()->paroquia_id, Auth::id());
+            return response()->json(['success' => true, 'preview' => $preview]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao gerar escala: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Erro ao gerar escala automática: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Confirm and save generated scale
+     */
+    public function confirmAutomatic(Request $request, $id)
+    {
+        if (Auth::user()->rule == 8) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $escala = Escala::where('es_id', $id)
+                        ->where('paroquia_id', Auth::user()->paroquia_id)
+                        ->firstOrFail();
+
+        $celebrationsToCreate = $request->input('celebrations', []);
+
+        if (empty($celebrationsToCreate)) {
+            return redirect()->back()->withErrors('Nenhuma celebração para salvar.');
+        }
+
+        if (!Storage::disk('local')->exists('escalas/drafts')) {
+            Storage::disk('local')->makeDirectory('escalas/drafts');
+        }
+
+        foreach ($celebrationsToCreate as $payload) {
+            $filename = 'draft_' . $escala->es_id . '_' . uniqid() . '.json';
+            Storage::disk('local')->put('escalas/drafts/' . $filename, json_encode($payload));
+            
+            EscalaDraft::create([
+                'es_id' => $escala->es_id,
+                'paroquia_id' => Auth::user()->paroquia_id,
+                'user_id' => Auth::id(),
+                'title' => $payload['celebration'] . ' às ' . $payload['hora'],
+                'payload' => $filename,
+                'status' => 'draft'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Rascunhos gerados automaticamente com sucesso! Revise e publique as celebrações.');
+    }
+
+    /**
+     * Publish automatic generated scale directly from JSON without drafts
+     */
+    public function generateAndPublishAutomatic(Request $request, $id)
+    {
+        if (Auth::user()->rule == 8) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $escala = Escala::where('es_id', $id)
+                        ->where('paroquia_id', Auth::user()->paroquia_id)
+                        ->firstOrFail();
+
+        $celebrationsToCreate = $request->input('celebrations', []);
+
+        if (empty($celebrationsToCreate)) {
+            return response()->json(['success' => false, 'message' => 'Nenhuma celebração para salvar.'], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($celebrationsToCreate as $payload) {
+                $celebration = EscalaDataHora::create([
+                    'es_id' => $escala->es_id,
+                    'data' => $payload['data'],
+                    'dia' => $payload['dia'],
+                    'celebration' => $payload['celebration'],
+                    'hora' => $payload['hora'],
+                    'ent_id' => $payload['ent_id'],
+                ]);
+
+                $acolitoIds = [];
+                if (!empty($payload['acolitos'])) {
+                    foreach ($payload['acolitos'] as $acolitoData) {
+                        EscaladoData::create([
+                            'd_id' => $celebration->d_id,
+                            'escala_id' => $escala->es_id,
+                            'acolito_id' => $acolitoData['id'],
+                            'funcao_id' => $acolitoData['funcao_id'] ?? null,
+                        ]);
+                        $acolitoIds[] = $acolitoData['id'];
+                    }
+                }
+
+                // Send WhatsApp immediately
+                if (!empty($acolitoIds)) {
+                    $details = [
+                        'title' => $payload['celebration'],
+                        'date' => $payload['data'] . '/' . $escala->month . '/' . $escala->year,
+                        'time' => $payload['hora'],
+                        'local' => Entidade::find($payload['ent_id'])->ent_name ?? 'Local não informado'
+                    ];
+                    $this->sendWhatsappNotification($acolitoIds, $details);
+                }
+            }
+
+            // Update total acolytes count in scale
+            $totalAcolitos = EscaladoData::where('escala_id', $escala->es_id)->count();
+            $escala->update(['qntd_acolitos' => $totalAcolitos]);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Celebrações publicadas e notificações enviadas com sucesso!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erro ao aprovar escala gerada: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Erro ao aprovar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Publish all drafts at once
+     */
+    public function publishAllDrafts(Request $request, $id)
+    {
+        if (Auth::user()->rule == 8) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $escala = Escala::where('es_id', $id)
+                        ->where('paroquia_id', Auth::user()->paroquia_id)
+                        ->firstOrFail();
+
+        $drafts = EscalaDraft::where('es_id', $id)->get();
+        if ($drafts->isEmpty()) {
+            return redirect()->back()->withErrors('Não há rascunhos para aprovar.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($drafts as $draft) {
+                if (Storage::disk('local')->exists('escalas/drafts/' . $draft->payload)) {
+                    $payload = json_decode(Storage::disk('local')->get('escalas/drafts/' . $draft->payload), true);
+                    
+                    $celebration = EscalaDataHora::create([
+                        'es_id' => $escala->es_id,
+                        'data' => $payload['data'],
+                        'dia' => $payload['dia'],
+                        'celebration' => $payload['celebration'],
+                        'hora' => $payload['hora'],
+                        'ent_id' => $payload['ent_id'],
+                    ]);
+
+                    $acolitoIds = [];
+                    if (!empty($payload['acolitos'])) {
+                        foreach ($payload['acolitos'] as $acolitoData) {
+                            EscaladoData::create([
+                                'd_id' => $celebration->d_id,
+                                'escala_id' => $escala->es_id,
+                                'acolito_id' => $acolitoData['id'],
+                                'funcao_id' => $acolitoData['funcao_id'] ?? null,
+                            ]);
+                            $acolitoIds[] = $acolitoData['id'];
+                        }
+                    }
+
+                    // Delete draft file and record
+                    Storage::disk('local')->delete('escalas/drafts/' . $draft->payload);
+                    $draft->delete();
+
+                    // Send WhatsApp immediately
+                    if (!empty($acolitoIds)) {
+                        $details = [
+                            'title' => $payload['celebration'],
+                            'date' => $payload['data'] . '/' . $escala->month . '/' . $escala->year,
+                            'time' => $payload['hora'],
+                            'local' => Entidade::find($payload['ent_id'])->ent_name ?? 'Local não informado'
+                        ];
+                        $this->sendWhatsappNotification($acolitoIds, $details);
+                    }
+                }
+            }
+
+            // Update total acolytes count in scale
+            $totalAcolitos = EscaladoData::where('escala_id', $escala->es_id)->count();
+            $escala->update(['qntd_acolitos' => $totalAcolitos]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Todas as celebrações foram publicadas e os acólitos notificados!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erro ao publicar rascunhos em lote: ' . $e->getMessage());
+            return redirect()->back()->withErrors('Erro ao aprovar rascunhos: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Send WhatsApp notification directly (Inline)
      */
     private function sendWhatsappNotification(array $acolitoIds, array $details)

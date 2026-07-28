@@ -307,6 +307,14 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('acolitos/escalas/{id}/celebrations', [App\Http\Controllers\AcolitoEscalaController::class, 'storeCelebration'])->name('acolitos.escalas.celebrations.store');
     Route::put('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'updateCelebration'])->name('acolitos.escalas.celebrations.update');
     Route::delete('acolitos/escalas/{id}/celebrations/{celebrationId}', [App\Http\Controllers\AcolitoEscalaController::class, 'destroyCelebration'])->name('acolitos.escalas.celebrations.destroy');
+    Route::get('acolitos/escalas/regras', [App\Http\Controllers\AcolitoEscalaRegraController::class, 'index'])->name('acolitos.escalas.regras.index');
+    Route::post('acolitos/escalas/regras', [App\Http\Controllers\AcolitoEscalaRegraController::class, 'store'])->name('acolitos.escalas.regras.store');
+    
+    Route::get('acolitos/escalas/{id}/generate-preview', [App\Http\Controllers\AcolitoEscalaController::class, 'previewAutomatic'])->name('acolitos.escalas.generate_preview');
+    Route::post('acolitos/escalas/{id}/generate-confirm', [App\Http\Controllers\AcolitoEscalaController::class, 'confirmAutomatic'])->name('acolitos.escalas.generate_confirm');
+    Route::post('acolitos/escalas/{id}/generate-publish', [App\Http\Controllers\AcolitoEscalaController::class, 'generateAndPublishAutomatic'])->name('acolitos.escalas.generate_publish');
+    Route::post('acolitos/escalas/{id}/publish-drafts', [App\Http\Controllers\AcolitoEscalaController::class, 'publishAllDrafts'])->name('acolitos.escalas.publish_drafts');
+
     Route::resource('acolitos/escalas', App\Http\Controllers\AcolitoEscalaController::class, ['as' => 'acolitos']);
     
     // Faltas/Presenças de Acólitos

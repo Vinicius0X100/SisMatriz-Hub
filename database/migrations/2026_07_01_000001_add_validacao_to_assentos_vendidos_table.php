@@ -12,9 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assentos_vendidos', function (Blueprint $table) {
-            $table->timestamp('validado_em')->nullable()->after('embarque_volta');
-            $table->unsignedBigInteger('validado_por')->nullable()->after('validado_em');
-            $table->foreign('validado_por')->references('id')->on('users')->onDelete('set null');
+            if (!Schema::hasColumn('assentos_vendidos', 'validado_em')) {
+                $table->timestamp('validado_em')->nullable()->after('embarque_volta');
+            }
+            if (!Schema::hasColumn('assentos_vendidos', 'validado_por')) {
+                $table->unsignedBigInteger('validado_por')->nullable()->after('validado_em');
+                $table->foreign('validado_por')->references('id')->on('users')->onDelete('set null');
+            }
         });
     }
 
