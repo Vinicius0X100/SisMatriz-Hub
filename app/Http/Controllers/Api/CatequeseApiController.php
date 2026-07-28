@@ -22,6 +22,11 @@ use App\Models\TurmaAdultos;
 use App\Models\CatecandoAdultos;
 use App\Models\FaltaAdultos;
 
+// Models Pré-Catequese
+use App\Models\TurmaPreCatequese;
+use App\Models\CatecandoPreCatequese;
+use App\Models\FaltaPreCatequese;
+
 class CatequeseApiController extends Controller
 {
     /**
@@ -47,6 +52,12 @@ class CatequeseApiController extends Controller
                     'turma' => TurmaAdultos::class,
                     'aluno' => CatecandoAdultos::class,
                     'falta' => FaltaAdultos::class,
+                ];
+            case 'pre-catequese':
+                return [
+                    'turma' => TurmaPreCatequese::class,
+                    'aluno' => CatecandoPreCatequese::class,
+                    'falta' => FaltaPreCatequese::class,
                 ];
             default:
                 abort(404, 'Tipo inválido.');
