@@ -729,6 +729,7 @@ class AcolitoEscalaController extends Controller
                         ->firstOrFail();
 
         $celebrationsToCreate = $request->input('celebrations', []);
+        $sendWhatsapp = filter_var($request->input('send_whatsapp', true), FILTER_VALIDATE_BOOLEAN);
 
         if (empty($celebrationsToCreate)) {
             return response()->json(['success' => false, 'message' => 'Nenhuma celebração para salvar.'], 400);
@@ -760,8 +761,8 @@ class AcolitoEscalaController extends Controller
                     }
                 }
 
-                // Send WhatsApp immediately
-                if (!empty($acolitoIds)) {
+                // Send WhatsApp immediately if requested
+                if ($sendWhatsapp && !empty($acolitoIds)) {
                     $details = [
                         'title' => $payload['celebration'],
                         'date' => $payload['data'] . '/' . $escala->month . '/' . $escala->year,
