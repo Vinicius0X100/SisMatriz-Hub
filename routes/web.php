@@ -197,6 +197,24 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::post('turmas-adultos/bulk-delete', [App\Http\Controllers\TurmasAdultosController::class, 'bulkDestroy'])->name('turmas-adultos.bulk-delete');
     Route::resource('turmas-adultos', App\Http\Controllers\TurmasAdultosController::class);
 
+    // Catequistas Pré-Catequese
+    Route::post('catequistas-pre-catequese/bulk-delete', [App\Http\Controllers\CatequistasPreCatequeseController::class, 'bulkDestroy'])->name('catequistas-pre-catequese.bulk-delete');
+    Route::resource('catequistas-pre-catequese', App\Http\Controllers\CatequistasPreCatequeseController::class);
+
+    // Turmas Pré-Catequese
+    Route::get('turmas-pre-catequese/search-registers', [App\Http\Controllers\TurmasPreCatequeseController::class, 'searchRegisters'])->name('turmas-pre-catequese.search-registers');
+    Route::get('turmas-pre-catequese/{id}/students', [App\Http\Controllers\TurmasPreCatequeseController::class, 'getStudents'])->name('turmas-pre-catequese.students');
+    Route::get('turmas-pre-catequese/export-bulk', [App\Http\Controllers\TurmasPreCatequeseController::class, 'exportBulk'])->name('turmas-pre-catequese.export-bulk');
+    Route::get('turmas-pre-catequese/{id}/export', [App\Http\Controllers\TurmasPreCatequeseController::class, 'exportStudents'])->name('turmas-pre-catequese.export');
+    Route::post('turmas-pre-catequese/transfer', [App\Http\Controllers\TurmasPreCatequeseController::class, 'transferStudent'])->name('turmas-pre-catequese.transfer');
+    Route::get('turmas-pre-catequese/{id}/attendance', [App\Http\Controllers\TurmasPreCatequeseController::class, 'getAttendance'])->name('turmas-pre-catequese.attendance');
+    Route::post('turmas-pre-catequese/attendance/save', [App\Http\Controllers\TurmasPreCatequeseController::class, 'saveAttendance'])->name('turmas-pre-catequese.attendance.save');
+    Route::post('turmas-pre-catequese/attendance/save-bulk', [App\Http\Controllers\TurmasPreCatequeseController::class, 'saveBulkAttendance'])->name('turmas-pre-catequese.attendance.save-bulk');
+    Route::get('turmas-pre-catequese/{id}/attendance-analysis', [App\Http\Controllers\TurmasPreCatequeseController::class, 'attendanceAnalysis'])->name('turmas-pre-catequese.attendance-analysis');
+    Route::get('turmas-pre-catequese/{id}/attendance-history/{student_id}', [App\Http\Controllers\TurmasPreCatequeseController::class, 'attendanceHistory'])->name('turmas-pre-catequese.attendance-history');
+    Route::post('turmas-pre-catequese/attendance/justify', [App\Http\Controllers\TurmasPreCatequeseController::class, 'storeJustification'])->name('turmas-pre-catequese.attendance.justify');
+    Route::resource('turmas-pre-catequese', App\Http\Controllers\TurmasPreCatequeseController::class);
+
     // Reservas e Calendário (Page View)
     Route::get('reservas-calendar', [App\Http\Controllers\ReservaCalendarController::class, 'view'])->name('reservas-calendar.view');
 
