@@ -44,10 +44,10 @@ class EscalaGeneratorService
                                        ->get();
 
         // Acólitos e Coroinhas ativos da comunidade
-        // status = 1 (active)
+        // status = 0 = Ativo no sistema
         $acolitosAtivos = Acolito::where('ent_id', $ent_id)
                                  ->where('paroquia_id', $paroquia_id)
-                                 ->where('status', 1)
+                                 ->where('status', 0)
                                  ->get();
 
         $acolitosList = $acolitosAtivos->where('type', 0)->values();
@@ -189,6 +189,8 @@ class EscalaGeneratorService
 
             $selecionados[] = [
                 'id' => $member->id,
+                'name' => $member->name,
+                'type' => $member->type, // 0 = acolito, 1 = coroinha
                 'funcao_id' => $funcao_id
             ];
 
