@@ -22,13 +22,13 @@
             <div class="d-flex gap-2">
                 @if($canEdit)
                 @if(isset($draftsCount) && $draftsCount >= 2)
-                <form action="{{ route('acolitos.escalas.publish_drafts', $escala->es_id) }}" method="POST" class="d-inline" id="publishDraftsForm">
+                <form action="{{ route('acolitos.escalas.publish_drafts', $escala->es_id) }}" method="POST" class="d-none" id="publishDraftsForm">
                     @csrf
-                    <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#publishDraftsModal">
-                        <i class="bi bi-whatsapp"></i>
-                        <span>Publicar {{ $draftsCount }} Rascunhos</span>
-                    </button>
                 </form>
+                <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#publishDraftsModal">
+                    <i class="bi bi-whatsapp"></i>
+                    <span>Publicar {{ $draftsCount }} Rascunhos</span>
+                </button>
                 @endif
                 <button type="button" class="btn btn-primary btn-sm shadow-sm d-flex align-items-center gap-2 rounded-3 px-3" onclick="openGenerateModal()">
                     <i class="bi bi-magic"></i>
