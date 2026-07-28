@@ -157,9 +157,9 @@ class EscalaGeneratorService
 
     private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false)
     {
-        if ($qtdNeeded <= 0) return;
+        if ($qtdNeeded <= 0 || $availableMembers->isEmpty()) return;
 
-        // Filtrar membros que já atingiram o maximo global (se maxServes > 0)
+        // 1ª tentativa: filtrar apenas quem ainda não atingiu o teto mensal
         $eligible = $availableMembers->filter(function($member) use ($maxServes, $currentMonthCounts) {
             if ($maxServes > 0 && $currentMonthCounts[$member->id] >= $maxServes) {
                 return false;
@@ -167,10 +167,16 @@ class EscalaGeneratorService
             return true;
         });
 
-        // Ordenar por menos vezes escalado historicamente e no mes atual (pesos)
-        // Embaralhar primeiro para desempatar aleatoriamente
+        // Se não sobrou ninguém dentro do teto (todos já serviram o máximo),
+        // reinicia o ciclo com todos os disponíveis para não deixar missa vazia.
+        // Isso é o comportamento correto: o teto é ideal, não absoluto.
+        if ($eligible->isEmpty()) {
+            $eligible = $availableMembers;
+        }
+
+        // Ordenar por menos vezes escalado no mês atual (desempate aleatório)
         $eligible = $eligible->shuffle()->sortBy(function($member) use ($currentMonthCounts, $escaladoCounts) {
-            // Peso: 70% mes atual, 30% historico
+            // Peso principal: contagem no mês atual; secundário: histórico
             return ($currentMonthCounts[$member->id] * 10) + $escaladoCounts[$member->id];
         })->take($qtdNeeded);
 
@@ -180,17 +186,16 @@ class EscalaGeneratorService
             if ($isCoroinha && $defaultFuncaoId) {
                 $funcao_id = $defaultFuncaoId;
             } else {
-                // Acolito: pegar função aleatória ou null
+                // Acolito: pegar função aleatória
                 if ($todasFuncoes->isNotEmpty()) {
-                    // Random function just to fill
                     $funcao_id = $todasFuncoes->random()->f_id;
                 }
             }
 
             $selecionados[] = [
-                'id' => $member->id,
-                'name' => $member->name,
-                'type' => $member->type, // 0 = acolito, 1 = coroinha
+                'id'       => $member->id,
+                'name'     => $member->name,
+                'type'     => $member->type, // 0 = acolito, 1 = coroinha
                 'funcao_id' => $funcao_id
             ];
 
