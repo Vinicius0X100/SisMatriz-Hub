@@ -225,10 +225,12 @@ class AcolitoEscalaController extends Controller
         // Map celebrations by day for easy access in view
         $celebrationsByDay = $allCelebrations->groupBy('data');
 
+        $draftsCount = $drafts->count();
+
         return view('modules.acolitos.escalas.manage', compact(
             'escala', 'celebrations', 'allCelebrations', 'celebrationsByDay', 'entidades', 
             'defaultEntId', 'acolitos', 'funcoes', 'daysInMonth', 'monthNum', 'year',
-            'canEdit', 'myAcolitoId'
+            'canEdit', 'myAcolitoId', 'draftsCount'
         ));
     }
 

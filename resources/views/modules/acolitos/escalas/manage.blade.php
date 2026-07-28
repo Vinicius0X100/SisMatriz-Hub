@@ -21,6 +21,15 @@
             </nav>
             <div class="d-flex gap-2">
                 @if($canEdit)
+                @if(isset($draftsCount) && $draftsCount >= 2)
+                <form action="{{ route('acolitos.escalas.publish_drafts', $escala->es_id) }}" method="POST" class="d-inline" id="publishDraftsForm">
+                    @csrf
+                    <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#publishDraftsModal">
+                        <i class="bi bi-whatsapp"></i>
+                        <span>Publicar {{ $draftsCount }} Rascunhos</span>
+                    </button>
+                </form>
+                @endif
                 <button type="button" class="btn btn-primary btn-sm shadow-sm d-flex align-items-center gap-2 rounded-3 px-3" onclick="openGenerateModal()">
                     <i class="bi bi-magic"></i>
                     <span>Gerar Automático</span>
@@ -169,7 +178,7 @@
                                     $badgeBg = $isDraft ? 'bg-warning' : ($imInThisOne ? 'bg-success' : 'bg-primary');
                                     $iconClass = $isDraft ? 'bi-file-earmark-text' : '';
                                 @endphp
-                                <div class="celebration-item px-2 py-1 rounded-3 d-flex align-items-center justify-content-between {{ $badgeBg }} bg-opacity-10 border border-{{ str_replace('bg-', '', $badgeBg) }} border-opacity-25" 
+                                <div class="celebration-item px-2 py-1 rounded-3 d-flex align-items-start justify-content-between {{ $badgeBg }} bg-opacity-10 border border-{{ str_replace('bg-', '', $badgeBg) }} border-opacity-25" 
                                      title="{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }} - {{ $cel->celebration }}"
                                      @if($canEdit) 
                                         onclick="event.stopPropagation(); openEditModal('{{ $cel->d_id }}')"
@@ -177,16 +186,16 @@
                                         onclick="event.stopPropagation(); openViewModal('{{ $cel->d_id }}')"
                                      @endif
                                      >
-                                    <div class="d-flex align-items-center overflow-hidden" style="flex: 1;">
-                                        <span class="d-inline-block rounded-circle {{ $dotColor }} me-2 flex-shrink-0" style="width: 6px; height: 6px;"></span>
-                                        <div class="text-truncate fw-medium text-dark" style="font-size: 0.75rem;">
+                                    <div class="d-flex align-items-start" style="flex: 1; overflow-wrap: break-word; min-width: 0;">
+                                        <span class="d-inline-block rounded-circle {{ $dotColor }} me-2 flex-shrink-0 mt-1" style="width: 6px; height: 6px;"></span>
+                                        <div class="fw-medium text-dark text-wrap lh-sm" style="font-size: 0.75rem;">
                                             @if($iconClass)<i class="bi {{ $iconClass }} text-muted me-1"></i>@endif
                                             <span class="text-muted me-1">{{ \Carbon\Carbon::parse($cel->hora)->format('H:i') }}</span>
                                             {{ $cel->celebration }}
                                         </div>
                                     </div>
                                     @if($canEdit)
-                                        <div class="ms-2 flex-shrink-0">
+                                        <div class="ms-2 flex-shrink-0 mt-1">
                                         @if(isset($cel->escalados) && $cel->escalados->count() > 0)
                                             <span class="badge {{ $badgeBg }} rounded-pill" style="font-size: 0.6rem;">{{ $cel->escalados->count() }}</span>
                                         @elseif(isset($cel->payload['acolitos']) && count($cel->payload['acolitos']) > 0)
@@ -196,7 +205,7 @@
                                         @endif
                                         </div>
                                     @elseif($imInThisOne)
-                                        <i class="bi bi-person-fill text-success ms-2 flex-shrink-0" style="font-size: 0.75rem;"></i>
+                                        <i class="bi bi-person-fill text-success ms-2 flex-shrink-0 mt-1" style="font-size: 0.75rem;"></i>
                                     @endif
                                 </div>
                             @endforeach
@@ -1033,4 +1042,34 @@
         </div>
     </div>
 </div>
+<!-- Modal de Confirmação para Publicar Rascunhos -->
+@if(isset($draftsCount) && $draftsCount >= 2)
+<div class="modal fade" id="publishDraftsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-success"><i class="bi bi-whatsapp me-2"></i>Publicar Rascunhos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-cloud-arrow-up text-success" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Você está prestes a publicar {{ $draftsCount }} rascunhos!</h5>
+                <p class="text-muted mb-0">
+                    Ao confirmar, todas as celebrações que estão como rascunho no calendário entrarão para a escala oficial.<br><br>
+                    <strong>Atenção:</strong> As mensagens de WhatsApp serão disparadas imediatamente para todos os acólitos e coroinhas escalados nessas missas.
+                </p>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" onclick="document.getElementById('publishDraftsForm').submit(); this.disabled=true; this.innerHTML='<span class=\'spinner-border spinner-border-sm me-2\'></span>Enviando...';">
+                    Confirmar e Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection
