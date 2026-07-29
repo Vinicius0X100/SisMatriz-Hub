@@ -13,372 +13,7 @@
     @viteReactRefresh
     @vite(['resources/css/app.scss', 'resources/js/app.js', 'resources/js/echo-setup.js'])
     @stack('styles')
-</head>
-<body class="d-flex flex-column min-vh-100 bg-light" data-auth-id="{{ Auth::id() }}">
-    
-    @auth
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm fixed-top">
-        <div class="container-fluid px-4">
-            <div class="d-flex align-items-center gap-2">
-                <button id="sidebarToggle" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Menu">
-                    <i class="bi bi-layout-sidebar fs-5 text-dark"></i>
-                </button>
-                <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="{{ route('dashboard') }}">
-                    <img src="{{ asset('images/logo.png') }}" alt="SisMatriz" height="38" class="rounded" onerror="this.style.display='none'">
-                    <span class="fw-bold text-dark">SisMatriz</span>
-                </a>
-            </div>
-            
-            <div class="d-flex align-items-center gap-3">
-                <!-- Notifications Button -->
-                <div class="dropdown">
-                    <button class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm position-relative" style="width: 40px; height: 40px;" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notificações">
-                        <i class="bi bi-bell text-dark fs-5"></i>
-                        @php
-                            $reminders = \App\Models\Lembrete::where('usuario_id', Auth::id())
-                                ->where('status', 'ativo')
-                                ->where('data_hora', '<=', now())
-                                ->orderBy('data_hora', 'desc')
-                                ->get();
-
-                            $messages = \App\Models\Message::where('receiver_id', Auth::id())
-                                ->where('is_read', false)
-                                ->whereHas('sender')
-                                ->with('sender')
-                                ->orderBy('created_at', 'desc')
-                                ->get();
-
-                            $protocolNotifications = \App\Models\ProtocolStatusNotification::where('user_id', Auth::id())
-                                ->where('is_read', false)
-                                ->with('protocol')
-                                ->orderBy('created_at', 'desc')
-                                ->get();
-                                
-                            $processoNotifications = \App\Models\ProcessoNotificacao::where('user_id', Auth::id())
-                                ->where('is_read', false)
-                                ->orderBy('created_at', 'desc')
-                                ->get();
-                                
-                            $totalNotifications = $reminders->count() + $messages->count() + $protocolNotifications->count() + $processoNotifications->count();
-                        @endphp
-                        @if($totalNotifications > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                                <span class="visually-hidden">New alerts</span>
-                            </span>
-                        @endif
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
-                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white sticky-top">
-                            <h6 class="mb-0 fw-bold">Notificações</h6>
-                            @php
-                                $extraNavbarNotification = session('bucket_notification');
-                            @endphp
-                            @if($totalNotifications > 0)
-                                <span class="badge bg-primary rounded-pill">{{ $totalNotifications }}</span>
-                            @endif
-                        </div>
-                        <div class="list-group list-group-flush" id="notificationList">
-                            @if(!empty($extraNavbarNotification))
-                                <div class="list-group-item border-0 px-3 py-3 bg-light">
-                                    <div class="d-flex align-items-start gap-2">
-                                        <div class="position-relative">
-                                            <i class="bi bi-cloud-arrow-up text-primary mt-1 fs-5"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark small">{{ $extraNavbarNotification['title'] ?? 'Bucket criado com sucesso' }}</div>
-                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $extraNavbarNotification['message'] ?? '' }}</div>
-                                            <div class="text-muted" style="font-size: 0.65rem;">agora mesmo</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                            <!-- Protocol Notifications -->
-                            @foreach($protocolNotifications as $notification)
-                                <a href="{{ route('protocols.notification.read', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
-                                    <div class="d-flex align-items-start gap-2">
-                                        <div class="position-relative">
-                                            <i class="bi bi-file-earmark-text text-primary mt-1 fs-5"></i>
-                                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark small">{{ $notification->title }}</div>
-                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $notification->message }}</div>
-                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $notification->created_at->diffForHumans() }}</div>
-                                        </div>
-                                    </div>
-                                </a>
-                            @endforeach
-                            <!-- Processo Notifications -->
-                            @foreach($processoNotifications as $notification)
-                                <a href="{{ route('processos.notificacao.ler', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
-                                    <div class="d-flex align-items-start gap-2">
-                                        <div class="position-relative">
-                                            <i class="bi bi-diagram-3-fill text-warning mt-1 fs-5"></i>
-                                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark small">{{ $notification->title }}</div>
-                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $notification->message }}</div>
-                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $notification->created_at->diffForHumans() }}</div>
-                                        </div>
-                                    </div>
-                                </a>
-                            @endforeach
-
-                            <!-- Messages -->
-                            @php
-                                $groupedMessages = $messages->groupBy('sender_id');
-                            @endphp
-                            @foreach($groupedMessages as $senderId => $senderMessages)
-                                @php
-                                    $sender = $senderMessages->first()->sender;
-                                    $senderName = $sender ? ($sender->hide_name ? 'Usuário' : ($sender->name ?? $sender->user)) : 'Usuário Desconhecido';
-                                @endphp
-                                
-                                @if($senderMessages->count() > 2)
-                                    <a href="{{ route('chat.index', ['user_id' => $senderId]) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
-                                        <div class="d-flex align-items-start gap-2">
-                                            <div class="position-relative">
-                                                <i class="bi bi-chat-dots-fill text-success mt-1 fs-5"></i>
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold text-dark small">{{ $senderName }}</div>
-                                                <div class="text-muted small">{{ $senderMessages->count() }} novas mensagens</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                @else
-                                    @foreach($senderMessages as $msg)
-                                        <a href="{{ route('chat.index', ['user_id' => $senderId]) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
-                                            <div class="d-flex align-items-start gap-2">
-                                                <i class="bi bi-chat-left-text text-success mt-1"></i>
-                                                <div>
-                                                    <div class="fw-bold text-dark small">{{ $senderName }}</div>
-                                                    <div class="text-muted text-truncate" style="max-width: 200px; font-size: 0.8rem;">{{ $msg->message }}</div>
-                                                    <div class="text-muted" style="font-size: 0.65rem;">{{ $msg->created_at->diffForHumans() }}</div>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    @endforeach
-                                @endif
-                            @endforeach
-
-                            <!-- Reminders -->
-                            @foreach($reminders as $reminder)
-                                <a href="{{ route('lembretes.index') }}" class="list-group-item list-group-item-action border-0 px-3 py-3">
-                                    <div class="d-flex align-items-start gap-2">
-                                        <i class="bi bi-calendar-event text-primary mt-1"></i>
-                                        <div>
-                                            <div class="fw-medium text-dark small">{{ $reminder->descricao }}</div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">{{ $reminder->data_hora->diffForHumans() }}</div>
-                                        </div>
-                                    </div>
-                                </a>
-                            @endforeach
-                            
-                            @if($totalNotifications == 0)
-                                <div class="text-center py-4 text-muted small">
-                                    <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
-                                    Nenhuma notificação nova
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Chat Button -->
-                <a href="{{ url('/chat') }}" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;" title="Chat">
-                    <i class="bi bi-chat-dots text-dark fs-5"></i>
-                </a>
-
-                <!-- Mega Menu Button -->
-                <div class="dropdown">
-                    <button class="btn btn-light border-0 rounded-pill d-flex align-items-center gap-2 shadow-sm px-3" style="height: 40px;" type="button" id="megaMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Todos os Módulos">
-                        <i class="mdi mdi-view-grid text-dark fs-5"></i>
-                        <span class="fw-bold text-dark small">Opções</span>
-                    </button>
-                    <div class="dropdown-menu shadow-lg p-0 mt-2 border-0 rounded-4" aria-labelledby="megaMenuBtn" style="width: 350px; max-height: 80vh; overflow-y: auto;">
-                        <div class="p-3 sticky-top bg-white border-bottom">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control bg-light border-start-0" id="megaMenuSearch" placeholder="Pesquisar módulos...">
-                            </div>
-                        </div>
-                        <div class="p-2" id="megaMenuContent">
-                            @if(isset($globalGroupedModules))
-                                @foreach($globalGroupedModules as $letter => $modules)
-                                    <div class="module-group-item mb-2">
-                                        <h6 class="px-3 py-1 text-muted fw-bold small bg-light">{{ $letter }}</h6>
-                                        <div class="list-group list-group-flush">
-                                            @foreach($modules as $module)
-                                                <a href="{{ $module['url'] ?? '#' }}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 px-3 py-2 module-link">
-                                                    <div class="d-flex align-items-center justify-content-center bg-light rounded-circle text-primary" style="width: 32px; height: 32px;">
-                                                        <i class="bi bi-{{ $module['icon'] }}"></i>
-                                                    </div>
-                                                    <span class="text-dark small fw-semibold module-name">{{ $module['name'] }}</span>
-                                                </a>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @endif
-                        </div>
-                        <div class="p-3 text-center border-top bg-light rounded-bottom-4">
-                            <a href="{{ route('dashboard') }}" class="text-decoration-none small fw-bold">Ver todos no Dashboard</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-end d-none d-md-block">
-                    <div class="fw-bold text-dark small">{{ Auth::user()->name ?? Auth::user()->user }}</div>
-                    <div class="text-muted" style="font-size: 0.75rem;">{{ Auth::user()->paroquia->name ?? 'Administrador' }}</div>
-                </div>
-                <div class="dropdown">
-                    <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                        @php
-                            $userName = Auth::user()->name ?? Auth::user()->user;
-                            $parts = explode(' ', trim($userName));
-                            $initials = strtoupper(substr($parts[0], 0, 1));
-                            if (count($parts) > 1) {
-                                $initials .= strtoupper(substr(end($parts), 0, 1));
-                            }
-                        @endphp
-
-                        @if(Auth::user()->avatar && file_exists(public_path('storage/uploads/avatars/' . Auth::user()->avatar)))
-                            <img src="{{ asset('storage/uploads/avatars/' . Auth::user()->avatar) }}" 
-                                 alt="{{ $userName }}" 
-                                 width="40" height="40" 
-                                 class="rounded-circle border shadow-sm" 
-                                 style="object-fit: cover; object-position: center;">
-                        @else
-                            <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center shadow-sm" style="width: 40px; height: 40px;">
-                                {{ $initials }}
-                            </div>
-                        @endif
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser1">
-                        <li><a class="dropdown-item" href="{{ route('profile') }}">Perfil</a></li>
-                        <li><a class="dropdown-item" href="{{ route('settings.index') }}">Configurações</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="dropdown-item text-danger">Sair</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
-    @endauth
-
-    {{-- Sidebar --}}
-    @auth
-    <aside id="appSidebar">
-        <div class="sidebar-inner">
-
-            {{-- Fixed Top Links --}}
-            <div class="sidebar-top-fixed">
-                <div class="sidebar-top-row">
-                    <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" style="flex:1;">
-                        <span class="sidebar-icon"><i class="bi bi-house-door-fill"></i></span>
-                        <span class="sidebar-label">Início</span>
-                    </a>
-                    <button id="sidebarEditBtn" class="sidebar-edit-btn" title="Editar fixados">
-                        <span id="sidebarEditBtnLabel">Editar</span>
-                    </button>
-                </div>
-            </div>
-
-            {{-- Search --}}
-            <div class="sidebar-search-wrap">
-                <div class="position-relative">
-                    <i class="bi bi-search sidebar-search-icon"></i>
-                    <input type="text" id="sidebarSearch" class="sidebar-search" placeholder="Pesquisar módulos...">
-                </div>
-            </div>
-
-            {{-- Scrollable area: Pinned + All Modules --}}
-            <nav class="sidebar-nav" id="sidebarNav">
-
-                {{-- Pinned Modules (inside scroll) --}}
-                @if(isset($globalPinnedModules) && $globalPinnedModules->count() > 0)
-                <div class="sidebar-group sidebar-pinned-group" data-group="__pinned__">
-                    <div class="sidebar-group-label">
-                        <i class="bi bi-pin-fill me-1" style="font-size: 0.65rem;"></i> Fixados
-                    </div>
-                    @foreach($globalPinnedModules as $module)
-                        <div class="sidebar-link-wrap"
-                             data-slug="{{ Str::slug($module['name']) }}"
-                             data-pinned="1">
-                            <button class="sidebar-pin-badge sidebar-pin-badge--pinned" tabindex="-1" aria-label="Desafixar {{ $module['name'] }}">
-                                <i class="bi bi-dash"></i>
-                            </button>
-                            <a href="{{ $module['url'] ?? '#' }}"
-                               class="sidebar-link sidebar-module-link sidebar-pinned-link"
-                               data-module-name="{{ strtolower($module['name']) }}">
-                                <span class="sidebar-icon">
-                                    <i class="bi bi-{{ $module['icon'] }}"></i>
-                                </span>
-                                <span class="sidebar-label">{{ $module['name'] }}</span>
-                            </a>
-                        </div>
-                    @endforeach
-                </div>
-                @endif
-
-                {{-- All modules grouped A-Z --}}
-                @if(isset($globalGroupedModules))
-                    @foreach($globalGroupedModules as $letter => $modules)
-                        <div class="sidebar-group" data-group="{{ $letter }}">
-                            <div class="sidebar-group-label">{{ $letter }}</div>
-                            @foreach($modules as $module)
-                                @php $slug = Str::slug($module['name']); @endphp
-                                <div class="sidebar-link-wrap"
-                                     data-slug="{{ $slug }}"
-                                     data-pinned="{{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? '1' : '0' }}">
-                                    <button class="sidebar-pin-badge {{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'sidebar-pin-badge--pinned' : 'sidebar-pin-badge--unpinned' }}"
-                                            tabindex="-1"
-                                            aria-label="{{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'Desafixar' : 'Fixar' }} {{ $module['name'] }}">
-                                        <i class="bi {{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'bi-dash' : 'bi-plus' }}"></i>
-                                    </button>
-                                    <a href="{{ $module['url'] ?? '#' }}"
-                                       class="sidebar-link sidebar-module-link"
-                                       data-module-name="{{ strtolower($module['name']) }}">
-                                        <span class="sidebar-icon">
-                                            <i class="bi bi-{{ $module['icon'] }}"></i>
-                                        </span>
-                                        <span class="sidebar-label">{{ $module['name'] }}</span>
-                                    </a>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endforeach
-                @endif
-
-            </nav>
-
-        </div>
-    </aside>
-    <div id="sidebarOverlay"></div>
-    @endauth
-
-    <main id="appMain" class="flex-shrink-0" style="padding-top: 70px;">
-        @yield('content')
-    </main>
-
-    <footer id="appFooter" class="footer mt-auto py-3 bg-white border-top text-center">
-        <div class="container">
-            <span class="text-muted">
-                &copy; {{ date('Y') }} <strong>Sacratech Softwares LTDA</strong>. Todos os direitos reservados.
-                <br>
-                <small>SisMatriz é um serviço da Sacratech Softwares.</small>
-            </span>
-        </div>
-    </footer>
-
-    <style>
+<style>
         /* =============================================
            SIDEBAR
         ============================================= */
@@ -408,6 +43,8 @@
         }
 
         .sidebar-inner {
+            opacity: 0; /* Hidden initially for shimmer */
+            transition: opacity 0.4s ease;
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -676,7 +313,421 @@
                 margin-left: var(--sidebar-width);
             }
         }
+    
+        /* Shimmer Styles */
+        .sidebar-shimmer-block {
+            background: #f6f7f8;
+            background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-repeat: no-repeat;
+            background-size: 800px 100%;
+            animation: sidebar-shimmer-animation 1.5s infinite linear;
+        }
+
+        @keyframes sidebar-shimmer-animation {
+            0% { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+
+        #sidebarShimmer {
+            position: absolute;
+            inset: 0;
+            background: #ffffff;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px 8px;
+            transition: opacity 0.4s ease;
+        }
     </style>
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light" data-auth-id="{{ Auth::id() }}">
+    
+    @auth
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm fixed-top">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center gap-2">
+                <button id="sidebarToggle" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Menu">
+                    <i class="bi bi-layout-sidebar fs-5 text-dark"></i>
+                </button>
+                <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="{{ route('dashboard') }}">
+                    <img src="{{ asset('images/logo.png') }}" alt="SisMatriz" height="38" class="rounded" onerror="this.style.display='none'">
+                    <span class="fw-bold text-dark">SisMatriz</span>
+                </a>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notifications Button -->
+                <div class="dropdown">
+                    <button class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm position-relative" style="width: 40px; height: 40px;" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notificações">
+                        <i class="bi bi-bell text-dark fs-5"></i>
+                        @php
+                            $reminders = \App\Models\Lembrete::where('usuario_id', Auth::id())
+                                ->where('status', 'ativo')
+                                ->where('data_hora', '<=', now())
+                                ->orderBy('data_hora', 'desc')
+                                ->get();
+
+                            $messages = \App\Models\Message::where('receiver_id', Auth::id())
+                                ->where('is_read', false)
+                                ->whereHas('sender')
+                                ->with('sender')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            $protocolNotifications = \App\Models\ProtocolStatusNotification::where('user_id', Auth::id())
+                                ->where('is_read', false)
+                                ->with('protocol')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+                                
+                            $processoNotifications = \App\Models\ProcessoNotificacao::where('user_id', Auth::id())
+                                ->where('is_read', false)
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+                                
+                            $totalNotifications = $reminders->count() + $messages->count() + $protocolNotifications->count() + $processoNotifications->count();
+                        @endphp
+                        @if($totalNotifications > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        @endif
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white sticky-top">
+                            <h6 class="mb-0 fw-bold">Notificações</h6>
+                            @php
+                                $extraNavbarNotification = session('bucket_notification');
+                            @endphp
+                            @if($totalNotifications > 0)
+                                <span class="badge bg-primary rounded-pill">{{ $totalNotifications }}</span>
+                            @endif
+                        </div>
+                        <div class="list-group list-group-flush" id="notificationList">
+                            @if(!empty($extraNavbarNotification))
+                                <div class="list-group-item border-0 px-3 py-3 bg-light">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="position-relative">
+                                            <i class="bi bi-cloud-arrow-up text-primary mt-1 fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ $extraNavbarNotification['title'] ?? 'Bucket criado com sucesso' }}</div>
+                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $extraNavbarNotification['message'] ?? '' }}</div>
+                                            <div class="text-muted" style="font-size: 0.65rem;">agora mesmo</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            <!-- Protocol Notifications -->
+                            @foreach($protocolNotifications as $notification)
+                                <a href="{{ route('protocols.notification.read', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="position-relative">
+                                            <i class="bi bi-file-earmark-text text-primary mt-1 fs-5"></i>
+                                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ $notification->title }}</div>
+                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $notification->message }}</div>
+                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                            <!-- Processo Notifications -->
+                            @foreach($processoNotifications as $notification)
+                                <a href="{{ route('processos.notificacao.ler', $notification->id) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="position-relative">
+                                            <i class="bi bi-diagram-3-fill text-warning mt-1 fs-5"></i>
+                                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;"></span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">{{ $notification->title }}</div>
+                                            <div class="text-muted small" style="font-size: 0.8rem;">{{ $notification->message }}</div>
+                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+
+                            <!-- Messages -->
+                            @php
+                                $groupedMessages = $messages->groupBy('sender_id');
+                            @endphp
+                            @foreach($groupedMessages as $senderId => $senderMessages)
+                                @php
+                                    $sender = $senderMessages->first()->sender;
+                                    $senderName = $sender ? ($sender->hide_name ? 'Usuário' : ($sender->name ?? $sender->user)) : 'Usuário Desconhecido';
+                                @endphp
+                                
+                                @if($senderMessages->count() > 2)
+                                    <a href="{{ route('chat.index', ['user_id' => $senderId]) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <div class="position-relative">
+                                                <i class="bi bi-chat-dots-fill text-success mt-1 fs-5"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark small">{{ $senderName }}</div>
+                                                <div class="text-muted small">{{ $senderMessages->count() }} novas mensagens</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @else
+                                    @foreach($senderMessages as $msg)
+                                        <a href="{{ route('chat.index', ['user_id' => $senderId]) }}" class="list-group-item list-group-item-action border-0 px-3 py-3 bg-light">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <i class="bi bi-chat-left-text text-success mt-1"></i>
+                                                <div>
+                                                    <div class="fw-bold text-dark small">{{ $senderName }}</div>
+                                                    <div class="text-muted text-truncate" style="max-width: 200px; font-size: 0.8rem;">{{ $msg->message }}</div>
+                                                    <div class="text-muted" style="font-size: 0.65rem;">{{ $msg->created_at->diffForHumans() }}</div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                @endif
+                            @endforeach
+
+                            <!-- Reminders -->
+                            @foreach($reminders as $reminder)
+                                <a href="{{ route('lembretes.index') }}" class="list-group-item list-group-item-action border-0 px-3 py-3">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i class="bi bi-calendar-event text-primary mt-1"></i>
+                                        <div>
+                                            <div class="fw-medium text-dark small">{{ $reminder->descricao }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ $reminder->data_hora->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                            
+                            @if($totalNotifications == 0)
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
+                                    Nenhuma notificação nova
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Button -->
+                <a href="{{ url('/chat') }}" class="btn btn-light border-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;" title="Chat">
+                    <i class="bi bi-chat-dots text-dark fs-5"></i>
+                </a>
+
+                <!-- Mega Menu Button -->
+                <div class="dropdown">
+                    <button class="btn btn-light border-0 rounded-pill d-flex align-items-center gap-2 shadow-sm px-3" style="height: 40px;" type="button" id="megaMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Todos os Módulos">
+                        <i class="mdi mdi-view-grid text-dark fs-5"></i>
+                        <span class="fw-bold text-dark small">Opções</span>
+                    </button>
+                    <div class="dropdown-menu shadow-lg p-0 mt-2 border-0 rounded-4" aria-labelledby="megaMenuBtn" style="width: 350px; max-height: 80vh; overflow-y: auto;">
+                        <div class="p-3 sticky-top bg-white border-bottom">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control bg-light border-start-0" id="megaMenuSearch" placeholder="Pesquisar módulos...">
+                            </div>
+                        </div>
+                        <div class="p-2" id="megaMenuContent">
+                            @if(isset($globalGroupedModules))
+                                @foreach($globalGroupedModules as $letter => $modules)
+                                    <div class="module-group-item mb-2">
+                                        <h6 class="px-3 py-1 text-muted fw-bold small bg-light">{{ $letter }}</h6>
+                                        <div class="list-group list-group-flush">
+                                            @foreach($modules as $module)
+                                                <a href="{{ $module['url'] ?? '#' }}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 px-3 py-2 module-link">
+                                                    <div class="d-flex align-items-center justify-content-center bg-light rounded-circle text-primary" style="width: 32px; height: 32px;">
+                                                        <i class="bi bi-{{ $module['icon'] }}"></i>
+                                                    </div>
+                                                    <span class="text-dark small fw-semibold module-name">{{ $module['name'] }}</span>
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <div class="p-3 text-center border-top bg-light rounded-bottom-4">
+                            <a href="{{ route('dashboard') }}" class="text-decoration-none small fw-bold">Ver todos no Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end d-none d-md-block">
+                    <div class="fw-bold text-dark small">{{ Auth::user()->name ?? Auth::user()->user }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">{{ Auth::user()->paroquia->name ?? 'Administrador' }}</div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                        @php
+                            $userName = Auth::user()->name ?? Auth::user()->user;
+                            $parts = explode(' ', trim($userName));
+                            $initials = strtoupper(substr($parts[0], 0, 1));
+                            if (count($parts) > 1) {
+                                $initials .= strtoupper(substr(end($parts), 0, 1));
+                            }
+                        @endphp
+
+                        @if(Auth::user()->avatar && file_exists(public_path('storage/uploads/avatars/' . Auth::user()->avatar)))
+                            <img src="{{ asset('storage/uploads/avatars/' . Auth::user()->avatar) }}" 
+                                 alt="{{ $userName }}" 
+                                 width="40" height="40" 
+                                 class="rounded-circle border shadow-sm" 
+                                 style="object-fit: cover; object-position: center;">
+                        @else
+                            <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center shadow-sm" style="width: 40px; height: 40px;">
+                                {{ $initials }}
+                            </div>
+                        @endif
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser1">
+                        <li><a class="dropdown-item" href="{{ route('profile') }}">Perfil</a></li>
+                        <li><a class="dropdown-item" href="{{ route('settings.index') }}">Configurações</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="dropdown-item text-danger">Sair</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    @endauth
+
+    {{-- Sidebar --}}
+    @auth
+    
+    <aside id="appSidebar">
+        <!-- Sidebar Shimmer -->
+        <div id="sidebarShimmer" aria-hidden="true">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 10px; margin-top: 10px;">
+                <div class="sidebar-shimmer-block" style="width: 100px; height: 30px; border-radius: 6px;"></div>
+                <div class="sidebar-shimmer-block" style="width: 50px; height: 20px; border-radius: 20px;"></div>
+            </div>
+            <div style="padding: 0 10px; margin-top: 15px;">
+                <div class="sidebar-shimmer-block" style="width: 100%; height: 36px; border-radius: 8px;"></div>
+            </div>
+            <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 15px; margin-top: 25px;">
+                <div class="sidebar-shimmer-block" style="width: 60px; height: 12px; border-radius: 4px; margin-bottom: 5px;"></div>
+                <div style="display: flex; align-items: center; gap: 12px;"><div class="sidebar-shimmer-block" style="width: 28px; height: 28px; border-radius: 6px;"></div><div class="sidebar-shimmer-block" style="width: 120px; height: 16px; border-radius: 4px;"></div></div>
+                <div style="display: flex; align-items: center; gap: 12px;"><div class="sidebar-shimmer-block" style="width: 28px; height: 28px; border-radius: 6px;"></div><div class="sidebar-shimmer-block" style="width: 140px; height: 16px; border-radius: 4px;"></div></div>
+                <div style="display: flex; align-items: center; gap: 12px;"><div class="sidebar-shimmer-block" style="width: 28px; height: 28px; border-radius: 6px;"></div><div class="sidebar-shimmer-block" style="width: 100px; height: 16px; border-radius: 4px;"></div></div>
+                
+                <div class="sidebar-shimmer-block" style="width: 60px; height: 12px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;"></div>
+                <div style="display: flex; align-items: center; gap: 12px;"><div class="sidebar-shimmer-block" style="width: 28px; height: 28px; border-radius: 6px;"></div><div class="sidebar-shimmer-block" style="width: 130px; height: 16px; border-radius: 4px;"></div></div>
+                <div style="display: flex; align-items: center; gap: 12px;"><div class="sidebar-shimmer-block" style="width: 28px; height: 28px; border-radius: 6px;"></div><div class="sidebar-shimmer-block" style="width: 110px; height: 16px; border-radius: 4px;"></div></div>
+            </div>
+        </div>
+
+        <div class="sidebar-inner">
+
+            {{-- Fixed Top Links --}}
+            <div class="sidebar-top-fixed">
+                <div class="sidebar-top-row">
+                    <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" style="flex:1;">
+                        <span class="sidebar-icon"><i class="bi bi-house-door-fill"></i></span>
+                        <span class="sidebar-label">Início</span>
+                    </a>
+                    <button id="sidebarEditBtn" class="sidebar-edit-btn" title="Editar fixados">
+                        <span id="sidebarEditBtnLabel">Editar</span>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Search --}}
+            <div class="sidebar-search-wrap">
+                <div class="position-relative">
+                    <i class="bi bi-search sidebar-search-icon"></i>
+                    <input type="text" id="sidebarSearch" class="sidebar-search" placeholder="Pesquisar módulos...">
+                </div>
+            </div>
+
+            {{-- Scrollable area: Pinned + All Modules --}}
+            <nav class="sidebar-nav" id="sidebarNav">
+
+                {{-- Pinned Modules (inside scroll) --}}
+                @if(isset($globalPinnedModules) && $globalPinnedModules->count() > 0)
+                <div class="sidebar-group sidebar-pinned-group" data-group="__pinned__">
+                    <div class="sidebar-group-label">
+                        <i class="bi bi-pin-fill me-1" style="font-size: 0.65rem;"></i> Fixados
+                    </div>
+                    @foreach($globalPinnedModules as $module)
+                        <div class="sidebar-link-wrap"
+                             data-slug="{{ Str::slug($module['name']) }}"
+                             data-pinned="1">
+                            <button class="sidebar-pin-badge sidebar-pin-badge--pinned" tabindex="-1" aria-label="Desafixar {{ $module['name'] }}">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <a href="{{ $module['url'] ?? '#' }}"
+                               class="sidebar-link sidebar-module-link sidebar-pinned-link"
+                               data-module-name="{{ strtolower($module['name']) }}">
+                                <span class="sidebar-icon">
+                                    <i class="bi bi-{{ $module['icon'] }}"></i>
+                                </span>
+                                <span class="sidebar-label">{{ $module['name'] }}</span>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+                @endif
+
+                {{-- All modules grouped A-Z --}}
+                @if(isset($globalGroupedModules))
+                    @foreach($globalGroupedModules as $letter => $modules)
+                        <div class="sidebar-group" data-group="{{ $letter }}">
+                            <div class="sidebar-group-label">{{ $letter }}</div>
+                            @foreach($modules as $module)
+                                @php $slug = Str::slug($module['name']); @endphp
+                                <div class="sidebar-link-wrap"
+                                     data-slug="{{ $slug }}"
+                                     data-pinned="{{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? '1' : '0' }}">
+                                    <button class="sidebar-pin-badge {{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'sidebar-pin-badge--pinned' : 'sidebar-pin-badge--unpinned' }}"
+                                            tabindex="-1"
+                                            aria-label="{{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'Desafixar' : 'Fixar' }} {{ $module['name'] }}">
+                                        <i class="bi {{ isset($globalPinnedModules) && $globalPinnedModules->firstWhere('slug', $slug) ? 'bi-dash' : 'bi-plus' }}"></i>
+                                    </button>
+                                    <a href="{{ $module['url'] ?? '#' }}"
+                                       class="sidebar-link sidebar-module-link"
+                                       data-module-name="{{ strtolower($module['name']) }}">
+                                        <span class="sidebar-icon">
+                                            <i class="bi bi-{{ $module['icon'] }}"></i>
+                                        </span>
+                                        <span class="sidebar-label">{{ $module['name'] }}</span>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
+                @endif
+
+            </nav>
+
+        </div>
+    </aside>
+    <div id="sidebarOverlay"></div>
+    @endauth
+
+    <main id="appMain" class="flex-shrink-0" style="padding-top: 70px;">
+        @yield('content')
+    </main>
+
+    <footer id="appFooter" class="footer mt-auto py-3 bg-white border-top text-center">
+        <div class="container">
+            <span class="text-muted">
+                &copy; {{ date('Y') }} <strong>Sacratech Softwares LTDA</strong>. Todos os direitos reservados.
+                <br>
+                <small>SisMatriz é um serviço da Sacratech Softwares.</small>
+            </span>
+        </div>
+    </footer>
+
+    
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -802,7 +853,24 @@
                 localStorage.setItem(STORAGE_KEY, '0');
             }
 
+
+            // Shimmer logic
+            setTimeout(function() {
+                const sidebarShimmer = document.getElementById('sidebarShimmer');
+                const sidebarInner = document.querySelector('.sidebar-inner');
+                if (sidebarShimmer) {
+                    sidebarShimmer.style.opacity = '0';
+                    if (sidebarInner) {
+                        sidebarInner.style.opacity = '1';
+                    }
+                    setTimeout(() => {
+                        sidebarShimmer.style.display = 'none';
+                    }, 400); // aguarda a animação sumir
+                }
+            }, 350);
+
             // Restore state from localStorage — default is open
+
             if (localStorage.getItem(STORAGE_KEY) !== '0') {
                 openSidebar();
             }
