@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EscalaAcolitoRegra;
 use App\Models\Entidade;
 use App\Models\AcolitoFuncao;
+use App\Models\CelebrationSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +32,7 @@ class AcolitoEscalaRegraController extends Controller
         }
 
         // 1: Segunda, 2: Terça, ..., 7: Domingo
-        $dias_semana = [
+        $dias_semana_full = [
             1 => 'Segunda-feira',
             2 => 'Terça-feira',
             3 => 'Quarta-feira',
@@ -40,6 +41,23 @@ class AcolitoEscalaRegraController extends Controller
             6 => 'Sábado',
             7 => 'Domingo'
         ];
+
+        $dias_semana = [];
+        if ($selected_ent_id) {
+            $diasComMissa = CelebrationSchedule::where('ent_id', $selected_ent_id)
+                ->where('paroquia_id', $paroquia_id)
+                ->pluck('dia_semana')
+                ->unique()
+                ->toArray();
+                
+            foreach ($dias_semana_full as $id => $nome) {
+                if (in_array($nome, $diasComMissa)) {
+                    $dias_semana[$id] = $nome;
+                }
+            }
+        } else {
+            $dias_semana = $dias_semana_full;
+        }
 
         return view('modules.acolitos.regras.index', compact('entidades', 'selected_ent_id', 'regras', 'dias_semana', 'funcoes'));
     }

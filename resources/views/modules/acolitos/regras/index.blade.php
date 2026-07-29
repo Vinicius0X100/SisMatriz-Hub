@@ -71,7 +71,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($dias_semana as $id_dia => $nome_dia)
+                            @forelse($dias_semana as $id_dia => $nome_dia)
                                 @php
                                     $regra = $regras->get($id_dia);
                                 @endphp
@@ -103,7 +103,16 @@
                                         <input type="number" name="regras[{{ $id_dia }}][max_serves_per_month]" class="form-control text-center" value="{{ $regra->max_serves_per_month ?? 4 }}" min="0" required title="0 para sem limite">
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+                                        Nenhum horário de missa cadastrado para esta comunidade.
+                                        <br>
+                                        <a href="{{ route('celebration-schedules.index') }}" class="btn btn-sm btn-outline-primary mt-3">Cadastrar Horários</a>
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
