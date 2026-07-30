@@ -87,20 +87,8 @@
                         </div>
                     </div>
                     <div style="min-width: 150px;">
-                        <label for="month" class="form-label fw-bold text-muted small">Mês</label>
-                        <select name="month" class="form-select rounded-pill bg-light border-0" id="month" onchange="this.form.submit()">
-                            <option value="">Todos</option>
-                            @php
-                                $meses = [
-                                    1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
-                                    5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
-                                    9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
-                                ];
-                            @endphp
-                            @foreach($meses as $num => $nome)
-                                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $nome }}</option>
-                            @endforeach
-                        </select>
+                        <label for="mes_ano" class="form-label fw-bold text-muted small">Mês Lançamento</label>
+                        <input type="month" name="mes_ano" class="form-control rounded-pill bg-light border-0" id="mes_ano" onchange="this.form.submit()" value="{{ request('mes_ano') }}">
                     </div>
                     <div style="min-width: 150px;">
                         <label for="kind" class="form-label fw-bold text-muted small">Tipo</label>
@@ -124,6 +112,9 @@
                     <button type="button" id="bulkDeleteBtn" class="btn btn-danger rounded-pill px-4 fw-bold text-nowrap d-none">
                         <i class="bi bi-trash me-2"></i> Excluir Selecionados (<span id="selectedCount">0</span>)
                     </button>
+                    <a href="{{ route('vicentinos-apuracoes.pdf', request()->all()) }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-4 fw-bold text-nowrap">
+                        <i class="bi bi-file-earmark-pdf me-2"></i> Gerar Relatório
+                    </a>
                     <a href="{{ route('vicentinos-apuracoes.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
                         <i class="bi bi-plus-lg me-2"></i> Nova Apuração
                     </a>
@@ -143,8 +134,9 @@
                             <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Nome</th>
                             <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Endereço</th>
                             <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Comunidade</th>
-                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Mês</th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Mês Ref.</th>
                             <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Tipo</th>
+                            <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Data Envio</th>
                             <th class="border-0 py-3 text-secondary text-uppercase small fw-bold">Enviado por</th>
                             <th class="border-0 rounded-end py-3 text-end pe-4 text-secondary text-uppercase small fw-bold">Ações</th>
                         </tr>
@@ -186,6 +178,11 @@
                                 @else
                                     <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Não Assistido</span>
                                 @endif
+                            </td>
+                            <td>
+                                <div class="text-muted small">
+                                    {{ $record->created_at ? $record->created_at->format('d/m/Y') : '-' }}
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">

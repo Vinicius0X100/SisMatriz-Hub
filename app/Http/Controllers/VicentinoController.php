@@ -23,7 +23,22 @@ class VicentinoController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        if ($request->filled('month')) {
+        if ($request->filled('mes_ano')) {
+            $parts = explode('-', $request->input('mes_ano'));
+            if (count($parts) == 2) {
+                $year = $parts[0];
+                $month = $parts[1];
+                $query->where(function($q) use ($year, $month) {
+                    $q->where(function($subQ) use ($year, $month) {
+                        $subQ->whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month);
+                    })->orWhere(function($subQ) use ($month) {
+                        $subQ->whereNull('created_at')
+                             ->where('month_entire', (int)$month);
+                    });
+                });
+            }
+        } elseif ($request->filled('month')) {
             $query->where('month_entire', $request->input('month'));
         }
 
@@ -234,5 +249,58 @@ class VicentinoController extends Controller
             ->get(['id', 'name', 'address', 'address_number']);
 
         return response()->json($registers);
+    }
+
+    // Gerar Relatório PDF
+    public function generatePdf(Request $request)
+    {
+        $query = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
+            ->with(['entidade', 'sender'])
+            ->orderBy('w_id', 'desc');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('mes_ano')) {
+            $parts = explode('-', $request->input('mes_ano'));
+            if (count($parts) == 2) {
+                $year = $parts[0];
+                $month = $parts[1];
+                $query->where(function($q) use ($year, $month) {
+                    $q->where(function($subQ) use ($year, $month) {
+                        $subQ->whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month);
+                    })->orWhere(function($subQ) use ($month) {
+                        $subQ->whereNull('created_at')
+                             ->where('month_entire', (int)$month);
+                    });
+                });
+            }
+        } elseif ($request->filled('month')) {
+            $query->where('month_entire', $request->input('month'));
+        }
+
+        if ($request->filled('kind')) {
+            $query->where('kind', $request->input('kind'));
+        }
+
+        if ($request->filled('ent_id')) {
+            $query->where('ent_id', $request->input('ent_id'));
+        }
+
+        $records = $query->get();
+        $meses = [
+            1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+            5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+            9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses'));
+        
+        $pdf->setPaper('a4', 'landscape');
+        
+        return $pdf->download('apuracao_vicentinos_' . date('YmdHis') . '.pdf');
     }
 }
