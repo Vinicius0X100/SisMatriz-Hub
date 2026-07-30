@@ -60,7 +60,30 @@ class VicentinoController extends Controller
             'nao_assistidos' => VinWatched::where('paroquia_id', Auth::user()->paroquia_id)->where('kind', 0)->count(),
         ];
 
-        return view('modules.vicentinos_apuracoes.index', compact('records', 'entidades', 'stats'));
+        $mesesDisponiveis = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
+            ->selectRaw('month_entire, YEAR(created_at) as year')
+            ->groupBy('month_entire', 'year')
+            ->orderByRaw('year DESC, month_entire DESC')
+            ->get()
+            ->map(function($item) {
+                $year = $item->year ?? 'Sem Ano';
+                $mesesStr = [
+                    1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+                    5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+                    9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+                ];
+                $nomeMes = $mesesStr[$item->month_entire] ?? $item->month_entire;
+                
+                $valYear = $item->year ?? '0000';
+                $valMonth = str_pad($item->month_entire, 2, '0', STR_PAD_LEFT);
+                
+                return [
+                    'value' => "{$valYear}-{$valMonth}",
+                    'label' => "{$nomeMes} / {$year}"
+                ];
+            })->unique('value');
+
+        return view('modules.vicentinos_apuracoes.index', compact('records', 'entidades', 'stats', 'mesesDisponiveis'));
     }
 
     // Formulário de Criação
@@ -251,35 +274,64 @@ class VicentinoController extends Controller
         return response()->json($registers);
     }
 
-    // Gerar Relatório PDF
-    public function generatePdf(Request $request)
+    // Gerar Relatório PDF / CSV
+    public function generateReport(Request $request)
     {
         $query = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
             ->with(['entidade', 'sender'])
             ->orderBy('w_id', 'desc');
 
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%");
-        }
-
-        if ($request->filled('mes_ano')) {
+        // Apply filters
+        if ($request->filled('periodo_tipo')) {
+            $now = \Carbon\Carbon::now();
+            switch ($request->input('periodo_tipo')) {
+                case 'mes_atual':
+                    $query->whereYear('created_at', $now->year)
+                          ->whereMonth('created_at', $now->month);
+                    break;
+                case 'bimestral':
+                    $query->where('created_at', '>=', $now->copy()->subMonths(2));
+                    break;
+                case 'trimestral':
+                    $query->where('created_at', '>=', $now->copy()->subMonths(3));
+                    break;
+                case 'personalizado':
+                    if ($request->filled('data_inicio')) {
+                        $query->whereDate('created_at', '>=', $request->input('data_inicio'));
+                    }
+                    if ($request->filled('data_fim')) {
+                        $query->whereDate('created_at', '<=', $request->input('data_fim'));
+                    }
+                    break;
+                case 'todo':
+                default:
+                    break;
+            }
+        } elseif ($request->filled('mes_ano')) {
+            // Se usou o select de mês específico em vez do período
             $parts = explode('-', $request->input('mes_ano'));
             if (count($parts) == 2) {
                 $year = $parts[0];
                 $month = $parts[1];
                 $query->where(function($q) use ($year, $month) {
-                    $q->where(function($subQ) use ($year, $month) {
-                        $subQ->whereYear('created_at', $year)
-                             ->whereMonth('created_at', $month);
-                    })->orWhere(function($subQ) use ($month) {
-                        $subQ->whereNull('created_at')
-                             ->where('month_entire', (int)$month);
-                    });
+                    if ($year === '0000') {
+                        $q->whereNull('created_at')->where('month_entire', (int)$month);
+                    } else {
+                        $q->where(function($subQ) use ($year, $month) {
+                            $subQ->whereYear('created_at', $year)
+                                 ->whereMonth('created_at', $month);
+                        })->orWhere(function($subQ) use ($month) {
+                            $subQ->whereNull('created_at')
+                                 ->where('month_entire', (int)$month);
+                        });
+                    }
                 });
             }
-        } elseif ($request->filled('month')) {
-            $query->where('month_entire', $request->input('month'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%");
         }
 
         if ($request->filled('kind')) {
@@ -297,10 +349,59 @@ class VicentinoController extends Controller
             9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
         ];
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses'));
-        
+        // Definir quais colunas mostrar
+        $colunasSelecionadas = $request->input('colunas', ['name', 'address', 'entidade', 'month_entire', 'kind', 'created_at', 'sender']);
+
+        $formato = $request->input('formato', 'pdf');
+
+        if ($formato === 'csv') {
+            $fileName = 'apuracao_vicentinos_' . date('YmdHis') . '.csv';
+            $headers = array(
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$fileName",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            );
+
+            $callback = function() use($records, $colunasSelecionadas, $meses) {
+                $file = fopen('php://output', 'w');
+                // Adiciona BOM para Excel ler acentos UTF-8
+                fputs($file, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+                
+                $cabecalhosCSV = [];
+                if (in_array('name', $colunasSelecionadas)) $cabecalhosCSV[] = 'Nome';
+                if (in_array('address', $colunasSelecionadas)) $cabecalhosCSV[] = 'Endereço';
+                if (in_array('entidade', $colunasSelecionadas)) $cabecalhosCSV[] = 'Comunidade';
+                if (in_array('month_entire', $colunasSelecionadas)) $cabecalhosCSV[] = 'Mês Ref.';
+                if (in_array('kind', $colunasSelecionadas)) $cabecalhosCSV[] = 'Tipo';
+                if (in_array('created_at', $colunasSelecionadas)) $cabecalhosCSV[] = 'Data Envio';
+                if (in_array('sender', $colunasSelecionadas)) $cabecalhosCSV[] = 'Enviado por';
+
+                fputcsv($file, $cabecalhosCSV, ';');
+
+                foreach ($records as $record) {
+                    $linha = [];
+                    if (in_array('name', $colunasSelecionadas)) $linha[] = $record->name;
+                    if (in_array('address', $colunasSelecionadas)) $linha[] = $record->address . ($record->address_number ? ', ' . $record->address_number : '');
+                    if (in_array('entidade', $colunasSelecionadas)) $linha[] = $record->entidade->ent_name ?? 'N/A';
+                    if (in_array('month_entire', $colunasSelecionadas)) $linha[] = $meses[$record->month_entire] ?? 'N/A';
+                    if (in_array('kind', $colunasSelecionadas)) $linha[] = $record->kind == 1 ? 'Assistido' : 'Não Assistido';
+                    if (in_array('created_at', $colunasSelecionadas)) $linha[] = $record->created_at ? $record->created_at->format('d/m/Y') : '-';
+                    if (in_array('sender', $colunasSelecionadas)) $linha[] = $record->sender->name ?? $record->sendby;
+                    
+                    fputcsv($file, $linha, ';');
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        // PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses', 'colunasSelecionadas'));
         $pdf->setPaper('a4', 'landscape');
         
-        return $pdf->download('apuracao_vicentinos_' . date('YmdHis') . '.pdf');
+        return $pdf->stream('apuracao_vicentinos_' . date('YmdHis') . '.pdf');
     }
 }

@@ -77,20 +77,25 @@
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <!-- Toolbar -->
-            <form action="{{ route('vicentinos-apuracoes.index') }}" method="GET" class="d-flex flex-column flex-md-row justify-content-between align-items-end gap-3 mb-4" id="filterForm">
-                <div class="d-flex flex-column flex-md-row gap-3 w-100">
-                    <div class="flex-grow-1">
+            <form action="{{ route('vicentinos-apuracoes.index') }}" method="GET" id="filterForm">
+                <div class="row g-3 mb-4 align-items-end">
+                    <div class="col-12 col-md-3">
                         <label for="search" class="form-label fw-bold text-muted small">Pesquisar</label>
                         <div class="position-relative">
                             <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             <input type="text" name="search" class="form-control ps-5 rounded-pill bg-light border-0" id="search" placeholder="Nome..." value="{{ request('search') }}">
                         </div>
                     </div>
-                    <div style="min-width: 150px;">
+                    <div class="col-12 col-md-3 col-sm-6">
                         <label for="mes_ano" class="form-label fw-bold text-muted small">Mês Lançamento</label>
-                        <input type="month" name="mes_ano" class="form-control rounded-pill bg-light border-0" id="mes_ano" onchange="this.form.submit()" value="{{ request('mes_ano') }}">
+                        <select name="mes_ano" class="form-select rounded-pill bg-light border-0" id="mes_ano" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            @foreach($mesesDisponiveis as $mes)
+                                <option value="{{ $mes['value'] }}" {{ request('mes_ano') == $mes['value'] ? 'selected' : '' }}>{{ $mes['label'] }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div style="min-width: 150px;">
+                    <div class="col-12 col-md-3 col-sm-6">
                         <label for="kind" class="form-label fw-bold text-muted small">Tipo</label>
                         <select name="kind" class="form-select rounded-pill bg-light border-0" id="kind" onchange="this.form.submit()">
                             <option value="">Todos</option>
@@ -98,7 +103,7 @@
                             <option value="0" {{ request('kind') == '0' ? 'selected' : '' }}>Não Assistido</option>
                         </select>
                     </div>
-                    <div style="min-width: 200px;">
+                    <div class="col-12 col-md-3">
                         <label for="ent_id" class="form-label fw-bold text-muted small">Comunidade</label>
                         <select name="ent_id" class="form-select rounded-pill bg-light border-0" id="ent_id" onchange="this.form.submit()">
                             <option value="">Todas</option>
@@ -108,13 +113,14 @@
                         </select>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
+                
+                <div class="d-flex flex-wrap gap-2 justify-content-end mb-4">
                     <button type="button" id="bulkDeleteBtn" class="btn btn-danger rounded-pill px-4 fw-bold text-nowrap d-none">
                         <i class="bi bi-trash me-2"></i> Excluir Selecionados (<span id="selectedCount">0</span>)
                     </button>
-                    <a href="{{ route('vicentinos-apuracoes.pdf', request()->all()) }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-4 fw-bold text-nowrap">
-                        <i class="bi bi-file-earmark-pdf me-2"></i> Gerar Relatório
-                    </a>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#reportModal">
+                        <i class="bi bi-file-earmark-bar-graph me-2"></i> Gerar Relatório
+                    </button>
                     <a href="{{ route('vicentinos-apuracoes.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
                         <i class="bi bi-plus-lg me-2"></i> Nova Apuração
                     </a>
@@ -247,6 +253,132 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Relatório -->
+    <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark" id="reportModalLabel">Gerar Relatório de Apuração</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="generateReportForm" action="{{ route('vicentinos-apuracoes.pdf') }}" method="GET">
+                    <div class="modal-body p-4">
+                        <div class="row g-4">
+                            <!-- Período -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Período</label>
+                                <select name="periodo_tipo" id="periodo_tipo" class="form-select rounded-3 bg-light border-0 mb-2">
+                                    <option value="">Usar filtro atual da tela</option>
+                                    <option value="mes_atual">Mês Atual</option>
+                                    <option value="bimestral">Últimos 2 meses (Bimestral)</option>
+                                    <option value="trimestral">Últimos 3 meses (Trimestral)</option>
+                                    <option value="todo">Todo o período</option>
+                                    <option value="personalizado">Personalizado (De - Até)</option>
+                                </select>
+                                <div id="customDateRange" class="d-none row g-2">
+                                    <div class="col-6">
+                                        <input type="date" name="data_inicio" class="form-control rounded-3 bg-light border-0" placeholder="De">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" name="data_fim" class="form-control rounded-3 bg-light border-0" placeholder="Até">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mês Referência (Se não usar período) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Mês Referência Específico</label>
+                                <select name="mes_ano" class="form-select rounded-3 bg-light border-0">
+                                    <option value="">Todos</option>
+                                    @foreach($mesesDisponiveis as $mes)
+                                        <option value="{{ $mes['value'] }}" {{ request('mes_ano') == $mes['value'] ? 'selected' : '' }}>{{ $mes['label'] }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="form-text">Usado apenas se nenhum período acima for selecionado.</div>
+                            </div>
+
+                            <!-- Colunas -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-dark mb-3">Colunas do Relatório</label>
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body p-3">
+                                        <div class="form-check mb-2 border-bottom pb-2">
+                                            <input class="form-check-input" type="checkbox" id="selectAllColumns" checked>
+                                            <label class="form-check-label fw-bold" for="selectAllColumns">
+                                                Selecionar Todas
+                                            </label>
+                                        </div>
+                                        <div class="row g-2">
+                                            @php
+                                                $cols = [
+                                                    'name' => 'Nome',
+                                                    'address' => 'Endereço',
+                                                    'entidade' => 'Comunidade',
+                                                    'month_entire' => 'Mês Ref.',
+                                                    'kind' => 'Tipo',
+                                                    'created_at' => 'Data Envio',
+                                                    'sender' => 'Enviado por'
+                                                ];
+                                            @endphp
+                                            @foreach($cols as $val => $label)
+                                            <div class="col-md-4 col-sm-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input col-checkbox" type="checkbox" name="colunas[]" value="{{ $val }}" id="col_{{ $val }}" checked>
+                                                    <label class="form-check-label" for="col_{{ $val }}">{{ $label }}</label>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Formato -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-dark mb-3">Formato de Exportação</label>
+                                <div class="d-flex gap-3">
+                                    <div class="flex-fill">
+                                        <input type="radio" class="btn-check" name="formato" id="formato_pdf" value="pdf" checked>
+                                        <label class="btn btn-outline-danger w-100 rounded-3 p-3 text-start d-flex align-items-center" for="formato_pdf">
+                                            <i class="bi bi-file-earmark-pdf fs-2 me-3"></i>
+                                            <div>
+                                                <div class="fw-bold">Arquivo PDF</div>
+                                                <div class="small opacity-75">Ideal para impressão</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <input type="radio" class="btn-check" name="formato" id="formato_csv" value="csv">
+                                        <label class="btn btn-outline-success w-100 rounded-3 p-3 text-start d-flex align-items-center" for="formato_csv">
+                                            <i class="bi bi-file-earmark-excel fs-2 me-3"></i>
+                                            <div>
+                                                <div class="fw-bold">Arquivo CSV (Excel)</div>
+                                                <div class="small opacity-75">Ideal para planilhas</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Campos Ocultos (Para manter os filtros atuais de pesquisa/tipo/comunidade) -->
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                            <input type="hidden" name="kind" value="{{ request('kind') }}">
+                            <input type="hidden" name="ent_id" value="{{ request('ent_id') }}">
+
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btnGenerateReport" class="btn btn-primary rounded-pill px-4 fw-bold">
+                            <span class="normal-text"><i class="bi bi-cloud-download me-2"></i> Gerar Relatório</span>
+                            <span class="loading-text d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Gerando...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @section('scripts')
 <script>
@@ -357,6 +489,85 @@
                 };
 
                 deleteConfirmModal.show();
+            });
+        }
+
+        // --- Report Modal Logic ---
+        
+        // Select All Columns
+        const selectAllColumns = document.getElementById('selectAllColumns');
+        const colCheckboxes = document.querySelectorAll('.col-checkbox');
+        if (selectAllColumns) {
+            selectAllColumns.addEventListener('change', function() {
+                colCheckboxes.forEach(cb => cb.checked = this.checked);
+            });
+            colCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const allChecked = Array.from(colCheckboxes).every(c => c.checked);
+                    selectAllColumns.checked = allChecked;
+                });
+            });
+        }
+
+        // Custom Date Range toggle
+        const periodoTipo = document.getElementById('periodo_tipo');
+        const customDateRange = document.getElementById('customDateRange');
+        if (periodoTipo) {
+            periodoTipo.addEventListener('change', function() {
+                if (this.value === 'personalizado') {
+                    customDateRange.classList.remove('d-none');
+                } else {
+                    customDateRange.classList.add('d-none');
+                }
+            });
+        }
+
+        // Handle Report Generation Submit
+        const generateReportForm = document.getElementById('generateReportForm');
+        const btnGenerateReport = document.getElementById('btnGenerateReport');
+        
+        if (generateReportForm) {
+            generateReportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show spinner
+                const normalText = btnGenerateReport.querySelector('.normal-text');
+                const loadingText = btnGenerateReport.querySelector('.loading-text');
+                
+                normalText.classList.add('d-none');
+                loadingText.classList.remove('d-none');
+                btnGenerateReport.disabled = true;
+
+                // Build query string
+                const formData = new FormData(this);
+                const queryParams = new URLSearchParams(formData).toString();
+                const url = this.action + '?' + queryParams;
+                
+                const isPdf = formData.get('formato') === 'pdf';
+
+                if (isPdf) {
+                    // Open PDF in new tab
+                    window.open(url, '_blank');
+                    
+                    // Reset button after a short delay
+                    setTimeout(() => {
+                        normalText.classList.remove('d-none');
+                        loadingText.classList.add('d-none');
+                        btnGenerateReport.disabled = false;
+                        bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+                    }, 1000);
+                } else {
+                    // CSV - trigger download in current window (won't navigate away because of content-disposition attachment)
+                    window.location.href = url;
+                    
+                    // Reset button
+                    setTimeout(() => {
+                        normalText.classList.remove('d-none');
+                        loadingText.classList.add('d-none');
+                        btnGenerateReport.disabled = false;
+                        bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+                    }, 1500);
+                }
             });
         }
     });
