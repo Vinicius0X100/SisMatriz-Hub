@@ -399,7 +399,8 @@ class VicentinoController extends Controller
         }
 
         // PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses', 'colunasSelecionadas'));
+        $paroquia = Auth::user()->paroquia;
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses', 'colunasSelecionadas', 'paroquia'));
         $pdf->setPaper('a4', 'landscape');
         
         return $pdf->stream('apuracao_vicentinos_' . date('YmdHis') . '.pdf');
