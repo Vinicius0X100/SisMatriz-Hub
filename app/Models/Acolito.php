@@ -21,7 +21,8 @@ class Acolito extends Model
         'graduation_year',
         'status', // 0 = Inativo, 1 = Ativo (assumindo padrão)
         'paroquia_id',
-        'user_id'
+        'user_id',
+        'created_at'
     ];
 
     public function register()

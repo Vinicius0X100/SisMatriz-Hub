@@ -141,6 +141,7 @@ class AcolitoController extends Controller
             'status' => $request->status,
             'paroquia_id' => Auth::user()->paroquia_id,
             'user_id' => $request->user_id,
+            'created_at' => now(),
         ]);
 
         return redirect()->route('acolitos.index')->with('success', 'Acólito/Coroinha cadastrado com sucesso!');
