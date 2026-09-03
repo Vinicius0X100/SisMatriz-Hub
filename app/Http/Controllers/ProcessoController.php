@@ -60,8 +60,14 @@ class ProcessoController extends Controller
         return $user->role_label ?: 'Usuário';
     }
 
+    private function isAdmin(User $user): bool
+    {
+        return $user->hasAnyRole(['1', '111']);
+    }
+
     private function podeTramitarInicio(User $user, string $assunto): bool
     {
+        if ($this->isAdmin($user)) return true;
         $grupoAssunto = self::ASSUNTO_GRUPOS[$assunto] ?? 'administracao';
         $userGrupos = $this->getUserGrupos($user);
         return in_array($grupoAssunto, $userGrupos);
@@ -146,6 +152,8 @@ class ProcessoController extends Controller
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
 
+        $isAdmin = $this->isAdmin($user);
+
         return view('modules.processos.index', compact(
             'processos',
             'minhaPastoral',
@@ -155,6 +163,7 @@ class ProcessoController extends Controller
             'filtroPrioridade',
             'filtroBusca',
             'userGrupos',
+            'isAdmin',
             'sortBy',
             'sortDir'
         ));
@@ -185,8 +194,12 @@ class ProcessoController extends Controller
      */
     public function bulkDestroy(Request $request)
     {
+        if (!$this->isAdmin(Auth::user())) {
+            return response()->json(['message' => 'Apenas administradores podem excluir processos em massa.'], 403);
+        }
+
         $ids = $request->input('ids', []);
-        
+
         $processos = ProcessoParoquial::where('paroquia_id', Auth::user()->paroquia_id)
             ->whereIn('id', $ids)
             ->whereIn('status', [2, 4])
@@ -293,8 +306,10 @@ class ProcessoController extends Controller
         $user    = Auth::user();
         $processo = ProcessoParoquial::where('paroquia_id', $user->paroquia_id)->findOrFail($id);
 
-        // Só pode iniciar se for o grupo correto
-        if (!$this->podeTramitarInicio($user, $processo->assunto) && $processo->responsavel_atual_user_id !== $user->id) {
+        // Admins têm acesso irrestrito; demais precisam ser do grupo responsável ou responsável atual
+        if (!$this->isAdmin($user)
+            && !$this->podeTramitarInicio($user, $processo->assunto)
+            && $processo->responsavel_atual_user_id !== $user->id) {
             return back()->with('error', 'Você não tem permissão para assumir este processo.');
         }
 
@@ -336,7 +351,8 @@ class ProcessoController extends Controller
         }
 
         // Se não encontrou a tramitação de abertura, verifica se o responsável é o usuário logado
-        if (!$tramitacaoAtual && $processo->responsavel_atual_user_id !== $user->id) {
+        // Admins bypassam esta verificação e podem tramitar qualquer processo
+        if (!$this->isAdmin($user) && !$tramitacaoAtual && $processo->responsavel_atual_user_id !== $user->id) {
             return redirect()->route('processos.index')
                 ->with('error', 'Você não é o responsável atual por este processo.');
         }

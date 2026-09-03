@@ -113,7 +113,8 @@
                         </select>
                     </div>
 
-                    <!-- Ações em Massa -->
+                    {{-- Ações em Massa (somente admins) --}}
+                    @if($isAdmin)
                     <div class="col-md-3 text-end d-flex justify-content-end">
                         <div class="dropdown">
                             <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center justify-content-center" style="height: 45px;" type="button" id="bulkActions" data-bs-toggle="dropdown" aria-expanded="false" disabled>
@@ -124,6 +125,7 @@
                             </ul>
                         </div>
                     </div>
+                    @endif
                 </div>
             </form>
 
@@ -139,11 +141,13 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
+                                @if($isAdmin)
                                 <th scope="col" width="40" class="text-center px-3 py-3">
                                     <div class="form-check d-flex justify-content-center mb-0">
                                         <input class="form-check-input" type="checkbox" id="selectAll">
                                     </div>
                                 </th>
+                                @endif
                                 <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="protocolo" style="font-size:.75rem;">Protocolo <i class="bi bi-arrow-down-up small ms-1"></i></th>
                                 <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="assunto" style="font-size:.75rem;">Assunto <i class="bi bi-arrow-down-up small ms-1"></i></th>
                                 <th class="px-3 py-3 text-muted small fw-bold text-uppercase cursor-pointer sortable" data-sort="nome_solicitante" style="font-size:.75rem;">Solicitante <i class="bi bi-arrow-down-up small ms-1"></i></th>
@@ -160,16 +164,18 @@
                                     $podeIniciar = \App\Http\Controllers\ProcessoController::ASSUNTO_GRUPOS[$processo->assunto] ?? 'administracao';
                                     $podeIniciarGrupo = in_array($podeIniciar, $userGrupos);
                                     $souResponsavelAtual = $processo->responsavel_atual_user_id === Auth::id();
-                                    $podeDarAndamento = $podeIniciarGrupo || $souResponsavelAtual
+                                    $podeDarAndamento = $isAdmin || $podeIniciarGrupo || $souResponsavelAtual
                                         || ($processo->tramitacoes->last() && $processo->tramitacoes->last()->para_user_id === Auth::id());
                                     $jaEncerrado = in_array($processo->status, [2, 4]); // Removido status 3 (Concluído não exclui)
                                 @endphp
                                 <tr class="{{ $souResponsavelAtual ? 'table-primary bg-opacity-10' : '' }}">
+                                    @if($isAdmin)
                                     <td class="text-center px-3 py-3">
                                         <div class="form-check d-flex justify-content-center mb-0">
                                             <input class="form-check-input row-checkbox" type="checkbox" value="{{ $processo->id }}">
                                         </div>
                                     </td>
+                                    @endif
                                     {{-- Protocolo --}}
                                     <td class="px-3 py-3">
                                         <div class="d-flex align-items-center gap-2">
