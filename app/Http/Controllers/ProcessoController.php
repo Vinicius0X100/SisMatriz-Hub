@@ -77,8 +77,13 @@ class ProcessoController extends Controller
         $user       = Auth::user();
         $paroquiaId = $user->paroquia_id;
 
-        // Leitura dos filtros (minha_pastoral padrão = true)
-        $minhaPastoral   = $request->input('minha_pastoral', '1') === '1';
+        // Leitura dos filtros
+        // Se o formulário nunca foi submetido (primeira visita), minha_pastoral ativo por padrão.
+        // Se foi submetido (_filtered presente), respeita o valor do checkbox (desmarcado = não enviado = false).
+        $formFoiSubmetido = $request->has('_filtered');
+        $minhaPastoral    = $formFoiSubmetido
+            ? $request->input('minha_pastoral') === '1'
+            : true;
         $souResponsavel  = $request->input('sou_responsavel', '0') === '1';
         $filtroAssunto   = $request->input('assunto');
         $filtroStatus    = $request->input('status');

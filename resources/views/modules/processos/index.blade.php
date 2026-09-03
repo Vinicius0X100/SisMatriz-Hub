@@ -37,6 +37,7 @@
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
             <form id="filtrosForm" method="GET" action="{{ route('processos.index') }}">
+                <input type="hidden" name="_filtered" value="1">
                 <input type="hidden" name="sort_by" id="sortBy" value="{{ $sortBy ?? '' }}">
                 <input type="hidden" name="sort_dir" id="sortDir" value="{{ $sortDir ?? 'desc' }}">
 
