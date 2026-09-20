@@ -102,7 +102,7 @@ class CatequeseApiController extends Controller
         $students = $alunoClass::where('turma_id', $id)
             ->with('register')
             ->get()
-            ->map(function ($student) use ($id, $date, $faltaClass) {
+            ->map(function ($student) use ($id, $date, $faltaClass, $tipo) {
                 $falta = $faltaClass::where('turma_id', $id)
                     ->where('aluno_id', $student->register_id)
                     ->where('data_aula', $date)
@@ -119,7 +119,7 @@ class CatequeseApiController extends Controller
                     ->where('status', 0)
                     ->count();
 
-                return [
+                $studentData = [
                     'id'        => $student->register->id ?? null,
                     'name'      => $student->register->name ?? 'Sem Nome',
                     'status'    => $falta ? $falta->status : 0,
@@ -127,6 +127,12 @@ class CatequeseApiController extends Controller
                     'presencas' => $presencas,
                     'faltas'    => $faltas,
                 ];
+
+                if ($tipo === 'pre-catequese') {
+                    $studentData['batizado'] = (bool) $student->batizado;
+                }
+
+                return $studentData;
             })
             // Remover caso o aluno tenha tido o cadastro excluido
             ->filter(function($s) { return !is_null($s['id']); })
@@ -273,6 +279,76 @@ class CatequeseApiController extends Controller
             'presencas' => $presencas,
             'faltas'    => $faltas,
             'history'   => $history->values(),
+        ]);
+    }
+
+    /**
+     * Verifica se o usuário autenticado possui permissão para gerenciar Pré-Catequese.
+     */
+    private function canManagePreCatequese(): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['1', '111', '20', '21']);
+    }
+
+    /**
+     * Atualiza o status de batismo de um aluno na turma de Pré-Catequese.
+     */
+    public function updateBatismo(Request $request, $tipo, $turma_id, $student_id)
+    {
+        if ($tipo !== 'pre-catequese') {
+            return response()->json([
+                'success' => false,
+                'message' => 'O status de batismo não está disponível para este tipo de catequese.'
+            ], 400);
+        }
+
+        if (!$this->canManagePreCatequese()) {
+            return response()->json(['error' => 'Acesso negado.'], 403);
+        }
+
+        $request->validate([
+            'batizado' => 'required|boolean',
+        ]);
+
+        $user = Auth::user();
+
+        $turma = TurmaPreCatequese::find($turma_id);
+
+        if (!$turma) {
+            return response()->json(['error' => 'Turma não encontrada.'], 404);
+        }
+
+        if ($turma->paroquia_id != $user->paroquia_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Busca determinística por register_id (mesmo identificador retornado em students[].id no GET attendance)
+        $catecando = CatecandoPreCatequese::where('turma_id', $turma->id)
+            ->where('register_id', $student_id)
+            ->with('register')
+            ->first();
+
+        if (!$catecando) {
+            return response()->json(['error' => 'Aluno não encontrado nesta turma.'], 404);
+        }
+
+        if ($catecando->register && $catecando->register->paroquia_id != $user->paroquia_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $catecando->update([
+            'batizado' => $request->boolean('batizado'),
+        ]);
+
+        return response()->json([
+            'success'    => true,
+            'student_id' => (int) $student_id,
+            'batizado'   => (bool) $catecando->batizado,
         ]);
     }
 }

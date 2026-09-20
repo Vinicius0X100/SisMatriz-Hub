@@ -48,6 +48,7 @@ Route::middleware(['web', 'auth:web'])->prefix('catequese')->group(function () {
     Route::post('/{tipo}/turmas/attendance/save', [CatequeseApiController::class, 'saveAttendance']);
     Route::post('/{tipo}/turmas/attendance/save-bulk', [CatequeseApiController::class, 'saveBulkAttendance']);
     Route::get('/{tipo}/turmas/{turma_id}/attendance-history/{student_id}', [CatequeseApiController::class, 'getAttendanceHistory']);
+    Route::post('/{tipo}/turmas/{turma_id}/students/{student_id}/batismo', [CatequeseApiController::class, 'updateBatismo']);
 });
 
 // Rotas de API para validação de bilhetes de Excursão
