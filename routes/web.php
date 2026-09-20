@@ -455,6 +455,7 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::delete('buckets/files/{file}', [App\Http\Controllers\BucketController::class, 'destroyFile'])->name('buckets.files.destroy');
 
     // Avisos Paroquiais
+    Route::post('avisos/bulk-delete', [App\Http\Controllers\FeedPostController::class, 'bulkDestroy'])->name('avisos.bulk-delete');
     Route::resource('avisos', App\Http\Controllers\FeedPostController::class);
 
     // Festas e Eventos

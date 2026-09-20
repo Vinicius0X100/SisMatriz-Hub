@@ -16,12 +16,29 @@ class FeedPostController extends Controller
         return view('modules.avisos.create');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $posts = FeedPost::where('paroquia_id', Auth::user()->paroquia_id)
+        $query = FeedPost::where('paroquia_id', Auth::user()->paroquia_id)
             ->orderByDesc('send_at')
-            ->orderByDesc('id')
-            ->paginate(25);
+            ->orderByDesc('id');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('legend', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('importance')) {
+            $query->where('level_importance', $request->importance);
+        }
+
+        $posts = $query->paginate(25);
+
+        if ($request->ajax()) {
+            return view('modules.avisos.partials.list', compact('posts'))->render();
+        }
 
         return view('modules.avisos.index', compact('posts'));
     }
@@ -120,5 +137,37 @@ class FeedPostController extends Controller
         $aviso->delete();
 
         return redirect()->route('avisos.index')->with('success', 'Aviso removido com sucesso.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $user = Auth::user();
+        $posts = FeedPost::where('paroquia_id', $user->paroquia_id)
+            ->whereIn('id', $request->ids)
+            ->get();
+
+        $count = $posts->count();
+
+        foreach ($posts as $post) {
+            if ($post->anexo && Storage::disk('public')->exists($post->anexo)) {
+                Storage::disk('public')->delete($post->anexo);
+            }
+            $post->delete();
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $count . ' aviso(s) excluído(s) com sucesso.',
+                'deleted_count' => $count,
+            ]);
+        }
+
+        return redirect()->route('avisos.index')->with('success', $count . ' aviso(s) excluído(s) com sucesso.');
     }
 }

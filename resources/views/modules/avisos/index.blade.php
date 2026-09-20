@@ -54,128 +54,32 @@
                     <label class="form-label fw-bold text-muted small">Pesquisar</label>
                     <div class="position-relative">
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input type="text" class="form-control ps-5 rounded-pill" placeholder="Título ou descrição..." style="height: 45px;" disabled>
+                        <input type="text" id="searchInput" class="form-control ps-5 rounded-pill" placeholder="Título ou descrição..." value="{{ request('search') }}" style="height: 45px;">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold text-muted small">Filtrar por importância</label>
-                    <select class="form-select rounded-pill" style="height: 45px;" disabled>
+                    <select id="importanceFilter" class="form-select rounded-pill" style="height: 45px;">
                         <option value="">Todos</option>
-                        <option value="0">Normal</option>
-                        <option value="1">Médio</option>
-                        <option value="2">Alto</option>
+                        <option value="0" {{ request('importance') === '0' ? 'selected' : '' }}>Normal</option>
+                        <option value="1" {{ request('importance') === '1' ? 'selected' : '' }}>Médio</option>
+                        <option value="2" {{ request('importance') === '2' ? 'selected' : '' }}>Alto</option>
                     </select>
+                </div>
+                <div class="col-md-5 text-end d-flex gap-2 justify-content-end align-items-end">
+                    <div class="dropdown">
+                        <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center justify-content-center" style="height: 45px;" type="button" id="bulkActions" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                            Ações
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="bulkActions">
+                            <li><a class="dropdown-item text-danger" href="#" id="bulkDeleteBtn"><i class="bi bi-trash me-2"></i> Excluir Selecionados</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="text-nowrap">Título</th>
-                            <th class="text-nowrap">Importância</th>
-                            <th class="text-nowrap">Origem</th>
-                            <th class="text-nowrap">Enviado em</th>
-                            <th class="text-nowrap">Visualizações</th>
-                            <th class="text-end text-nowrap">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($posts as $post)
-                            @php
-                                $importanceMap = [0 => ['Normal', 'secondary'], 1 => ['Médio', 'warning'], 2 => ['Alto', 'danger']];
-                                $importance = $importanceMap[$post->level_importance] ?? ['Indefinido', 'secondary'];
-                                $deviceIcon = match($post->device) {
-                                    2 => 'bi-android',
-                                    3 => 'bi-apple',
-                                    default => 'bi-globe',
-                                };
-                                $deviceLabel = match($post->device) {
-                                    1 => 'Web',
-                                    2 => 'Android',
-                                    3 => 'iOS',
-                                    default => 'Indefinido',
-                                };
-                                $thumbUrl = null;
-                                $attachmentUrl = '';
-                                if ($post->anexo) {
-                                    $fullPath = storage_path('app/public/' . $post->anexo);
-                                    if (file_exists($fullPath)) {
-                                        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
-                                        $attachmentUrl = asset('storage/' . $post->anexo);
-                                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])) {
-                                            $thumbUrl = asset('storage/' . $post->anexo);
-                                        }
-                                    }
-                                }
-                            @endphp
-                            <tr
-                                data-id="{{ $post->id }}"
-                                data-title="{{ $post->title }}"
-                                data-legend="{{ $post->legend }}"
-                                data-level="{{ (int) $post->level_importance }}"
-                                data-importance-label="{{ $importance[0] }}"
-                                data-importance-badge="{{ $importance[1] }}"
-                                data-device-label="{{ $deviceLabel }}"
-                                data-device-icon="{{ $deviceIcon }}"
-                                data-send-at="{{ optional($post->send_at)->format('d/m/Y H:i') }}"
-                                data-image-url="{{ $thumbUrl }}"
-                                data-attachment-url="{{ $attachmentUrl }}"
-                            >
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; overflow: hidden;">
-                                            @if($thumbUrl)
-                                                <img src="{{ $thumbUrl }}" alt="{{ $post->title }}" class="w-100 h-100" style="object-fit: cover; object-position: center;">
-                                            @else
-                                                <i class="bi bi-image text-muted"></i>
-                                            @endif
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold">{{ $post->title }}</div>
-                                            <div class="text-muted small text-truncate" style="max-width: 260px;">{{ $post->legend }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-{{ $importance[1] }}">{{ $importance[0] }}</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="bi {{ $deviceIcon }}"></i>
-                                        <span class="text-muted small">{{ $deviceLabel }}</span>
-                                    </div>
-                                </td>
-                                <td>{{ optional($post->send_at)->format('d/m/Y H:i') }}</td>
-                                <td>{{ $post->views ?? 0 }}</td>
-                                <td class="text-end">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-light rounded-pill px-3 btn-view-aviso" title="Ver aviso">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <a href="{{ route('avisos.edit', $post) }}" class="btn btn-light rounded-pill px-3" title="Editar aviso">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-light rounded-pill px-3 text-danger btn-delete-aviso" title="Excluir aviso"
-                                                data-id="{{ $post->id }}"
-                                                data-title="{{ $post->title }}"
-                                                data-url="{{ route('avisos.destroy', $post) }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center text-muted py-4">Nenhum aviso cadastrado.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-3">
-                {{ $posts->links() }}
+            <div id="table-container">
+                @include('modules.avisos.partials.list')
             </div>
         </div>
     </div>
@@ -251,23 +155,53 @@
     </div>
 </div>
 
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-body text-center p-5">
+                <div class="text-danger mb-3">
+                    <i class="bi bi-exclamation-circle display-1"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Excluir avisos selecionados?</h4>
+                <p class="text-muted mb-4">Você está prestes a excluir <strong id="bulkDeleteCount">0</strong> aviso(s) selecionado(s). Esta ação não poderá ser desfeita.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmBulkDeleteBtn" class="btn btn-danger rounded-pill px-4">Sim, excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const modalEl = document.getElementById('viewAvisoModal');
         const deleteModalEl = document.getElementById('deleteAvisoModal');
         const deleteForm = document.getElementById('deleteAvisoForm');
+        const bulkDeleteModalEl = document.getElementById('bulkDeleteModal');
+        const bulkDeleteCountEl = document.getElementById('bulkDeleteCount');
+        const confirmBulkDeleteBtn = document.getElementById('confirmBulkDeleteBtn');
+
+        const searchInput = document.getElementById('searchInput');
+        const importanceFilter = document.getElementById('importanceFilter');
+        const tableContainer = document.getElementById('table-container');
+        const bulkActionsBtn = document.getElementById('bulkActions');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+        let debounceTimer;
+        const globalSelectedIds = new Set();
 
         function getBootstrapModal() {
-            if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
-                return null;
-            }
+            if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) return null;
             return bootstrap.Modal.getOrCreateInstance(modalEl);
         }
         function getDeleteModal() {
-            if (!deleteModalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
-                return null;
-            }
+            if (!deleteModalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) return null;
             return bootstrap.Modal.getOrCreateInstance(deleteModalEl);
+        }
+        function getBulkDeleteModal() {
+            if (!bulkDeleteModalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) return null;
+            return bootstrap.Modal.getOrCreateInstance(bulkDeleteModalEl);
         }
 
         function populateViewModal(row) {
@@ -334,28 +268,226 @@
             }
         }
 
-        document.querySelectorAll('.btn-view-aviso').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const row = this.closest('tr');
-                if (!row) return;
+        // --- Gerenciamento de Seleção ---
+        function toggleSelection(id, isSelected) {
+            id = parseInt(id);
+            if (isSelected) {
+                globalSelectedIds.add(id);
+            } else {
+                globalSelectedIds.delete(id);
+            }
+            updateBulkActions();
+        }
 
-                const modal = getBootstrapModal();
-                if (!modal) return;
+        function restoreSelection() {
+            const checkboxes = tableContainer.querySelectorAll('.row-checkbox');
+            let allChecked = checkboxes.length > 0;
 
-                populateViewModal(row);
-                modal.show();
+            checkboxes.forEach(cb => {
+                const id = parseInt(cb.value);
+                if (globalSelectedIds.has(id)) {
+                    cb.checked = true;
+                } else {
+                    cb.checked = false;
+                    allChecked = false;
+                }
             });
-        });
 
-        document.querySelectorAll('.btn-delete-aviso').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                const url = this.dataset.url;
-                const modal = getDeleteModal();
-                if (!modal || !deleteForm || !url) return;
-                deleteForm.action = url;
-                modal.show();
+            const selectAll = tableContainer.querySelector('#selectAll');
+            if (selectAll) {
+                selectAll.checked = allChecked;
+            }
+
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const checkboxes = tableContainer.querySelectorAll('.row-checkbox');
+            const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+            const selectAll = tableContainer.querySelector('#selectAll');
+            if (selectAll) {
+                selectAll.checked = allChecked;
+            }
+
+            const count = globalSelectedIds.size;
+            if (bulkActionsBtn) {
+                bulkActionsBtn.disabled = count === 0;
+                bulkActionsBtn.innerHTML = count > 0 ? `Ações (${count})` : 'Ações';
+            }
+        }
+
+        // --- Fetch Data (Paginação AJAX e Filtros) ---
+        function fetchData(pageUrl = null) {
+            const params = new URLSearchParams();
+            if (searchInput && searchInput.value) {
+                params.append('search', searchInput.value);
+            }
+            if (importanceFilter && importanceFilter.value !== '') {
+                params.append('importance', importanceFilter.value);
+            }
+
+            let url = pageUrl;
+            if (!url) {
+                url = "{{ route('avisos.index') }}?" + params.toString();
+            } else if (params.toString()) {
+                const joinChar = url.includes('?') ? '&' : '?';
+                url = url + joinChar + params.toString();
+            }
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao carregar avisos.');
+                return res.text();
+            })
+            .then(html => {
+                tableContainer.innerHTML = html;
+                setupTableEvents();
+                restoreSelection();
+            })
+            .catch(err => {
+                console.error('Erro na requisição AJAX:', err);
             });
-        });
+        }
+
+        function setupTableEvents() {
+            // Paginação AJAX: interceptar cliques nos links da paginação
+            tableContainer.querySelectorAll('.pagination a').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    fetchData(this.href);
+                });
+            });
+
+            // Selecionar Todos na página visível
+            const selectAll = tableContainer.querySelector('#selectAll');
+            if (selectAll) {
+                selectAll.addEventListener('change', function () {
+                    const checkboxes = tableContainer.querySelectorAll('.row-checkbox');
+                    checkboxes.forEach(cb => {
+                        cb.checked = selectAll.checked;
+                        const id = parseInt(cb.value);
+                        if (selectAll.checked) {
+                            globalSelectedIds.add(id);
+                        } else {
+                            globalSelectedIds.delete(id);
+                        }
+                    });
+                    updateBulkActions();
+                });
+            }
+
+            // Checkboxes individuais
+            tableContainer.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.addEventListener('change', function () {
+                    toggleSelection(this.value, this.checked);
+                });
+            });
+
+            // Botões de Visualizar Aviso
+            tableContainer.querySelectorAll('.btn-view-aviso').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const row = this.closest('tr');
+                    if (!row) return;
+
+                    const modal = getBootstrapModal();
+                    if (!modal) return;
+
+                    populateViewModal(row);
+                    modal.show();
+                });
+            });
+
+            // Botões de Excluir Aviso (Individual)
+            tableContainer.querySelectorAll('.btn-delete-aviso').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const url = this.dataset.url;
+                    const modal = getDeleteModal();
+                    if (!modal || !deleteForm || !url) return;
+                    deleteForm.action = url;
+                    modal.show();
+                });
+            });
+        }
+
+        // Filtros (Busca e Importância)
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    fetchData();
+                }, 300);
+            });
+        }
+
+        if (importanceFilter) {
+            importanceFilter.addEventListener('change', function () {
+                fetchData();
+            });
+        }
+
+        // Botão de Exclusão em Massa
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (globalSelectedIds.size === 0) return;
+
+                if (bulkDeleteCountEl) {
+                    bulkDeleteCountEl.textContent = globalSelectedIds.size;
+                }
+                const modal = getBulkDeleteModal();
+                if (modal) modal.show();
+            });
+        }
+
+        if (confirmBulkDeleteBtn) {
+            confirmBulkDeleteBtn.addEventListener('click', function () {
+                const ids = Array.from(globalSelectedIds);
+                if (ids.length === 0) return;
+
+                confirmBulkDeleteBtn.disabled = true;
+                confirmBulkDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Excluindo...';
+
+                fetch("{{ route('avisos.bulk-delete') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: ids })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const modal = getBulkDeleteModal();
+                        if (modal) modal.hide();
+
+                        globalSelectedIds.clear();
+                        updateBulkActions();
+                        fetchData();
+                    } else {
+                        alert(data.message || 'Erro ao excluir avisos.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Erro ao excluir em massa:', err);
+                    alert('Erro na comunicação com o servidor.');
+                })
+                .finally(() => {
+                    confirmBulkDeleteBtn.disabled = false;
+                    confirmBulkDeleteBtn.innerHTML = 'Sim, excluir';
+                });
+            });
+        }
+
+        // Inicializar eventos da tabela na carga inicial
+        setupTableEvents();
     });
 </script>
 @endsection
