@@ -146,25 +146,59 @@ class EscalaGeneratorService
                     $maxServes = $regraDoDia->max_serves_per_month;
 
                     $selecionados = [];
-
-                    // Format hour for key
                     $timeKey = $day . '_' . substr($horario->horario, 0, 5);
+                    $rejectedIds = [];
+                    $maxAttempts = 3;
 
-                    // Selecionar Acolitos (type 0)
-                    $this->selectMembers(
-                        $acolitosList, $qtdAcolitos, $maxServes, $currentMonthCounts, 
-                        $escaladoCounts, $selecionados, null, $funcoes, false,
-                        $currentMonthHours, $horario->horario, $occupiedSlots, $timeKey
-                    );
+                    for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+                        $currAcolitos = count(array_filter($selecionados, fn($s) => $s['type'] == 0));
+                        $currCoroinhas = count(array_filter($selecionados, fn($s) => $s['type'] == 1));
 
-                    // Selecionar Coroinhas (type 1)
-                    $this->selectMembers(
-                        $coroinhasList, $qtdCoroinhas, $maxServes, $currentMonthCounts, 
-                        $escaladoCounts, $selecionados, $regraDoDia->coroinha_funcao_id, $funcoes, true,
-                        $currentMonthHours, $horario->horario, $occupiedSlots, $timeKey
-                    );
+                        $neededAcolitos = $qtdAcolitos - $currAcolitos;
+                        $neededCoroinhas = $qtdCoroinhas - $currCoroinhas;
 
-                    // Validar a equipe formada usando as regras de composição
+                        if ($neededAcolitos > 0) {
+                            $this->selectMembers(
+                                $acolitosList, $neededAcolitos, $maxServes, $currentMonthCounts, 
+                                $escaladoCounts, $selecionados, null, $funcoes, false,
+                                $currentMonthHours, $horario->horario, $occupiedSlots, $timeKey, $rejectedIds
+                            );
+                        }
+
+                        if ($neededCoroinhas > 0) {
+                            $this->selectMembers(
+                                $coroinhasList, $neededCoroinhas, $maxServes, $currentMonthCounts, 
+                                $escaladoCounts, $selecionados, $regraDoDia->coroinha_funcao_id, $funcoes, true,
+                                $currentMonthHours, $horario->horario, $occupiedSlots, $timeKey, $rejectedIds
+                            );
+                        }
+
+                        // Validate composition
+                        $acolitosIds = array_column($selecionados, 'id');
+                        $invalidos = $this->teamCompositionService->membrosInvalidos($paroquia_id, $acolitosIds);
+
+                        if (empty($invalidos)) {
+                            break; // All rules satisfied!
+                        }
+
+                        // Remove invalid members and rollback their counters
+                        foreach ($selecionados as $k => $sel) {
+                            if (in_array($sel['id'], $invalidos)) {
+                                if (isset($occupiedSlots[$timeKey])) {
+                                    $pos = array_search($sel['id'], $occupiedSlots[$timeKey]);
+                                    if ($pos !== false) unset($occupiedSlots[$timeKey][$pos]);
+                                }
+                                $currentMonthCounts[$sel['id']]--;
+                                $escaladoCounts[$sel['id']]--;
+                                
+                                $rejectedIds[] = $sel['id'];
+                                unset($selecionados[$k]);
+                            }
+                        }
+                        $selecionados = array_values($selecionados);
+                    }
+
+                    // Last pass validation just to generate warnings for the UI (if any remain)
                     $acolitosIds = array_column($selecionados, 'id');
                     $errosComposicao = $this->teamCompositionService->validarEquipe($paroquia_id, $acolitosIds);
 
@@ -189,16 +223,18 @@ class EscalaGeneratorService
         return $celebrationsToCreate;
     }
 
-    private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false, &$currentMonthHours = null, $currentHora = null, &$occupiedSlots = [], $timeKey = null)
+    private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false, &$currentMonthHours = null, $currentHora = null, &$occupiedSlots = [], $timeKey = null, $rejectedIds = [])
     {
         if ($qtdNeeded <= 0 || $availableMembers->isEmpty()) return;
 
-        // Remover acólitos que já estão ocupados neste exato dia e horário
-        if ($timeKey && isset($occupiedSlots[$timeKey])) {
-            $availableMembers = $availableMembers->reject(function($member) use ($occupiedSlots, $timeKey) {
-                return in_array($member->id, $occupiedSlots[$timeKey]);
-            });
-        }
+        // Remover acólitos que já estão ocupados neste exato dia e horário, ou que foram rejeitados
+        $availableMembers = $availableMembers->reject(function($member) use ($occupiedSlots, $timeKey, $rejectedIds) {
+            if (in_array($member->id, $rejectedIds)) return true;
+            if ($timeKey && isset($occupiedSlots[$timeKey]) && in_array($member->id, $occupiedSlots[$timeKey])) {
+                return true;
+            }
+            return false;
+        });
 
         if ($availableMembers->isEmpty()) return;
 

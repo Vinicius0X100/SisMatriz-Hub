@@ -82,19 +82,40 @@
                     $idsIncompativeis = $regraIncompatibilidade ? ($regraIncompatibilidade->configuracao['acolitos_incompativeis'] ?? []) : [];
 
                     $regraObrigatoria = $regras_composicao->get('companhia_obrigatoria');
-                    $idsObrigatorios = $regraObrigatoria ? ($regraObrigatoria->configuracao['acolitos_obrigatorios'] ?? []) : [];
-                    $modoObrigatorio = $regraObrigatoria ? ($regraObrigatoria->configuracao['modo'] ?? 'qualquer') : 'qualquer';
-
                     $regraMinimo = $regras_composicao->get('acompanhamento_minimo');
-                    $minimoAcompanhantes = $regraMinimo ? ($regraMinimo->configuracao['minimo_acompanhantes'] ?? 0) : 0;
-                    $minimoCategorias = $regraMinimo ? ($regraMinimo->configuracao['categorias'] ?? []) : [];
+                    $regraUnificada = $regras_composicao->get('acompanhamento');
+
+                    $idsObrigatorios = [];
+                    $modoObrigatorio = 'qualquer';
+                    $minimoAcompanhantes = 0;
+                    $categoria = 'qualquer';
+
+                    if ($regraUnificada) {
+                        $idsObrigatorios = $regraUnificada->configuracao['acompanhantes_especificos'] ?? [];
+                        $modoObrigatorio = $regraUnificada->configuracao['modo'] ?? 'qualquer';
+                        $minimoAcompanhantes = $regraUnificada->configuracao['minimo_acompanhantes'] ?? 0;
+                        $categoria = $regraUnificada->configuracao['categoria'] ?? 'qualquer';
+                    } else {
+                        if ($regraObrigatoria) {
+                            $idsObrigatorios = $regraObrigatoria->configuracao['acolitos_obrigatorios'] ?? [];
+                            $modoObrigatorio = $regraObrigatoria->configuracao['modo'] ?? 'qualquer';
+                        }
+                        if ($regraMinimo) {
+                            $minimoAcompanhantes = $regraMinimo->configuracao['minimo_acompanhantes'] ?? 0;
+                            $catLegacy = $regraMinimo->configuracao['categorias'] ?? [];
+                            // cast to int array if necessary
+                            $catLegacy = array_map('intval', $catLegacy);
+                            if (in_array(0, $catLegacy) && !in_array(1, $catLegacy)) $categoria = '0';
+                            if (in_array(1, $catLegacy) && !in_array(0, $catLegacy)) $categoria = '1';
+                        }
+                    }
                 @endphp
 
                 <!-- 1. Incompatibilidade -->
                 <div class="mb-4 p-3 border rounded">
                     <h6 class="fw-bold text-danger"><i class="bi bi-x-circle me-2"></i>Incompatibilidade (Não pode servir com)</h6>
                     <p class="text-muted small">Selecione os membros que NÃO DEVEM ser escalados na mesma equipe que este membro.</p>
-                    <select name="incompatibilidade_ids[]" class="form-select select2-multiple" multiple>
+                    <select name="incompatibilidade_ids[]" class="form-select select2-multiple" multiple data-placeholder="Buscar integrantes...">
                         @foreach($acolitos as $acolito)
                             @if($acolito->id != $selected_acolito_id)
                                 <option value="{{ $acolito->id }}" {{ in_array($acolito->id, $idsIncompativeis) ? 'selected' : '' }}>
@@ -105,52 +126,68 @@
                     </select>
                 </div>
 
-                <!-- 2. Companhia Obrigatória -->
+                <!-- 2. Acompanhamento na Celebração (Unificado) -->
                 <div class="mb-4 p-3 border rounded">
-                    <h6 class="fw-bold text-primary"><i class="bi bi-person-plus me-2"></i>Companhia Obrigatória</h6>
-                    <p class="text-muted small">Selecione membros específicos cuja presença é exigida para que este membro sirva.</p>
-                    <select name="companhia_ids[]" class="form-select select2-multiple mb-2" multiple>
-                        @foreach($acolitos as $acolito)
-                            @if($acolito->id != $selected_acolito_id)
-                                <option value="{{ $acolito->id }}" {{ in_array($acolito->id, $idsObrigatorios) ? 'selected' : '' }}>
-                                    {{ $acolito->name }}
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="radio" name="companhia_modo" id="modo_qualquer" value="qualquer" {{ $modoObrigatorio == 'qualquer' ? 'checked' : '' }}>
-                        <label class="form-check-label" for="modo_qualquer">
-                            Pelo menos UM dos selecionados deve estar presente
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="companhia_modo" id="modo_todos" value="todos" {{ $modoObrigatorio == 'todos' ? 'checked' : '' }}>
-                        <label class="form-check-label" for="modo_todos">
-                            TODOS os selecionados devem estar presentes
-                        </label>
-                    </div>
-                </div>
-
-                <!-- 3. Acompanhamento Mínimo -->
-                <div class="mb-4 p-3 border rounded">
-                    <h6 class="fw-bold text-success"><i class="bi bi-people me-2"></i>Acompanhamento Mínimo Geral</h6>
-                    <p class="text-muted small">Defina se este membro precisa de uma quantidade mínima de outros membros para servir (ex: membros novatos precisando de apoio).</p>
-                    <div class="row align-items-center">
+                    <h6 class="fw-bold text-primary"><i class="bi bi-people me-2"></i>Acompanhamento na Celebração</h6>
+                    <p class="text-muted small">Defina se este membro precisa de uma quantidade mínima de outros integrantes na equipe para participar, independentemente de quem sejam.</p>
+                    
+                    <div class="row align-items-center mb-3">
                         <div class="col-md-4">
-                            <label class="form-label">Quantidade Mínima de Acompanhantes</label>
+                            <label class="form-label fw-semibold">Qtd Mínima de Acompanhantes</label>
                             <input type="number" name="minimo_acompanhantes" class="form-control" value="{{ $minimoAcompanhantes }}" min="0">
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label">Restrição de Categoria (Opcional)</label>
+                            <label class="form-label fw-semibold">Categoria dos Acompanhantes</label>
                             <div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" name="minimo_categorias[]" id="cat_0" value="0" {{ in_array('0', $minimoCategorias) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="cat_0">Apenas Acólitos (experientes)</label>
+                                    <input class="form-check-input" type="radio" name="acompanhamento_categoria" id="cat_qualquer" value="qualquer" {{ $categoria === 'qualquer' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="cat_qualquer">Qualquer acólito ou coroinha</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" name="minimo_categorias[]" id="cat_1" value="1" {{ in_array('1', $minimoCategorias) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="cat_1">Apenas Coroinhas</label>
+                                    <input class="form-check-input" type="radio" name="acompanhamento_categoria" id="cat_0" value="0" {{ $categoria === '0' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="cat_0">Somente acólitos</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="acompanhamento_categoria" id="cat_1" value="1" {{ $categoria === '1' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="cat_1">Somente coroinhas</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion" id="advancedAccordion">
+                        <div class="accordion-item border-0 bg-light rounded-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-transparent shadow-none fw-semibold text-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSettings">
+                                    <i class="bi bi-gear-fill me-2"></i> Configuração Avançada: Acompanhantes Específicos
+                                </button>
+                            </h2>
+                            <div id="advancedSettings" class="accordion-collapse collapse {{ !empty($idsObrigatorios) ? 'show' : '' }}" data-bs-parent="#advancedAccordion">
+                                <div class="accordion-body pt-0">
+                                    <p class="small text-muted mb-2 mt-2">
+                                        Use apenas se o integrante depender de <strong>pessoas específicas</strong> para servir. O algoritmo sempre tentará preservar o rodízio. Se os específicos não puderem ser escalados, este integrante também não será.
+                                    </p>
+                                    <select name="companhia_ids[]" class="form-select select2-multiple mb-2" multiple data-placeholder="Buscar integrantes específicos...">
+                                        @foreach($acolitos as $acolito)
+                                            @if($acolito->id != $selected_acolito_id)
+                                                <option value="{{ $acolito->id }}" {{ in_array($acolito->id, $idsObrigatorios) ? 'selected' : '' }}>
+                                                    {{ $acolito->name }}
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="radio" name="companhia_modo" id="modo_qualquer" value="qualquer" {{ $modoObrigatorio == 'qualquer' ? 'checked' : '' }}>
+                                        <label class="form-check-label small" for="modo_qualquer">
+                                            Pelo menos UM dos selecionados acima deve estar presente
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="companhia_modo" id="modo_todos" value="todos" {{ $modoObrigatorio == 'todos' ? 'checked' : '' }}>
+                                        <label class="form-check-label small" for="modo_todos">
+                                            TODOS os selecionados acima devem estar presentes simultaneamente
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -152,13 +152,12 @@ class AcolitoEscalaRegraController extends Controller
         $request->validate([
             'acolito_id' => 'required|exists:acolitos,id',
             'ent_id' => 'required|exists:entidades,ent_id',
-            // array options
         ]);
 
         $paroquia_id = Auth::user()->paroquia_id;
         $acolito_id = $request->acolito_id;
 
-        // Limpar regras ativas para recriar (ou atualizar)
+        // Limpar regras ativas antigas para recriar a nova versão unificada
         \App\Models\AcolitoRegraComposicao::where('paroquia_id', $paroquia_id)
             ->where('acolito_id', $acolito_id)
             ->update(['ativo' => false]);
@@ -171,28 +170,24 @@ class AcolitoEscalaRegraController extends Controller
             );
         }
 
-        // Process Companhia Obrigatória
-        if ($request->filled('companhia_ids')) {
-            $modo = $request->companhia_modo ?? 'qualquer';
-            $compositionService->salvarRegra(
-                $paroquia_id, $acolito_id, 'companhia_obrigatoria', 
-                ['acolitos_obrigatorios' => $request->companhia_ids, 'modo' => $modo]
-            );
-        }
+        // Process Acompanhamento Unificado
+        $minimo = (int) $request->input('minimo_acompanhantes', 0);
+        $especificos = $request->input('companhia_ids', []);
+        
+        if ($minimo > 0 || !empty($especificos)) {
+            $categoria = $request->input('acompanhamento_categoria', 'qualquer');
+            $modo = $request->input('companhia_modo', 'qualquer');
 
-        // Process Acompanhamento Mínimo
-        if ($request->filled('minimo_acompanhantes')) {
-            $minimo = (int) $request->minimo_acompanhantes;
-            if ($minimo > 0) {
-                $categorias = $request->input('minimo_categorias', []);
-                // map to integer array
-                $categorias = array_map('intval', $categorias);
-                
-                $compositionService->salvarRegra(
-                    $paroquia_id, $acolito_id, 'acompanhamento_minimo', 
-                    ['minimo_acompanhantes' => $minimo, 'categorias' => $categorias]
-                );
-            }
+            $configuracao = [
+                'minimo_acompanhantes' => $minimo,
+                'categoria' => $categoria,
+                'acompanhantes_especificos' => $especificos,
+                'modo' => $modo
+            ];
+
+            $compositionService->salvarRegra(
+                $paroquia_id, $acolito_id, 'acompanhamento', $configuracao
+            );
         }
 
         return redirect()->route('acolitos.escalas.regras.composicao', [

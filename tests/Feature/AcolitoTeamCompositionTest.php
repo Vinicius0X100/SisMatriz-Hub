@@ -76,25 +76,64 @@ class AcolitoTeamCompositionTest extends TestCase
         $this->assertEmpty($errosValid);
     }
 
-    public function test_minimum_accompaniment_rule()
+    public function test_unified_acompanhamento_rule()
     {
         $paroquiaId = 999;
         $entId = 999;
         $baseData = ['status' => 0, 'paroquia_id' => $paroquiaId, 'ent_id' => $entId, 'age' => 15, 'graduation_year' => 2024];
         
-        $acolitoId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Acolito Minimo', 'type' => 0], $baseData));
-        $acompanhanteId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Acompanhante', 'type' => 0], $baseData));
-        $coroinhaId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Coroinha', 'type' => 1], $baseData));
+        $gabrielId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Gabriel', 'type' => 0], $baseData));
+        $lucasId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Lucas', 'type' => 0], $baseData));
+        $pedroId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Pedro', 'type' => 1], $baseData));
 
         $this->mockRegras([
-            ['tipo_regra' => 'acompanhamento_minimo', 'acolito_id' => $acolitoId, 'configuracao' => ['minimo_acompanhantes' => 1, 'categorias' => [0]]]
+            ['tipo_regra' => 'acompanhamento', 'acolito_id' => $gabrielId, 'configuracao' => [
+                'minimo_acompanhantes' => 1, 
+                'categoria' => 'qualquer',
+                'acompanhantes_especificos' => []
+            ]]
         ]);
 
-        $erros1 = $this->service->validarEquipe($paroquiaId, [$acolitoId, $coroinhaId]);
-        $this->assertNotEmpty($erros1);
+        // Gabriel sozinho = invalido
+        $errosSozinho = $this->service->validarEquipe($paroquiaId, [$gabrielId]);
+        $this->assertNotEmpty($errosSozinho);
+        $this->assertStringContainsString('sozinho', $errosSozinho[0]);
 
-        $erros2 = $this->service->validarEquipe($paroquiaId, [$acolitoId, $acompanhanteId]);
-        $this->assertEmpty($erros2);
+        // Gabriel + Lucas (Acolito) = valido
+        $errosComLucas = $this->service->validarEquipe($paroquiaId, [$gabrielId, $lucasId]);
+        $this->assertEmpty($errosComLucas);
+
+        // Gabriel + Pedro (Coroinha) = valido, pois a categoria é 'qualquer'
+        $errosComPedro = $this->service->validarEquipe($paroquiaId, [$gabrielId, $pedroId]);
+        $this->assertEmpty($errosComPedro);
+    }
+
+    public function test_unified_acompanhamento_rule_with_category()
+    {
+        $paroquiaId = 999;
+        $entId = 999;
+        $baseData = ['status' => 0, 'paroquia_id' => $paroquiaId, 'ent_id' => $entId, 'age' => 15, 'graduation_year' => 2024];
+        
+        $gabrielId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Gabriel', 'type' => 0], $baseData));
+        $lucasId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Lucas', 'type' => 0], $baseData));
+        $pedroId = \Illuminate\Support\Facades\DB::table('acolitos')->insertGetId(array_merge(['name' => 'Pedro', 'type' => 1], $baseData));
+
+        $this->mockRegras([
+            ['tipo_regra' => 'acompanhamento', 'acolito_id' => $gabrielId, 'configuracao' => [
+                'minimo_acompanhantes' => 1, 
+                'categoria' => '0', // Somente acólitos
+                'acompanhantes_especificos' => []
+            ]]
+        ]);
+
+        // Gabriel + Pedro (Coroinha) = invalido, pois exige Acólito ('0')
+        $errosComPedro = $this->service->validarEquipe($paroquiaId, [$gabrielId, $pedroId]);
+        $this->assertNotEmpty($errosComPedro);
+        $this->assertStringContainsString('Acólito(s)', $errosComPedro[0]);
+
+        // Gabriel + Lucas (Acólito) = valido
+        $errosComLucas = $this->service->validarEquipe($paroquiaId, [$gabrielId, $lucasId]);
+        $this->assertEmpty($errosComLucas);
     }
 
     protected function tearDown(): void
