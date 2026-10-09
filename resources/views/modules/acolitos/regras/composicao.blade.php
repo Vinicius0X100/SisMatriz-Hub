@@ -115,15 +115,22 @@
                 <div class="mb-4 p-3 border rounded">
                     <h6 class="fw-bold text-danger"><i class="bi bi-x-circle me-2"></i>Incompatibilidade (Não pode servir com)</h6>
                     <p class="text-muted small">Selecione os membros que NÃO DEVEM ser escalados na mesma equipe que este membro.</p>
-                    <select name="incompatibilidade_ids[]" class="form-select select2-multiple" multiple data-placeholder="Buscar integrantes...">
-                        @foreach($acolitos as $acolito)
-                            @if($acolito->id != $selected_acolito_id)
-                                <option value="{{ $acolito->id }}" {{ in_array($acolito->id, $idsIncompativeis) ? 'selected' : '' }}>
-                                    {{ $acolito->name }}
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
+                    
+                    <div class="border rounded p-2 bg-white">
+                        <input type="text" class="form-control form-control-sm mb-2 search-checkboxes" placeholder="Buscar integrantes...">
+                        <div class="checkbox-list" style="max-height: 200px; overflow-y: auto;">
+                            @foreach($acolitos as $acolito)
+                                @if($acolito->id != $selected_acolito_id)
+                                    <div class="form-check checkbox-item py-1 border-bottom">
+                                        <input class="form-check-input" type="checkbox" name="incompatibilidade_ids[]" value="{{ $acolito->id }}" id="incomp_{{ $acolito->id }}" {{ in_array($acolito->id, $idsIncompativeis) ? 'checked' : '' }}>
+                                        <label class="form-check-label w-100" for="incomp_{{ $acolito->id }}" style="cursor: pointer;">
+                                            {{ $acolito->name }}
+                                        </label>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 2. Acompanhamento na Celebração (Unificado) -->
@@ -167,15 +174,23 @@
                                     <p class="small text-muted mb-2 mt-2">
                                         Use apenas se o integrante depender de <strong>pessoas específicas</strong> para servir. O algoritmo sempre tentará preservar o rodízio. Se os específicos não puderem ser escalados, este integrante também não será.
                                     </p>
-                                    <select name="companhia_ids[]" class="form-select select2-multiple mb-2" multiple data-placeholder="Buscar integrantes específicos...">
-                                        @foreach($acolitos as $acolito)
-                                            @if($acolito->id != $selected_acolito_id)
-                                                <option value="{{ $acolito->id }}" {{ in_array($acolito->id, $idsObrigatorios) ? 'selected' : '' }}>
-                                                    {{ $acolito->name }}
-                                                </option>
-                                            @endif
-                                        @endforeach
-                                    </select>
+                                    
+                                    <div class="border rounded p-2 bg-white mb-3">
+                                        <input type="text" class="form-control form-control-sm mb-2 search-checkboxes" placeholder="Buscar integrantes específicos...">
+                                        <div class="checkbox-list" style="max-height: 200px; overflow-y: auto;">
+                                            @foreach($acolitos as $acolito)
+                                                @if($acolito->id != $selected_acolito_id)
+                                                    <div class="form-check checkbox-item py-1 border-bottom">
+                                                        <input class="form-check-input" type="checkbox" name="companhia_ids[]" value="{{ $acolito->id }}" id="comp_{{ $acolito->id }}" {{ in_array($acolito->id, $idsObrigatorios) ? 'checked' : '' }}>
+                                                        <label class="form-check-label w-100" for="comp_{{ $acolito->id }}" style="cursor: pointer;">
+                                                            {{ $acolito->name }}
+                                                        </label>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+
                                     <div class="form-check mt-2">
                                         <input class="form-check-input" type="radio" name="companhia_modo" id="modo_qualquer" value="qualquer" {{ $modoObrigatorio == 'qualquer' ? 'checked' : '' }}>
                                         <label class="form-check-label small" for="modo_qualquer">
@@ -205,15 +220,25 @@
     @endif
 </div>
 
-<!-- O SisMatriz usa select2? A maioria usa. Se sim, podemos inicializar. -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
-        $('.select2-multiple').select2({
-            theme: 'bootstrap-5',
-            placeholder: "Selecione..."
+    // Filtro para as listas de checkboxes pesquisáveis
+    document.querySelectorAll('.search-checkboxes').forEach(function(input) {
+        input.addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let list = this.nextElementSibling;
+            let items = list.querySelectorAll('.checkbox-item');
+            
+            items.forEach(function(item) {
+                let text = item.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
         });
-    }
+    });
 });
 </script>
 @endsection
