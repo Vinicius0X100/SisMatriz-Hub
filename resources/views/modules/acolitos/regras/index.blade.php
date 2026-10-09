@@ -26,6 +26,15 @@
     </div>
     @endif
 
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link active fw-bold" href="#">Regras da Comunidade</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('acolitos.escalas.regras.composicao', ['ent_id' => $selected_ent_id]) }}">Regras de Composição Individual</a>
+        </li>
+    </ul>
+
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
             <form action="{{ route('acolitos.escalas.regras.index') }}" method="GET" class="row g-3 align-items-end">

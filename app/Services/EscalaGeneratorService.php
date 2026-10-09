@@ -13,9 +13,16 @@ use App\Models\EscalaDataHora;
 use App\Models\EscaladoData;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use App\Services\AcolitoTeamCompositionService;
 
 class EscalaGeneratorService
 {
+    protected $teamCompositionService;
+
+    public function __construct(AcolitoTeamCompositionService $teamCompositionService)
+    {
+        $this->teamCompositionService = $teamCompositionService;
+    }
     /**
      * Gera a escala automática criando drafts
      */
@@ -102,6 +109,21 @@ class EscalaGeneratorService
             7 => 'Domingo'
         ];
 
+        // Mapear ocupações já existentes no banco para evitar conflito de data/hora
+        $occupiedSlots = [];
+        $existingSchedules = EscalaDataHora::join('escalas', 'escalas.es_id', '=', 'escalas_datas_horas.es_id')
+            ->join('escalados_datas', 'escalados_datas.d_id', '=', 'escalas_datas_horas.d_id')
+            ->where('escalas.paroquia_id', $paroquia_id)
+            ->where('escalas.month', $escala->month)
+            ->where('escalas.year', $year)
+            ->select('escalas_datas_horas.data', 'escalas_datas_horas.hora', 'escalados_datas.acolito_id')
+            ->get();
+
+        foreach ($existingSchedules as $sched) {
+            $key = $sched->data . '_' . substr($sched->hora, 0, 5);
+            $occupiedSlots[$key][] = $sched->acolito_id;
+        }
+
         // Descobrir as datas do mês atual
         $daysInMonth = Carbon::createFromDate($year, $monthNum, 1)->daysInMonth;
         
@@ -125,19 +147,26 @@ class EscalaGeneratorService
 
                     $selecionados = [];
 
+                    // Format hour for key
+                    $timeKey = $day . '_' . substr($horario->horario, 0, 5);
+
                     // Selecionar Acolitos (type 0)
                     $this->selectMembers(
                         $acolitosList, $qtdAcolitos, $maxServes, $currentMonthCounts, 
                         $escaladoCounts, $selecionados, null, $funcoes, false,
-                        $currentMonthHours, $horario->horario
+                        $currentMonthHours, $horario->horario, $occupiedSlots, $timeKey
                     );
 
                     // Selecionar Coroinhas (type 1)
                     $this->selectMembers(
                         $coroinhasList, $qtdCoroinhas, $maxServes, $currentMonthCounts, 
                         $escaladoCounts, $selecionados, $regraDoDia->coroinha_funcao_id, $funcoes, true,
-                        $currentMonthHours, $horario->horario
+                        $currentMonthHours, $horario->horario, $occupiedSlots, $timeKey
                     );
+
+                    // Validar a equipe formada usando as regras de composição
+                    $acolitosIds = array_column($selecionados, 'id');
+                    $errosComposicao = $this->teamCompositionService->validarEquipe($paroquia_id, $acolitosIds);
 
                     // Preparar payload para o Draft
                     $payload = [
@@ -147,7 +176,8 @@ class EscalaGeneratorService
                         'celebration' => 'Missa',
                         'ent_id' => $ent_id,
                         'status' => 'draft',
-                        'acolitos' => $selecionados
+                        'acolitos' => $selecionados,
+                        'avisos' => $errosComposicao // Adiciona avisos para o preview
                     ];
 
                     $celebrationsToCreate[] = $payload;
@@ -159,9 +189,18 @@ class EscalaGeneratorService
         return $celebrationsToCreate;
     }
 
-    private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false, &$currentMonthHours = null, $currentHora = null)
+    private function selectMembers($availableMembers, $qtdNeeded, $maxServes, &$currentMonthCounts, &$escaladoCounts, &$selecionados, $defaultFuncaoId, $todasFuncoes, $isCoroinha = false, &$currentMonthHours = null, $currentHora = null, &$occupiedSlots = [], $timeKey = null)
     {
         if ($qtdNeeded <= 0 || $availableMembers->isEmpty()) return;
+
+        // Remover acólitos que já estão ocupados neste exato dia e horário
+        if ($timeKey && isset($occupiedSlots[$timeKey])) {
+            $availableMembers = $availableMembers->reject(function($member) use ($occupiedSlots, $timeKey) {
+                return in_array($member->id, $occupiedSlots[$timeKey]);
+            });
+        }
+
+        if ($availableMembers->isEmpty()) return;
 
         // 1ª tentativa: filtrar apenas quem ainda não atingiu o teto mensal
         $eligible = $availableMembers->filter(function($member) use ($maxServes, $currentMonthCounts) {
@@ -173,7 +212,6 @@ class EscalaGeneratorService
 
         // Se não sobrou ninguém dentro do teto (todos já serviram o máximo),
         // reinicia o ciclo com todos os disponíveis para não deixar missa vazia.
-        // Isso é o comportamento correto: o teto é ideal, não absoluto.
         if ($eligible->isEmpty()) {
             $eligible = $availableMembers;
         }
@@ -183,7 +221,7 @@ class EscalaGeneratorService
             // Peso principal: contagem no mês atual; secundário: histórico
             $score = ($currentMonthCounts[$member->id] * 10) + $escaladoCounts[$member->id];
             
-            // Penalidade imensa se já serviu neste exato horário neste mês (evita repetir o mesmo horário)
+            // Penalidade imensa se já serviu neste exato horário neste mês (evita repetir o mesmo horário todo domingo)
             if ($currentMonthHours !== null && $currentHora !== null) {
                 if (in_array($currentHora, $currentMonthHours[$member->id])) {
                     $score += 10000;
@@ -212,11 +250,14 @@ class EscalaGeneratorService
                 'funcao_id' => $funcao_id
             ];
 
-            // Incrementar contadores
+            // Incrementar contadores e registrar ocupação
             $currentMonthCounts[$member->id]++;
             $escaladoCounts[$member->id]++;
             if ($currentMonthHours !== null && $currentHora !== null) {
                 $currentMonthHours[$member->id][] = $currentHora;
+            }
+            if ($timeKey !== null) {
+                $occupiedSlots[$timeKey][] = $member->id;
             }
         }
     }

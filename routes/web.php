@@ -310,6 +310,10 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     Route::get('acolitos/escalas/regras', [App\Http\Controllers\AcolitoEscalaRegraController::class, 'index'])->name('acolitos.escalas.regras.index');
     Route::post('acolitos/escalas/regras', [App\Http\Controllers\AcolitoEscalaRegraController::class, 'store'])->name('acolitos.escalas.regras.store');
     
+    // Regras de Composição Individual
+    Route::get('acolitos/escalas/regras/composicao', [App\Http\Controllers\AcolitoEscalaRegraController::class, 'composicao'])->name('acolitos.escalas.regras.composicao');
+    Route::post('acolitos/escalas/regras/composicao', [App\Http\Controllers\AcolitoEscalaRegraController::class, 'storeComposicao'])->name('acolitos.escalas.regras.composicao.store');
+    
     Route::get('acolitos/escalas/{id}/generate-preview', [App\Http\Controllers\AcolitoEscalaController::class, 'previewAutomatic'])->name('acolitos.escalas.generate_preview');
     Route::post('acolitos/escalas/{id}/generate-confirm', [App\Http\Controllers\AcolitoEscalaController::class, 'confirmAutomatic'])->name('acolitos.escalas.generate_confirm');
     Route::post('acolitos/escalas/{id}/generate-publish', [App\Http\Controllers\AcolitoEscalaController::class, 'generateAndPublishAutomatic'])->name('acolitos.escalas.generate_publish');

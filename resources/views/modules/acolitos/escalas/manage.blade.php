@@ -898,23 +898,36 @@
                             }).join('');
                         };
 
+                        let avisosHtml = '';
+                        if (cel.avisos && cel.avisos.length > 0) {
+                            avisosHtml = `<div class="mt-2 pt-2 border-top">
+                                <div class="small fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Avisos de Composição:</div>
+                                <ul class="mb-0 text-danger small ps-3">
+                                    ${cel.avisos.map(aviso => `<li>${aviso}</li>`).join('')}
+                                </ul>
+                            </div>`;
+                        }
+
                         html += `
-                            <div class="card border-0 shadow-sm rounded-3 mb-2">
+                            <div class="card border-0 shadow-sm rounded-3 mb-2 ${cel.avisos && cel.avisos.length > 0 ? 'border border-danger border-opacity-25' : ''}">
                                 <div class="card-body py-2 px-3">
                                     <div class="d-flex align-items-start gap-3">
                                         <div class="text-center flex-shrink-0 bg-light rounded-3 px-3 py-2">
                                             <div class="fw-bold fs-5 text-dark lh-1">${cel.data}</div>
                                             <div class="text-muted small">${hora}</div>
                                         </div>
-                                        <div class="flex-fill row g-0">
-                                            <div class="col-6">
-                                                <div class="small fw-bold text-primary mb-1"><i class="bi bi-person-badge me-1"></i>Acólitos</div>
-                                                ${renderAvatars(acolitos, 'bg-primary')}
+                                        <div class="flex-fill">
+                                            <div class="row g-0">
+                                                <div class="col-6">
+                                                    <div class="small fw-bold text-primary mb-1"><i class="bi bi-person-badge me-1"></i>Acólitos</div>
+                                                    ${renderAvatars(acolitos, 'bg-primary')}
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="small fw-bold text-warning mb-1"><i class="bi bi-star me-1"></i>Coroinhas</div>
+                                                    ${renderAvatars(coroinhas, 'bg-warning')}
+                                                </div>
                                             </div>
-                                            <div class="col-6">
-                                                <div class="small fw-bold text-warning mb-1"><i class="bi bi-star me-1"></i>Coroinhas</div>
-                                                ${renderAvatars(coroinhas, 'bg-warning')}
-                                            </div>
+                                            ${avisosHtml}
                                         </div>
                                     </div>
                                 </div>
