@@ -53,7 +53,7 @@
 
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
-                        <label for="name" class="form-label fw-bold small text-muted">Nome do Assistido <span class="text-danger">*</span></label>
+                        <label for="name" class="form-label fw-bold small text-muted">Nome <span class="text-danger">*</span></label>
                         <input type="text" name="name" id="name" class="form-control rounded-pill bg-light border-0 px-4 py-2 @error('name') is-invalid @enderror" value="{{ old('name') }}" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
