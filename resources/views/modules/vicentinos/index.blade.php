@@ -5,16 +5,19 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
-            <h2 class="mb-0 fw-bold text-dark">Registros Vicentinos</h2>
-            <p class="text-muted small mb-0">Gerencie as fichas e acompanhamentos vicentinos.</p>
+            <h2 class="mb-0 fw-bold text-dark">Ações Sociais — Famílias Acompanhadas</h2>
+            <p class="text-muted small mb-0">Gerencie as fichas e acompanhamentos familiares de assistência social.</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Registros Vicentinos</li>
+                <li class="breadcrumb-item active" aria-current="page">Famílias Acompanhadas</li>
             </ol>
         </nav>
     </div>
+
+    <!-- Sub-menu e Contexto de Equipe -->
+    @include('modules.acoes_sociais.partials.team_context_header')
 
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
@@ -25,7 +28,7 @@
                         <i class="bi bi-people-fill text-primary fs-4"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Total de Fichas</h6>
+                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Total de Famílias</h6>
                         <h3 class="fw-bold text-dark mb-0">{{ $stats['total'] ?? 0 }}</h3>
                     </div>
                 </div>
@@ -81,8 +84,8 @@
                             <li><a class="dropdown-item py-2" href="#" id="bulkPdfBtn"><i class="bi bi-file-earmark-pdf me-2"></i> Gerar Relatório PDF</a></li>
                         </ul>
                     </div>
-                    <a href="{{ route('vicentinos.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
-                        <i class="bi bi-plus-lg me-2"></i> Nova Ficha
+                    <a href="{{ route('acoes-sociais.familias.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
+                        <i class="bi bi-plus-lg me-2"></i> Nova Família
                     </a>
                 </div>
             </div>
@@ -162,7 +165,7 @@
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted small mb-3">Selecione as colunas que deseja incluir no relatório.</p>
-                <form id="pdfForm" action="{{ route('vicentinos.pdf') }}" method="POST">
+                <form id="pdfForm" action="{{ route('acoes-sociais.familias.pdf') }}" method="POST">
                     @csrf
                     <input type="hidden" name="selected_ids" id="pdfSelectedIds">
 
@@ -201,9 +204,9 @@
                         <div class="col-12 mt-3"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Outros</h6></div>
                         <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="religiao"><label class="form-check-label small">Religião</label></div></div>
                         <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="catolico_tem_sacramentos"><label class="form-check-label small">Católico?</label></div></div>
-                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="responsaveis_sindicancia"><label class="form-check-label small">Resp. Sindicância</label></div></div>
-                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="data_dispensa"><label class="form-check-label small">Data Dispensa</label></div></div>
-                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="motivo_dispensa"><label class="form-check-label small">Motivo Dispensa</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="responsaveis_sindicancia"><label class="form-check-label small">Resp. Visita/Avaliação</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="data_dispensa"><label class="form-check-label small">Data Encerramento</label></div></div>
+                        <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="columns[]" value="motivo_dispensa"><label class="form-check-label small">Motivo Encerramento</label></div></div>
                         
                         <div class="col-12 mt-3"><h6 class="fw-bold text-secondary small text-uppercase border-bottom pb-1 mb-2">Opções Adicionais</h6></div>
                         <div class="col-12">
@@ -344,7 +347,7 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Excluindo...';
 
-            fetch(`/vicentinos/${deleteId}`, {
+            fetch(`/acoes-sociais/familias/${deleteId}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -386,7 +389,7 @@
                 sort_dir: sortDir
             });
 
-            fetch(`{{ route('vicentinos.index') }}?${params.toString()}`, {
+            fetch(`{{ route('acoes-sociais.familias.index') }}?${params.toString()}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -445,10 +448,10 @@
                     <td>${record.created_at_formatted}</td>
                     <td class="text-end pe-4">
                         <div class="btn-group">
-                            <a href="/vicentinos/${record.id}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Ver Detalhes">
+                            <a href="/acoes-sociais/familias/${record.id}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Ver Detalhes">
                                 <i class="bi bi-eye-fill"></i>
                             </a>
-                            <a href="/vicentinos/${record.id}/edit" class="btn btn-sm btn-outline-primary border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Editar">
+                            <a href="/acoes-sociais/familias/${record.id}/edit" class="btn btn-sm btn-outline-primary border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>
                             <button onclick="openDeleteModal(${record.id})" class="btn btn-sm btn-outline-danger border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Excluir">

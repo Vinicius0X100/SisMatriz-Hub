@@ -4,19 +4,19 @@
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
-            <h2 class="mb-0 fw-bold text-dark">Editar Ficha Vicentina</h2>
-            <p class="text-muted small mb-0">Atualize os dados da família assistida.</p>
+            <h2 class="mb-0 fw-bold text-dark">Editar Ficha de Acompanhamento Familiar</h2>
+            <p class="text-muted small mb-0">Atualize os dados da família assistida para o acompanhamento socioassistencial.</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('vicentinos.index') }}" class="text-decoration-none">Registros Vicentinos</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('acoes-sociais.familias.index') }}" class="text-decoration-none">Ações Sociais — Famílias</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Editar Ficha</li>
             </ol>
         </nav>
     </div>
 
-    <form action="{{ route('vicentinos.update', $record->id) }}" method="POST">
+    <form action="{{ route('acoes-sociais.familias.update', $record->id) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -39,6 +39,7 @@
                         <label class="form-label small fw-bold text-muted">Data da Ficha</label>
                         <input type="date" name="data_ficha" class="form-control" value="{{ old('data_ficha', $record->data_ficha ? $record->data_ficha->format('Y-m-d') : '') }}">
                     </div>
+                    @if(isset($activeEquipe) && $activeEquipe->isVicentinos())
                     <div class="col-md-5">
                         <label class="form-label small fw-bold text-muted">Conferência</label>
                         <input type="text" name="conferencia" class="form-control" value="{{ old('conferencia', $record->conferencia) }}">
@@ -47,6 +48,12 @@
                         <label class="form-label small fw-bold text-muted">Conselho Particular</label>
                         <input type="text" name="conselho_particular" class="form-control" value="{{ old('conselho_particular', $record->conselho_particular) }}">
                     </div>
+                    @else
+                    <div class="col-md-9">
+                        <label class="form-label small fw-bold text-muted">Equipe / Pastoral Ativa</label>
+                        <input type="text" class="form-control" value="{{ $record->equipe->nome ?? ($activeEquipe->nome ?? 'Equipe de Ações Sociais') }}" readonly>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -314,19 +321,19 @@
                 <textarea name="observacoes" class="form-control" rows="4">{{ old('observacoes', $record->observacoes) }}</textarea>
                 
                 <div class="row g-3 mt-2">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold text-muted">Responsaveis pela Sindicância</label>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Responsáveis pela Visita / Avaliação</label>
                         <input type="text" name="responsaveis_sindicancia" class="form-control" value="{{ old('responsaveis_sindicancia', $record->responsaveis_sindicancia) }}">
                     </div>
                 </div>
 
                 <div class="row g-3 mt-2">
                     <div class="col-md-3">
-                        <label class="form-label small fw-bold text-muted">Dispensado em</label>
+                        <label class="form-label small fw-bold text-muted">Data Encerramento / Dispensa</label>
                         <input type="date" name="data_dispensa" class="form-control" value="{{ old('data_dispensa', $record->data_dispensa ? $record->data_dispensa->format('Y-m-d') : '') }}">
                     </div>
                     <div class="col-md-9">
-                        <label class="form-label small fw-bold text-muted">Motivo da Dispensa</label>
+                        <label class="form-label small fw-bold text-muted">Motivo do Encerramento</label>
                         <textarea name="motivo_dispensa" class="form-control" rows="1">{{ old('motivo_dispensa', $record->motivo_dispensa) }}</textarea>
                     </div>
                 </div>
@@ -338,7 +345,7 @@
                 <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
                 <span class="text-primary fw-bold small">Salvando...</span>
             </div>
-            <a href="{{ route('vicentinos.index') }}" class="btn btn-light rounded-pill px-4">Cancelar</a>
+            <a href="{{ route('acoes-sociais.familias.index') }}" class="btn btn-light rounded-pill px-4">Cancelar</a>
             <button type="submit" id="btnSalvar" class="btn btn-primary rounded-pill px-5 fw-bold">Atualizar Ficha</button>
         </div>
     </form>

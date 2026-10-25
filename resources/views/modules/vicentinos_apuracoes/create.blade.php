@@ -4,14 +4,14 @@
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
-            <h2 class="mb-0 fw-bold text-dark">Nova Apuração Vicentina</h2>
-            <p class="text-muted small mb-0">Preencha os dados do assistido/não assistido.</p>
+            <h2 class="mb-0 fw-bold text-dark">Novo Atendimento e Entrega</h2>
+            <p class="text-muted small mb-0">Preencha os dados do atendimento socioassistencial realizado.</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('vicentinos-apuracoes.index') }}" class="text-decoration-none">Apuração de Vicentinos</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Nova Apuração</li>
+                <li class="breadcrumb-item"><a href="{{ route('acoes-sociais.atendimentos.index') }}" class="text-decoration-none">Ações Sociais — Atendimentos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Novo Atendimento</li>
             </ol>
         </nav>
     </div>
@@ -31,22 +31,23 @@
                 </div>
             @endif
 
-            <form action="{{ route('vicentinos-apuracoes.store') }}" method="POST">
+            <form action="{{ route('acoes-sociais.atendimentos.store') }}" method="POST">
                 @csrf
+                <input type="hidden" name="vicentinos_record_id" id="vicentinos_record_id" value="{{ old('vicentinos_record_id') }}">
 
                 <!-- Dados Principais -->
                 <h5 class="fw-bold text-dark mb-4">Informações do Registro</h5>
                 
                 <div class="row g-4 mb-4">
                     <div class="col-md-12">
-                         <label class="form-label fw-bold small text-muted">Pesquisar Pessoa (Registros Vicentinos)</label>
+                         <label class="form-label fw-bold small text-muted">Pesquisar Família Cadastrada (Ações Sociais)</label>
                          <div class="input-group">
                              <input type="text" id="search_person" class="form-control rounded-pill rounded-end-0 bg-light border-0 px-4 py-2" placeholder="Digite o nome ou CPF para pesquisar...">
                              <button type="button" id="search_btn" class="btn btn-primary rounded-pill rounded-start-0 px-4" data-bs-toggle="modal" data-bs-target="#searchModal">
                                  <i class="bi bi-search me-2"></i> Pesquisar
                              </button>
                         </div>
-                         <small class="text-muted">Utilize a pesquisa para preencher automaticamente os dados.</small>
+                         <small class="text-muted">Utilize a pesquisa para vincular à família acompanhada e preencher automaticamente os dados.</small>
                     </div>
                 </div>
 
@@ -128,8 +129,8 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="{{ route('vicentinos-apuracoes.index') }}" class="btn btn-light rounded-pill px-4 fw-bold">Cancelar</a>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">Salvar Apuração</button>
+                    <a href="{{ route('acoes-sociais.atendimentos.index') }}" class="btn btn-light rounded-pill px-4 fw-bold">Cancelar</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">Salvar Atendimento</button>
                 </div>
             </form>
         </div>
@@ -141,7 +142,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content rounded-4 border-0">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="searchModalLabel">Pesquisar Registro Vicentino</h5>
+                <h5 class="modal-title fw-bold" id="searchModalLabel">Pesquisar Família Cadastrada</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
@@ -188,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function performSearch(query) {
         // Se query vazia, busca os últimos registros (sem filtro)
-        let url = `{{ route('vicentinos-apuracoes.search-records') }}`;
+        let url = `{{ route('acoes-sociais.atendimentos.search-records') }}`;
         if (query) {
              url += `?q=${encodeURIComponent(query)}`;
         }
@@ -234,6 +235,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('name').value = person.name;
         document.getElementById('address').value = person.address || '';
         document.getElementById('address_number').value = person.address_number || '';
+        if (person.id) {
+            document.getElementById('vicentinos_record_id').value = person.id;
+        }
         
         // Atualizar input de pesquisa visualmente
         const searchInput = document.getElementById('search_person');

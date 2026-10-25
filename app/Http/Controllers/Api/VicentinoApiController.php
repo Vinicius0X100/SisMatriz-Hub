@@ -5,18 +5,40 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\VinWatched;
 use App\Models\VicentinosRecord;
+use App\Services\AcaoSocialContextService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 class VicentinoApiController extends Controller
 {
+    protected AcaoSocialContextService $contextService;
+
+    public function __construct(AcaoSocialContextService $contextService)
+    {
+        $this->contextService = $contextService;
+    }
+
     /**
-     * Retorna a lista de Apurações (Assistidos - Modelo Antigo)
-     * Equivalente à tela web: /vicentinos-apuracoes
+     * Retorna a lista de Apurações / Atendimentos
+     * Compatibilidade total com a rota móvel: /api/vicentinos/apuracoes
+     * E nova rota canônica: /api/acoes-sociais/atendimentos
      */
     public function getApuracoes(Request $request)
     {
-        $query = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        $equipe = $this->contextService->resolveForApi($user, $request);
+
+        if (!$equipe) {
+            return response()->json(new LengthAwarePaginator([], 0, 15));
+        }
+
+        $query = VinWatched::where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $equipe->id)
             ->with(['entidade', 'sender'])
             ->orderBy('w_id', 'desc');
 
@@ -47,12 +69,25 @@ class VicentinoApiController extends Controller
     }
 
     /**
-     * Retorna a lista de Fichas (Assistidos - Modelo Novo)
-     * Equivalente à tela web: /vicentinos
+     * Retorna a lista de Fichas / Famílias Acompanhadas
+     * Compatibilidade total com a rota móvel: /api/vicentinos/fichas
+     * E nova rota canônica: /api/acoes-sociais/familias
      */
     public function getFichas(Request $request)
     {
-        $query = VicentinosRecord::where('paroquia_id', Auth::user()->paroquia_id)
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        $equipe = $this->contextService->resolveForApi($user, $request);
+
+        if (!$equipe) {
+            return response()->json(new LengthAwarePaginator([], 0, 15));
+        }
+
+        $query = VicentinosRecord::where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $equipe->id)
             ->orderBy('id', 'desc');
 
         // Filtro de busca genérica por nome

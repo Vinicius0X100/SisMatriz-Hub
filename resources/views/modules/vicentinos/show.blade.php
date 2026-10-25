@@ -4,13 +4,13 @@
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
-            <h2 class="mb-0 fw-bold text-dark">Detalhes da Ficha Vicentina</h2>
-            <p class="text-muted small mb-0">Visualizando informações da família assistida.</p>
+            <h2 class="mb-0 fw-bold text-dark">Detalhes da Ficha de Acompanhamento Familiar</h2>
+            <p class="text-muted small mb-0">Visualizando informações da família acompanhada.</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('vicentinos.index') }}" class="text-decoration-none">Registros Vicentinos</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('acoes-sociais.familias.index') }}" class="text-decoration-none">Ações Sociais — Famílias</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Detalhes</li>
             </ol>
         </nav>
@@ -19,10 +19,10 @@
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-5">
             <div class="d-flex justify-content-end mb-4">
-                <a href="{{ route('vicentinos.edit', $record->id) }}" class="btn btn-primary rounded-pill px-4 me-2">
+                <a href="{{ route('acoes-sociais.familias.edit', $record->id) }}" class="btn btn-primary rounded-pill px-4 me-2">
                     <i class="bi bi-pencil-fill me-2"></i> Editar Ficha
                 </a>
-                <a href="{{ route('vicentinos.index') }}" class="btn btn-light rounded-pill px-4">
+                <a href="{{ route('acoes-sociais.familias.index') }}" class="btn btn-light rounded-pill px-4">
                     <i class="bi bi-arrow-left me-2"></i> Voltar
                 </a>
             </div>
@@ -33,9 +33,10 @@
                 <div class="col-md-3">
                     <label class="form-label fw-bold small text-muted">Data da Ficha</label>
                     <div class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark">
-                        {{ $record->created_at->format('d/m/Y') }}
+                        {{ $record->data_ficha ? \Carbon\Carbon::parse($record->data_ficha)->format('d/m/Y') : ($record->created_at ? $record->created_at->format('d/m/Y') : '-') }}
                     </div>
                 </div>
+                @if($record->equipe && $record->equipe->isVicentinos())
                 <div class="col-md-5">
                     <label class="form-label fw-bold small text-muted">Conferência</label>
                     <div class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark">
@@ -48,6 +49,14 @@
                         {{ $record->conselho_particular ?? '-' }}
                     </div>
                 </div>
+                @else
+                <div class="col-md-9">
+                    <label class="form-label fw-bold small text-muted">Equipe / Pastoral Responsável</label>
+                    <div class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark">
+                        {{ $record->equipe->nome ?? 'Equipe de Ações Sociais' }}
+                    </div>
+                </div>
+                @endif
             </div>
 
             <hr class="my-4 text-muted opacity-25">
@@ -289,19 +298,19 @@
             
             <div class="row g-4 mb-4">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted">Responsáveis pela Sindicância</label>
+                    <label class="form-label fw-bold small text-muted">Responsáveis pela Visita / Avaliação</label>
                     <div class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark">
                         {{ $record->responsaveis_sindicancia ?? '-' }}
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted">Data Dispensa</label>
+                    <label class="form-label fw-bold small text-muted">Data Encerramento / Dispensa</label>
                     <div class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark">
                         {{ $record->data_dispensa ? \Carbon\Carbon::parse($record->data_dispensa)->format('d/m/Y') : '-' }}
                     </div>
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label fw-bold small text-muted">Motivo Dispensa</label>
+                    <label class="form-label fw-bold small text-muted">Motivo do Encerramento</label>
                     <div class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark">
                         {{ $record->motivo_dispensa ?? '-' }}
                     </div>

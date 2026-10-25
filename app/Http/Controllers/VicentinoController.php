@@ -6,16 +6,39 @@ use App\Models\VinWatched;
 use App\Models\Register;
 use App\Models\Entidade;
 use App\Models\VicentinosRecord;
+use App\Services\AcaoSocialContextService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class VicentinoController extends Controller
 {
+    protected AcaoSocialContextService $contextService;
+
+    public function __construct(AcaoSocialContextService $contextService)
+    {
+        $this->contextService = $contextService;
+    }
+
     // Listagem
     public function index(Request $request)
     {
-        $query = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
-            ->with(['entidade', 'sender'])
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user, $request);
+        $authorizedEquipes = $this->contextService->getAuthorizedEquipes($user);
+        $hasMultipleEquipes = $this->contextService->userHasMultipleEquipes($user);
+        $paroquiaHasMultiple = $this->contextService->paroquiaHasMultipleEquipes($user);
+
+        if (!$activeEquipe) {
+            $records = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15);
+            $entidades = collect();
+            $stats = ['total' => 0, 'assistidos' => 0, 'nao_assistidos' => 0];
+            $mesesDisponiveis = collect();
+            return view('modules.vicentinos_apuracoes.index', compact('records', 'entidades', 'stats', 'mesesDisponiveis', 'activeEquipe', 'authorizedEquipes', 'hasMultipleEquipes', 'paroquiaHasMultiple'));
+        }
+
+        $query = VinWatched::where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id)
+            ->with(['entidade', 'sender', 'familia'])
             ->orderBy('w_id', 'desc');
 
         if ($request->filled('search')) {
@@ -52,15 +75,16 @@ class VicentinoController extends Controller
 
         $records = $query->paginate(15);
         
-        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)->get();
+        $entidades = Entidade::where('paroquia_id', $user->paroquia_id)->get();
         
         $stats = [
-            'total' => VinWatched::where('paroquia_id', Auth::user()->paroquia_id)->count(),
-            'assistidos' => VinWatched::where('paroquia_id', Auth::user()->paroquia_id)->where('kind', 1)->count(),
-            'nao_assistidos' => VinWatched::where('paroquia_id', Auth::user()->paroquia_id)->where('kind', 0)->count(),
+            'total' => VinWatched::where('paroquia_id', $user->paroquia_id)->where('equipe_id', $activeEquipe->id)->count(),
+            'assistidos' => VinWatched::where('paroquia_id', $user->paroquia_id)->where('equipe_id', $activeEquipe->id)->where('kind', 1)->count(),
+            'nao_assistidos' => VinWatched::where('paroquia_id', $user->paroquia_id)->where('equipe_id', $activeEquipe->id)->where('kind', 0)->count(),
         ];
 
-        $mesesDisponiveis = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
+        $mesesDisponiveis = VinWatched::where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id)
             ->selectRaw('month_entire, YEAR(created_at) as year')
             ->groupBy('month_entire', 'year')
             ->orderByRaw('year DESC, month_entire DESC')
@@ -83,20 +107,36 @@ class VicentinoController extends Controller
                 ];
             })->unique('value');
 
-        return view('modules.vicentinos_apuracoes.index', compact('records', 'entidades', 'stats', 'mesesDisponiveis'));
+        return view('modules.vicentinos_apuracoes.index', compact('records', 'entidades', 'stats', 'mesesDisponiveis', 'activeEquipe', 'authorizedEquipes', 'hasMultipleEquipes', 'paroquiaHasMultiple'));
     }
 
     // Formulário de Criação
     public function create()
     {
-        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)->get();
-        return view('modules.vicentinos_apuracoes.create', compact('entidades'));
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user);
+        if (!$activeEquipe) {
+            return redirect()->route('acoes-sociais.atendimentos.index')
+                ->with('error', 'Nenhuma equipe de Ações Sociais autorizada para seu usuário.');
+        }
+
+        $entidades = Entidade::where('paroquia_id', $user->paroquia_id)->get();
+        $authorizedEquipes = $this->contextService->getAuthorizedEquipes($user);
+        $hasMultipleEquipes = $this->contextService->userHasMultipleEquipes($user);
+
+        return view('modules.vicentinos_apuracoes.create', compact('entidades', 'activeEquipe', 'authorizedEquipes', 'hasMultipleEquipes'));
     }
 
     // Salvar
     public function store(Request $request)
     {
         try {
+            $user = Auth::user();
+            $activeEquipe = $this->contextService->getActiveEquipe($user);
+            if (!$activeEquipe) {
+                return back()->with('error', 'Nenhuma equipe autorizada. Operação cancelada.')->withInput();
+            }
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'ent_id' => 'required|exists:entidades,ent_id',
@@ -105,41 +145,70 @@ class VicentinoController extends Controller
                 'address' => 'nullable|string',
                 'address_number' => 'nullable|string',
                 'description' => 'nullable|string',
+                'vicentinos_record_id' => 'nullable|integer',
             ]);
 
             $data = $validated;
-            $data['sendby'] = Auth::id(); // Alterado para enviar o ID do usuário
-            $data['paroquia_id'] = Auth::user()->paroquia_id;
+            $data['sendby'] = $user->id;
+            $data['paroquia_id'] = $user->paroquia_id;
+            $data['equipe_id'] = $activeEquipe->id;
             $data['created_at'] = now();
+
+            // Valida se a família vinculada pertence à mesma paróquia e equipe
+            if (!empty($data['vicentinos_record_id'])) {
+                $familiaValida = VicentinosRecord::where('id', $data['vicentinos_record_id'])
+                    ->where('paroquia_id', $user->paroquia_id)
+                    ->where('equipe_id', $activeEquipe->id)
+                    ->exists();
+                if (!$familiaValida) {
+                    $data['vicentinos_record_id'] = null;
+                }
+            }
 
             VinWatched::create($data);
 
-            return redirect()->route('vicentinos-apuracoes.index')->with('success', 'Apuração registrada com sucesso!');
+            return redirect()->route('acoes-sociais.atendimentos.index')->with('success', 'Atendimento registrado com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Erro ao registrar apuração: ' . $e->getMessage());
+                ->with('error', 'Erro ao registrar atendimento: ' . $e->getMessage());
         }
     }
 
     // Formulário de Edição
     public function edit($id)
     {
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user);
+        if (!$activeEquipe) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
         $record = VinWatched::where('w_id', $id)
-            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id)
             ->firstOrFail();
             
-        $entidades = Entidade::where('paroquia_id', Auth::user()->paroquia_id)->get();
+        $entidades = Entidade::where('paroquia_id', $user->paroquia_id)->get();
+        $authorizedEquipes = $this->contextService->getAuthorizedEquipes($user);
+        $hasMultipleEquipes = $this->contextService->userHasMultipleEquipes($user);
         
-        return view('modules.vicentinos_apuracoes.edit', compact('record', 'entidades'));
+        return view('modules.vicentinos_apuracoes.edit', compact('record', 'entidades', 'activeEquipe', 'authorizedEquipes', 'hasMultipleEquipes'));
     }
 
     // Atualizar
     public function update(Request $request, $id)
     {
         try {
+            $user = Auth::user();
+            $activeEquipe = $this->contextService->getActiveEquipe($user);
+            if (!$activeEquipe) {
+                abort(403, 'Acesso não autorizado.');
+            }
+
             $record = VinWatched::where('w_id', $id)
-                ->where('paroquia_id', Auth::user()->paroquia_id)
+                ->where('paroquia_id', $user->paroquia_id)
+                ->where('equipe_id', $activeEquipe->id)
                 ->firstOrFail();
 
             $validated = $request->validate([
@@ -150,40 +219,65 @@ class VicentinoController extends Controller
                 'address' => 'nullable|string',
                 'address_number' => 'nullable|string',
                 'description' => 'nullable|string',
+                'vicentinos_record_id' => 'nullable|integer',
             ]);
+
+            if (!empty($validated['vicentinos_record_id'])) {
+                $familiaValida = VicentinosRecord::where('id', $validated['vicentinos_record_id'])
+                    ->where('paroquia_id', $user->paroquia_id)
+                    ->where('equipe_id', $activeEquipe->id)
+                    ->exists();
+                if (!$familiaValida) {
+                    $validated['vicentinos_record_id'] = null;
+                }
+            }
 
             $record->update($validated);
 
-            return redirect()->route('vicentinos-apuracoes.index')->with('success', 'Apuração atualizada com sucesso!');
+            return redirect()->route('acoes-sociais.atendimentos.index')->with('success', 'Atendimento atualizado com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Erro ao atualizar apuração: ' . $e->getMessage());
+                ->with('error', 'Erro ao atualizar atendimento: ' . $e->getMessage());
         }
     }
 
     // Excluir
     public function destroy($id)
     {
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user);
+        if (!$activeEquipe) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
         $record = VinWatched::where('w_id', $id)
-            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id)
             ->firstOrFail();
 
         $record->delete();
 
-        return redirect()->route('vicentinos-apuracoes.index')->with('success', 'Registro excluído com sucesso.');
+        return redirect()->route('acoes-sociais.atendimentos.index')->with('success', 'Registro excluído com sucesso.');
     }
 
     // Exclusão em massa
     public function bulkDestroy(Request $request)
     {
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user);
+        if (!$activeEquipe) {
+            return response()->json(['error' => 'Acesso não autorizado.'], 403);
+        }
+
         $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:vin_watcheds,w_id'
         ]);
 
         $count = VinWatched::whereIn('w_id', $request->ids)
-            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id)
             ->delete();
 
         return response()->json(['message' => "$count registros excluídos com sucesso."]);
@@ -192,9 +286,16 @@ class VicentinoController extends Controller
     // Busca de Registros (AJAX) - VicentinosRecord
     public function searchVicentinosRecords(Request $request)
     {
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user);
+        if (!$activeEquipe) {
+            return response()->json([]);
+        }
+
         $search = trim($request->input('q'));
         
-        $query = VicentinosRecord::where('paroquia_id', Auth::user()->paroquia_id);
+        $query = VicentinosRecord::where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id);
         
         if (strlen($search) >= 3) {
             // Verifica se é CPF (apenas números ou formato de CPF)
@@ -277,8 +378,15 @@ class VicentinoController extends Controller
     // Gerar Relatório PDF / CSV
     public function generateReport(Request $request)
     {
-        $query = VinWatched::where('paroquia_id', Auth::user()->paroquia_id)
-            ->with(['entidade', 'sender'])
+        $user = Auth::user();
+        $activeEquipe = $this->contextService->getActiveEquipe($user);
+        if (!$activeEquipe) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $query = VinWatched::where('paroquia_id', $user->paroquia_id)
+            ->where('equipe_id', $activeEquipe->id)
+            ->with(['entidade', 'sender', 'familia'])
             ->orderBy('w_id', 'desc');
 
         // Apply filters
@@ -400,9 +508,9 @@ class VicentinoController extends Controller
 
         // PDF
         $paroquia = Auth::user()->paroquia;
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses', 'colunasSelecionadas', 'paroquia'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.vicentinos_apuracoes.pdf', compact('records', 'meses', 'colunasSelecionadas', 'paroquia', 'activeEquipe'));
         $pdf->setPaper('a4', 'landscape');
         
-        return $pdf->stream('apuracao_vicentinos_' . date('YmdHis') . '.pdf');
+        return $pdf->stream('apuracao_acoes_sociais_' . date('YmdHis') . '.pdf');
     }
 }

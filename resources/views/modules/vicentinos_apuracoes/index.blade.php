@@ -5,16 +5,19 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
-            <h2 class="mb-0 fw-bold text-dark">Apuração de Vicentinos</h2>
-            <p class="text-muted small mb-0">Controle mensal de assistidos e não assistidos.</p>
+            <h2 class="mb-0 fw-bold text-dark">Ações Sociais — Atendimentos e Entregas</h2>
+            <p class="text-muted small mb-0">Controle mensal de atendimentos, entregas de benefícios e acompanhamento socioassistencial.</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Apuração de Vicentinos</li>
+                <li class="breadcrumb-item active" aria-current="page">Atendimentos e Entregas</li>
             </ol>
         </nav>
     </div>
+
+    <!-- Sub-menu e Contexto de Equipe -->
+    @include('modules.acoes_sociais.partials.team_context_header')
 
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
@@ -77,7 +80,7 @@
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <!-- Toolbar -->
-            <form action="{{ route('vicentinos-apuracoes.index') }}" method="GET" id="filterForm">
+            <form action="{{ route('acoes-sociais.atendimentos.index') }}" method="GET" id="filterForm">
                 <div class="row g-3 mb-4 align-items-end">
                     <div class="col-12 col-md-3">
                         <label for="search" class="form-label fw-bold text-muted small">Pesquisar</label>
@@ -121,8 +124,8 @@
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#reportModal">
                         <i class="bi bi-file-earmark-bar-graph me-2"></i> Gerar Relatório
                     </button>
-                    <a href="{{ route('vicentinos-apuracoes.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
-                        <i class="bi bi-plus-lg me-2"></i> Nova Apuração
+                    <a href="{{ route('acoes-sociais.atendimentos.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold text-nowrap">
+                        <i class="bi bi-plus-lg me-2"></i> Novo Atendimento
                     </a>
                 </div>
             </form>
@@ -200,10 +203,10 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
-                                    <a href="{{ route('vicentinos-apuracoes.edit', $record->w_id) }}" class="btn btn-sm btn-light text-primary rounded-circle shadow-sm" title="Editar">
+                                    <a href="{{ route('acoes-sociais.atendimentos.edit', $record->w_id) }}" class="btn btn-sm btn-light text-primary rounded-circle shadow-sm" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form action="{{ route('vicentinos-apuracoes.destroy', $record->w_id) }}" method="POST" class="delete-form">
+                                    <form action="{{ route('acoes-sociais.atendimentos.destroy', $record->w_id) }}" method="POST" class="delete-form">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle shadow-sm" title="Excluir">
@@ -259,10 +262,10 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-4 border-0 shadow">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark" id="reportModalLabel">Gerar Relatório de Apuração</h5>
+                    <h5 class="modal-title fw-bold text-dark" id="reportModalLabel">Gerar Relatório de Atendimentos e Entregas</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="generateReportForm" action="{{ route('vicentinos-apuracoes.pdf') }}" method="GET">
+                <form id="generateReportForm" action="{{ route('acoes-sociais.atendimentos.pdf') }}" method="GET">
                     <div class="modal-body p-4">
                         <div class="row g-4">
                             <!-- Período -->

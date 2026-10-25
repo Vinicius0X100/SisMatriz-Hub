@@ -35,8 +35,16 @@ Route::middleware('web')->get('/profile-data', function (Request $request) {
     ]);
 });
 
-// Novas rotas do módulo Vicentinos
+// Rotas do módulo Vicentinos (Legado mantido para compatibilidade total com apps existentes)
 Route::middleware(['web', 'auth:web'])->prefix('vicentinos')->group(function () {
+    Route::get('/apuracoes', [VicentinoApiController::class, 'getApuracoes']);
+    Route::get('/fichas', [VicentinoApiController::class, 'getFichas']);
+});
+
+// Rotas canônicas do módulo Ações Sociais (Universalizado)
+Route::middleware(['web', 'auth:web'])->prefix('acoes-sociais')->group(function () {
+    Route::get('/atendimentos', [VicentinoApiController::class, 'getApuracoes']);
+    Route::get('/familias', [VicentinoApiController::class, 'getFichas']);
     Route::get('/apuracoes', [VicentinoApiController::class, 'getApuracoes']);
     Route::get('/fichas', [VicentinoApiController::class, 'getFichas']);
 });

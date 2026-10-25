@@ -72,7 +72,7 @@ class User extends Authenticatable
                     1 => 'Administrador Geral',
                     2  => 'Gestor de Ministério',               // Mais amplo e representativo que "Gestor Pleno"
                     3  => 'Coordenador - Crisma',               // Mais direto que "Instrutor. Crisma"
-                    4  => 'Membro - Vicentinos',               // Dá clareza de pertencimento ao grupo
+                    4  => 'Agente de Ações Sociais',
                     5  => 'Coordenador - Música Litúrgica',    // "Min. Música" pode ser vago
                     6  => 'Coordenador - Acólitos',            // Representa liderança sobre o grupo
                     7  => 'Coordenador - 1ª Eucaristia',        // Nome mais direto e padronizado
@@ -179,5 +179,26 @@ class User extends Authenticatable
     public function blockedUsers()
     {
         return $this->hasMany(BlockedUser::class, 'user_id');
+    }
+
+    public function acaoSocialEquipes()
+    {
+        return $this->belongsToMany(AcaoSocialEquipe::class, 'acao_social_equipe_user', 'user_id', 'equipe_id')
+            ->withPivot('funcao', 'paroquia_id')
+            ->withTimestamps();
+    }
+
+    public function isCoordenadorAcaoSocial(?AcaoSocialEquipe $equipe = null): bool
+    {
+        if ($this->hasAnyRole(['1', '111'])) {
+            return true;
+        }
+
+        if ($equipe) {
+            $pivot = $this->acaoSocialEquipes()->where('acao_social_equipes.id', $equipe->id)->first();
+            return $pivot && $pivot->pivot->funcao === 'coordenador';
+        }
+
+        return $this->acaoSocialEquipes()->wherePivot('funcao', 'coordenador')->exists();
     }
 }

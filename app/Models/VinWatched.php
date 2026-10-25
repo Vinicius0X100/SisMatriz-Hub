@@ -26,7 +26,9 @@ class VinWatched extends Model
         'ent_id',
         'kind', // 0 = Não Assistido, 1 = Assistido
         'created_at',
-        'paroquia_id'
+        'paroquia_id',
+        'equipe_id',
+        'vicentinos_record_id',
     ];
 
     protected $casts = [
@@ -50,5 +52,15 @@ class VinWatched extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sendby');
+    }
+
+    public function equipe()
+    {
+        return $this->belongsTo(AcaoSocialEquipe::class, 'equipe_id');
+    }
+
+    public function familia()
+    {
+        return $this->belongsTo(VicentinosRecord::class, 'vicentinos_record_id');
     }
 }

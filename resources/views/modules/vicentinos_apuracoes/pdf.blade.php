@@ -1,10 +1,13 @@
 @extends('layouts.pdf')
 
-@section('title', 'Relatório de Apuração - Vicentinos')
+@section('title', 'Relatório de Atendimentos — Ações Sociais')
 
 @section('content')
     <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="margin: 0; text-transform: uppercase; color: #1e293b;">Relatório de Apuração Mensal - Vicentinos</h2>
+        <h2 style="margin: 0; text-transform: uppercase; color: #1e293b;">Relatório de Atendimentos e Entregas — Ações Sociais</h2>
+        @if(isset($activeEquipe))
+            <p style="margin: 5px 0 0 0; font-size: 13px; color: #64748b;"><strong>Equipe / Pastoral:</strong> {{ $activeEquipe->nome }}</p>
+        @endif
         @if(request('mes_ano'))
             @php
                 $parts = explode('-', request('mes_ano'));

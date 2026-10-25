@@ -329,14 +329,49 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
     
     Route::resource('acolitos', App\Http\Controllers\AcolitoController::class);
 
-    // Vicentinos
-    // Vicentinos (Novo Módulo de Fichas)
+    // Ações Sociais (Universalizado)
+    Route::prefix('acoes-sociais')->group(function () {
+        Route::get('/', function () {
+            return redirect()->route('acoes-sociais.familias.index');
+        })->name('acoes-sociais.index');
+
+        // Alternância de Equipe Ativa
+        Route::post('switch-equipe', [App\Http\Controllers\AcaoSocialEquipeController::class, 'switchEquipe'])->name('acoes-sociais.switch-equipe');
+        Route::post('equipes/switch', [App\Http\Controllers\AcaoSocialEquipeController::class, 'switchEquipe'])->name('acoes-sociais.equipes.switch');
+
+        // Famílias Acompanhadas
+        Route::get('familias/search-registers', [App\Http\Controllers\VicentinosRecordController::class, 'searchRegisters'])->name('acoes-sociais.familias.search-registers');
+        Route::post('familias/pdf', [App\Http\Controllers\VicentinosRecordController::class, 'generatePdf'])->name('acoes-sociais.familias.pdf');
+        Route::resource('familias', App\Http\Controllers\VicentinosRecordController::class)->names('acoes-sociais.familias');
+
+        // Atendimentos e Entregas
+        Route::get('atendimentos/search-records', [App\Http\Controllers\VicentinoController::class, 'searchVicentinosRecords'])->name('acoes-sociais.atendimentos.search-records');
+        Route::get('atendimentos/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('acoes-sociais.atendimentos.search-registers');
+        Route::post('atendimentos/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('acoes-sociais.atendimentos.bulk-delete');
+        Route::get('atendimentos/pdf', [App\Http\Controllers\VicentinoController::class, 'generateReport'])->name('acoes-sociais.atendimentos.pdf');
+        Route::resource('atendimentos', App\Http\Controllers\VicentinoController::class)->names('acoes-sociais.atendimentos');
+
+        // Relatórios Hub
+        Route::get('relatorios', function () {
+            $contextService = app(\App\Services\AcaoSocialContextService::class);
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $activeEquipe = $contextService->getActiveEquipe($user);
+            $authorizedEquipes = $contextService->getAuthorizedEquipes($user);
+            $hasMultipleEquipes = $contextService->userHasMultipleEquipes($user);
+            $paroquiaHasMultiple = $contextService->paroquiaHasMultipleEquipes($user);
+            return view('modules.acoes_sociais.relatorios.index', compact('activeEquipe', 'authorizedEquipes', 'hasMultipleEquipes', 'paroquiaHasMultiple'));
+        })->name('acoes-sociais.relatorios');
+
+        // Gestão de Equipes e Pastorais
+        Route::post('equipes/{id}/toggle-status', [App\Http\Controllers\AcaoSocialEquipeController::class, 'toggleStatus'])->name('acoes-sociais.equipes.toggle-status');
+        Route::resource('equipes', App\Http\Controllers\AcaoSocialEquipeController::class)->names('acoes-sociais.equipes');
+    });
+
+    // Vicentinos (Rotas legadas mantidas para compatibilidade retroativa integral)
     Route::get('vicentinos/search-registers', [App\Http\Controllers\VicentinosRecordController::class, 'searchRegisters'])->name('vicentinos.search-registers');
     Route::post('vicentinos/pdf', [App\Http\Controllers\VicentinosRecordController::class, 'generatePdf'])->name('vicentinos.pdf');
     Route::resource('vicentinos', App\Http\Controllers\VicentinosRecordController::class);
     
-    // Vicentinos (Antigo / Apurações - Renomeado para evitar conflito se ainda necessário)
-    // Rotas de Apuração de Vicentinos (Antigo/Legado mas ainda em uso)
     Route::get('vicentinos-apuracoes/search-vicentinos-records', [App\Http\Controllers\VicentinoController::class, 'searchVicentinosRecords'])->name('vicentinos-apuracoes.search-records');
     Route::get('vicentinos-apuracoes/search-registers', [App\Http\Controllers\VicentinoController::class, 'searchRegisters'])->name('vicentinos-apuracoes.search-registers');
     Route::post('vicentinos-apuracoes/bulk-delete', [App\Http\Controllers\VicentinoController::class, 'bulkDestroy'])->name('vicentinos-apuracoes.bulk-delete');

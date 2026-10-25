@@ -4,13 +4,13 @@
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <div>
-            <h2 class="mb-0 fw-bold text-dark">Nova Ficha Vicentina</h2>
-            <p class="text-muted small mb-0">Preencha os dados da família assistida.</p>
+            <h2 class="mb-0 fw-bold text-dark">Nova Ficha de Acompanhamento Familiar</h2>
+            <p class="text-muted small mb-0">Preencha os dados da família assistida para o acompanhamento socioassistencial.</p>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('vicentinos.index') }}" class="text-decoration-none">Registros Vicentinos</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('acoes-sociais.familias.index') }}" class="text-decoration-none">Ações Sociais — Famílias</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Nova Ficha</li>
             </ol>
         </nav>
@@ -26,7 +26,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('vicentinos.store') }}" method="POST">
+            <form action="{{ route('acoes-sociais.familias.store') }}" method="POST">
                 @csrf
 
                 <!-- Dados Iniciais -->
@@ -36,14 +36,21 @@
                         <label class="form-label fw-bold small text-muted">Data da Ficha</label>
                         <input type="date" name="data_ficha" class="form-control rounded-pill bg-light border-0 px-4 py-2" value="{{ date('Y-m-d') }}">
                     </div>
+                    @if(isset($activeEquipe) && $activeEquipe->isVicentinos())
                     <div class="col-md-5">
                         <label class="form-label fw-bold small text-muted">Conferência</label>
-                        <input type="text" name="conferencia" class="form-control rounded-pill bg-light border-0 px-4 py-2">
+                        <input type="text" name="conferencia" class="form-control rounded-pill bg-light border-0 px-4 py-2" value="{{ old('conferencia', $activeEquipe->nome) }}">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold small text-muted">Conselho Particular</label>
-                        <input type="text" name="conselho_particular" class="form-control rounded-pill bg-light border-0 px-4 py-2">
+                        <input type="text" name="conselho_particular" class="form-control rounded-pill bg-light border-0 px-4 py-2" value="{{ old('conselho_particular') }}">
                     </div>
+                    @else
+                    <div class="col-md-9">
+                        <label class="form-label fw-bold small text-muted">Equipe / Pastoral Ativa</label>
+                        <input type="text" class="form-control rounded-pill bg-light border-0 px-4 py-2" value="{{ $activeEquipe->nome ?? 'Equipe de Ações Sociais' }}" readonly>
+                    </div>
+                    @endif
                 </div>
 
                 <hr class="my-4 text-muted opacity-25">
@@ -296,15 +303,15 @@
                 
                 <div class="row g-4 mb-4">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold small text-muted">Responsáveis pela Sindicância</label>
+                        <label class="form-label fw-bold small text-muted">Responsáveis pela Visita / Avaliação</label>
                         <input type="text" name="responsaveis_sindicancia" class="form-control rounded-pill bg-light border-0 px-4 py-2">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-bold small text-muted">Dispensado em</label>
+                        <label class="form-label fw-bold small text-muted">Data Encerramento / Dispensa</label>
                         <input type="date" name="data_dispensa" class="form-control rounded-pill bg-light border-0 px-4 py-2">
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label fw-bold small text-muted">Motivo da Dispensa</label>
+                        <label class="form-label fw-bold small text-muted">Motivo do Encerramento</label>
                         <input type="text" name="motivo_dispensa" class="form-control rounded-pill bg-light border-0 px-4 py-2">
                     </div>
                 </div>
@@ -314,7 +321,7 @@
                         <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
                         <span class="text-primary fw-bold small">Salvando...</span>
                     </div>
-                    <a href="{{ route('vicentinos.index') }}" class="btn btn-light rounded-pill px-4">Cancelar</a>
+                    <a href="{{ route('acoes-sociais.familias.index') }}" class="btn btn-light rounded-pill px-4">Cancelar</a>
                     <button type="submit" id="btnSalvar" class="btn btn-primary rounded-pill px-5 fw-bold">Salvar Ficha</button>
                 </div>
             </form>

@@ -12,6 +12,7 @@ class VicentinosRecord extends Model
     protected $fillable = [
         'user_id',
         'paroquia_id',
+        'equipe_id',
         'register_id',
         'data_ficha',
         'conferencia',
@@ -78,5 +79,10 @@ class VicentinosRecord extends Model
     public function register()
     {
         return $this->belongsTo(Register::class);
+    }
+
+    public function equipe()
+    {
+        return $this->belongsTo(AcaoSocialEquipe::class, 'equipe_id');
     }
 }
