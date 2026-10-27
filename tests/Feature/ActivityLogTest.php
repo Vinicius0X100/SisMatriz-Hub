@@ -311,7 +311,7 @@ class ActivityLogTest extends TestCase
         $response->assertDontSee('Log Exclusivo Paróquia 2');
     }
 
-    public function test_role_111_can_view_global_logs_explicitly(): void
+    public function test_role_111_is_also_scoped_to_own_parish_on_listing(): void
     {
         ActivityLog::create([
             'paroquia_id' => $this->paroquia2->id,
@@ -320,14 +320,28 @@ class ActivityLogTest extends TestCase
             'category' => 'action',
             'action' => 'create',
             'module' => 'Notas Fiscais',
-            'description' => 'Log Paróquia 2 Visível Globalmente',
+            'description' => 'Log Paróquia 2 Inacessível',
             'status' => 'success',
             'created_at' => now(),
         ]);
 
+        ActivityLog::create([
+            'paroquia_id' => $this->adminGlobal111->paroquia_id,
+            'user_id' => $this->adminGlobal111->id,
+            'user_name' => $this->adminGlobal111->name,
+            'category' => 'action',
+            'action' => 'create',
+            'module' => 'Notas Fiscais',
+            'description' => 'Log Paróquia Própria do Admin 111',
+            'status' => 'success',
+            'created_at' => now(),
+        ]);
+
+        // Mesmo que passe paroquia_id=all na query string, a listagem escopa na paróquia do usuário
         $response = $this->actingAs($this->adminGlobal111)->get('/activity-logs?paroquia_id=all');
         $response->assertStatus(200);
-        $response->assertSee('Log Paróquia 2 Visível Globalmente');
+        $response->assertSee('Log Paróquia Própria do Admin 111');
+        $response->assertDontSee('Log Paróquia 2 Inacessível');
     }
 
     public function test_events_without_parish_not_exposed_to_parish_admin(): void

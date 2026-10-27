@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
-use App\Models\ParoquiaSuperadmin;
 use App\Models\User;
 use App\Services\ActivityLoggerService;
 use Illuminate\Http\Request;
@@ -32,23 +31,8 @@ class ActivityLogController extends Controller
 
         $query = ActivityLog::query();
 
-        // 2. Isolamento Multi-Tenancy
-        $isGlobalAdmin = $currentUser->hasRole('111');
-        $selectedParoquia = $request->input('paroquia_id');
-
-        if ($isGlobalAdmin) {
-            // Role 111 pode consultar globalmente de forma explícita ('all') ou filtrar por paróquia específica
-            if ($selectedParoquia && $selectedParoquia !== 'all') {
-                $query->where('paroquia_id', (int) $selectedParoquia);
-            } elseif (!$selectedParoquia) {
-                // Por padrão, escopa na paróquia atual do usuário se não especificado 'all'
-                $query->where('paroquia_id', $currentUser->paroquia_id);
-            }
-        } else {
-            // Role 1: OBRIGATORIAMENTE vê apenas sua própria paróquia.
-            // Ignora qualquer tentativa de manipulação via parâmetro paroquia_id
-            $query->where('paroquia_id', $currentUser->paroquia_id);
-        }
+        // 2. Isolamento Multi-Tenancy Estrito: sempre e exclusivamente da paróquia do usuário autenticado
+        $query->where('paroquia_id', $currentUser->paroquia_id);
 
         // 3. Filtros
         if ($request->filled('user_id')) {
@@ -99,31 +83,21 @@ class ActivityLogController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        // 6. Dados auxiliares para os selects de filtro
-        $usersQuery = User::query();
-        if (!$isGlobalAdmin || ($selectedParoquia && $selectedParoquia !== 'all')) {
-            $usersQuery->where('paroquia_id', $isGlobalAdmin ? (int) $selectedParoquia : $currentUser->paroquia_id);
-        }
-        $users = $usersQuery->orderBy('name')->get(['id', 'name', 'user']);
+        // 6. Dados auxiliares para os selects de filtro (estritos à paróquia do usuário)
+        $users = User::where('paroquia_id', $currentUser->paroquia_id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'user']);
 
-        $modules = ActivityLog::select('module')
-            ->when(!$isGlobalAdmin || ($selectedParoquia && $selectedParoquia !== 'all'), function ($q) use ($currentUser, $selectedParoquia, $isGlobalAdmin) {
-                $q->where('paroquia_id', $isGlobalAdmin ? (int) $selectedParoquia : $currentUser->paroquia_id);
-            })
+        $modules = ActivityLog::where('paroquia_id', $currentUser->paroquia_id)
             ->distinct()
             ->orderBy('module')
             ->pluck('module');
-
-        $paroquias = $isGlobalAdmin ? ParoquiaSuperadmin::orderBy('name')->get(['id', 'name']) : collect([]);
 
         return view('modules.activity-logs.index', compact(
             'logs',
             'stats',
             'users',
-            'modules',
-            'paroquias',
-            'isGlobalAdmin',
-            'selectedParoquia'
+            'modules'
         ));
     }
 
@@ -141,7 +115,7 @@ class ActivityLogController extends Controller
 
         $query = ActivityLog::with(['user', 'paroquia']);
 
-        // Se for Role 1, garante que não pode abrir por ID um log de outra paróquia
+        // Role 1 só pode abrir logs da sua própria paróquia
         if (!$currentUser->hasRole('111')) {
             $query->where('paroquia_id', $currentUser->paroquia_id);
         }

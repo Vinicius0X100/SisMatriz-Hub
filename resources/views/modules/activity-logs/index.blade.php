@@ -91,7 +91,7 @@
             <!-- Barra de Filtros -->
             <form method="GET" action="{{ route('activity-logs.index') }}" class="row g-3 mb-4">
                 <!-- Pesquisa Livre -->
-                <div class="col-lg-3 col-md-6">
+                <div class="col-lg-4 col-md-6">
                     <label for="searchInput" class="form-label fw-bold text-muted small">Pesquisa Textual</label>
                     <div class="position-relative">
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
@@ -100,7 +100,7 @@
                 </div>
 
                 <!-- Filtro de Usuário -->
-                <div class="col-lg-2 col-md-6">
+                <div class="col-lg-3 col-md-6">
                     <label for="userFilter" class="form-label fw-bold text-muted small">Usuário</label>
                     <select name="user_id" id="userFilter" class="form-select rounded-pill" style="height: 42px;">
                         <option value="">Todos os Usuários</option>
@@ -112,8 +112,19 @@
                     </select>
                 </div>
 
+                <!-- Filtro de Módulo -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="moduleFilter" class="form-label fw-bold text-muted small">Módulo</label>
+                    <select name="module" id="moduleFilter" class="form-select rounded-pill" style="height: 42px;">
+                        <option value="">Todos os Módulos</option>
+                        @foreach($modules as $m)
+                            <option value="{{ $m }}" {{ request('module') == $m ? 'selected' : '' }}>{{ $m }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Filtro de Categoria -->
-                <div class="col-lg-2 col-md-4 col-6">
+                <div class="col-lg-2 col-md-6">
                     <label for="categoryFilter" class="form-label fw-bold text-muted small">Categoria</label>
                     <select name="category" id="categoryFilter" class="form-select rounded-pill" style="height: 42px;">
                         <option value="">Todas as Categorias</option>
@@ -125,22 +136,11 @@
                     </select>
                 </div>
 
-                <!-- Filtro de Módulo -->
-                <div class="col-lg-2 col-md-4 col-6">
-                    <label for="moduleFilter" class="form-label fw-bold text-muted small">Módulo</label>
-                    <select name="module" id="moduleFilter" class="form-select rounded-pill" style="height: 42px;">
-                        <option value="">Todos os Módulos</option>
-                        @foreach($modules as $m)
-                            <option value="{{ $m }}" {{ request('module') == $m ? 'selected' : '' }}>{{ $m }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
                 <!-- Filtro de Status -->
-                <div class="col-lg-1 col-md-4 col-6">
+                <div class="col-lg-2 col-md-4 col-12">
                     <label for="statusFilter" class="form-label fw-bold text-muted small">Status</label>
                     <select name="status" id="statusFilter" class="form-select rounded-pill" style="height: 42px;">
-                        <option value="">Todos</option>
+                        <option value="">Todos os Status</option>
                         <option value="success" {{ request('status') == 'success' ? 'selected' : '' }}>Sucesso</option>
                         <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Falha</option>
                         <option value="blocked" {{ request('status') == 'blocked' ? 'selected' : '' }}>Bloqueado</option>
@@ -148,34 +148,19 @@
                 </div>
 
                 <!-- Período: Data Inicial -->
-                <div class="col-lg-2 col-md-6 col-6">
+                <div class="col-lg-3 col-md-4 col-6">
                     <label for="startDate" class="form-label fw-bold text-muted small">Data Inicial</label>
                     <input type="date" name="start_date" id="startDate" class="form-control rounded-pill" value="{{ request('start_date') }}" style="height: 42px;">
                 </div>
 
                 <!-- Período: Data Final -->
-                <div class="col-lg-2 col-md-6 col-6">
+                <div class="col-lg-3 col-md-4 col-6">
                     <label for="endDate" class="form-label fw-bold text-muted small">Data Final</label>
                     <input type="date" name="end_date" id="endDate" class="form-control rounded-pill" value="{{ request('end_date') }}" style="height: 42px;">
                 </div>
 
-                @if($isGlobalAdmin)
-                <!-- Seletor de Paróquia (Exclusivo Superadmin 111) -->
-                <div class="col-lg-3 col-md-6">
-                    <label for="paroquiaFilter" class="form-label fw-bold text-muted small"><i class="bi bi-buildings me-1 text-primary"></i>Paróquia (Superadmin)</label>
-                    <select name="paroquia_id" id="paroquiaFilter" class="form-select rounded-pill border-primary" style="height: 42px;">
-                        <option value="all" {{ request('paroquia_id') == 'all' ? 'selected' : '' }}>🌐 Todas as Paróquias (Visão Global)</option>
-                        @foreach($paroquias as $p)
-                            <option value="{{ $p->id }}" {{ (request('paroquia_id') == $p->id || (!request('paroquia_id') && auth()->user()->paroquia_id == $p->id)) ? 'selected' : '' }}>
-                                {{ $p->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-
                 <!-- Botões de Filtrar e Limpar -->
-                <div class="col-lg-2 col-md-6 d-flex align-items-end gap-2 ms-auto">
+                <div class="col-lg-4 col-md-12 d-flex align-items-end gap-2 ms-auto">
                     <button type="submit" class="btn btn-primary rounded-pill px-3 w-100 d-flex align-items-center justify-content-center gap-1" style="height: 42px;" data-audit-action="filtro_avancado_aplicado" data-audit-module="Logs de Atividades" data-audit-desc="Aplicação de filtros avançados na listagem de logs">
                         <i class="bi bi-funnel"></i> Filtrar
                     </button>
