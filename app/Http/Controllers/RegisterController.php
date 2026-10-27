@@ -321,6 +321,13 @@ class RegisterController extends Controller
         $paroquia = $user->paroquia;
 
         $pdf = PDF::loadView('modules.registers.pdf', compact('registers', 'columns', 'paroquia'));
+
+        app(\App\Services\ActivityLoggerService::class)->logExport(
+            'Registros Gerais',
+            'PDF',
+            "Gerou relatório em PDF de registros de fiéis/paroquianos (" . $registers->count() . " registros exportados)."
+        );
+
         return $pdf->download('relatorio_registros.pdf');
     }
 

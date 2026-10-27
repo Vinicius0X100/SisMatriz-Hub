@@ -2,12 +2,30 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SocialAssistant extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected string $auditModuleName = 'Estoque e Doações';
+
+    public function getAuditableAttributes(): array
+    {
+        return [
+            'type',
+            'category',
+            'ent_id',
+            'sala_id',
+            'description',
+            'qntd_destributed',
+            'qntd_anterior',
+            'last_update',
+            'paroquia_id',
+        ];
+    }
 
     protected $table = 'social_assistant';
     protected $primaryKey = 's_id';

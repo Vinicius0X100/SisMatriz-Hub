@@ -9,7 +9,25 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Acessos e Usuários';
+
+    /**
+     * Lista branca restrita: apenas campos administrativos relevantes são auditados.
+     * login_attempts, last_attempt, remember_token, avatar e onboarding são ignorados.
+     */
+    public array $auditableAttributes = [
+        'name',
+        'user',
+        'email',
+        'rule',
+        'status',
+        'is_visible',
+        'hide_name',
+        'paroquia_id',
+        'timezone',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -200,5 +218,18 @@ class User extends Authenticatable
         }
 
         return $this->acaoSocialEquipes()->wherePivot('funcao', 'coordenador')->exists();
+    }
+
+    /**
+     * Define a estratégia transacional de auditoria:
+     * Alterações críticas de permissões/cargos ('rule') ou status de acesso são estritamente atômicas ('atomic').
+     */
+    public function getAuditTransactionalMode(): string
+    {
+        if (isset($this->auditPendingChanges['new']['rule']) || isset($this->auditPendingChanges['new']['status'])) {
+            return 'atomic';
+        }
+
+        return 'after_commit';
     }
 }

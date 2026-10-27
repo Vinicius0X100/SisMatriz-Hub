@@ -28,6 +28,11 @@ class CheckModuleAccess
             return $next($request);
         }
 
+        // Permitir que qualquer usuário autenticado registre interações autorizadas de interface
+        if ($request->routeIs('activity-logs.interaction')) {
+            return $next($request);
+        }
+
         $currentPath = '/' . trim($request->path(), '/');
         $modules = config('modules');
 

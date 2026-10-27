@@ -7,7 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Campanha extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Campanhas';
+
+    public array $auditableAttributes = [
+        'nome',
+        'categoria_id',
+        'descricao',
+        'data_inicio',
+        'data_fim',
+        'paroquia_id',
+        'status',
+    ];
 
     protected $fillable = [
         'nome',

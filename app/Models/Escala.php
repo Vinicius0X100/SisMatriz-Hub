@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Escala extends Model
 {
+    use \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Escalas de Acólitos';
+
+    public array $auditableAttributes = [
+        'month',
+        'year',
+        'church',
+        'send_date',
+        'qntd_acolitos',
+        'situation',
+        'paroquia_id',
+    ];
+
     protected $table = 'escalas';
     protected $primaryKey = 'es_id';
 

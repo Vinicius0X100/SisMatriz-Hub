@@ -116,13 +116,13 @@
                                             <a href="{{ route('excursoes.onibus.show', [$excursao, $onibus]) }}" class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Gerenciar Assentos">
                                                 <i class="bi bi-grid-3x3-gap"></i>
                                             </a>
-                                            <a href="{{ route('excursoes.onibus.manifesto', [$excursao, $onibus]) }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill me-1" title="Imprimir Lista">
+                                            <a href="{{ route('excursoes.onibus.manifesto', [$excursao, $onibus]) }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill me-1" title="Imprimir Lista" data-audit-action="download_relatorio" data-audit-module="Excursões" data-audit-desc="Impressão/download do manifesto de passageiros do ônibus {{ $onibus->numero }}">
                                                 <i class="bi bi-file-earmark-spreadsheet"></i>
                                             </a>
                                             <a href="{{ route('excursoes.onibus.edit', [$excursao, $onibus]) }}" class="btn btn-sm btn-outline-secondary rounded-pill me-1" title="Editar">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" title="Excluir" onclick="confirmDeleteOnibus('{{ route('excursoes.onibus.destroy', [$excursao, $onibus]) }}', '{{ addslashes($onibus->numero) }}')">
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" title="Excluir" onclick="confirmDeleteOnibus('{{ route('excursoes.onibus.destroy', [$excursao, $onibus]) }}', '{{ addslashes($onibus->numero) }}')" data-audit-action="confirmacao_critica" data-audit-module="Excursões" data-audit-desc="Exclusão de ônibus {{ $onibus->numero }} solicitada">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>

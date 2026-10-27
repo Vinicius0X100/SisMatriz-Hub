@@ -7,7 +7,32 @@ use Illuminate\Database\Eloquent\Model;
 
 class Register extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Registros Gerais';
+
+    public array $auditableAttributes = [
+        'name',
+        'email',
+        'phone',
+        'address',
+        'address_number',
+        'cpf',
+        'rg',
+        'familly_qntd',
+        'civil_status',
+        'sexo',
+        'age',
+        'born_date',
+        'work_state',
+        'race',
+        'country',
+        'state',
+        'city',
+        'cep',
+        'status',
+        'paroquia_id',
+    ];
 
     protected $table = 'registers';
     public $timestamps = false;

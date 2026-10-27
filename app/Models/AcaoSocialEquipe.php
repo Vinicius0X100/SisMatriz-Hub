@@ -2,12 +2,26 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AcaoSocialEquipe extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected string $auditModuleName = 'Ações Sociais - Equipes';
+
+    public function getAuditableAttributes(): array
+    {
+        return [
+            'paroquia_id',
+            'nome',
+            'descricao',
+            'tipo',
+            'ativo',
+        ];
+    }
 
     protected $table = 'acao_social_equipes';
 

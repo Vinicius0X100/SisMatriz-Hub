@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
 use Symfony\Component\Mailer\Transport\Dsn;
 
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Logout;
+use App\Listeners\LogSuccessfulLogin;
+use App\Listeners\LogFailedLogin;
+use App\Listeners\LogSuccessfulLogout;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -26,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // Registro dos Listeners de Auditoria de Autenticação
+        Event::listen(Login::class, LogSuccessfulLogin::class);
+        Event::listen(Failed::class, LogFailedLogin::class);
+        Event::listen(Logout::class, LogSuccessfulLogout::class);
 
         Mail::extend('brevo', function (array $config = []) {
             return (new BrevoTransportFactory)->create(

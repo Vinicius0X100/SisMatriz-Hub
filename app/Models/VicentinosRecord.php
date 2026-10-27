@@ -7,7 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class VicentinosRecord extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Ações Sociais - Fichas';
+
+    /**
+     * Lista branca restrita à identificação e status administrativo.
+     * Dados de saúde, religião e observações íntimas são omitidos por LGPD.
+     */
+    public array $auditableAttributes = [
+        'responsavel_nome',
+        'cpf',
+        'rg',
+        'telefone',
+        'bairro',
+        'cidade',
+        'equipe_id',
+        'data_ficha',
+        'motivo_dispensa',
+        'data_dispensa',
+        'paroquia_id',
+    ];
 
     protected $fillable = [
         'user_id',

@@ -2,12 +2,33 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Batismo extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected string $auditModuleName = 'Sacramentos - Batismo';
+
+    public function getAuditableAttributes(): array
+    {
+        return [
+            'register_id',
+            'paroquia_id',
+            'is_batizado',
+            'data_batismo',
+            'local_batismo',
+            'celebrante',
+            'padrinho_nome',
+            'madrinha_nome',
+            'livro',
+            'folha',
+            'registro',
+            'obs',
+        ];
+    }
 
     protected $table = 'batismos';
 

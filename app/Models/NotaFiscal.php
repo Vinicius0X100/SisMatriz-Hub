@@ -8,7 +8,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class NotaFiscal extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Notas Fiscais';
+    public string $auditTransactionalMode = 'atomic';
+
+    public array $auditableAttributes = [
+        'numero',
+        'serie',
+        'chave_acesso',
+        'tipo',
+        'data_emissao',
+        'data_entrada',
+        'emitente_nome',
+        'emitente_documento',
+        'valor_total',
+        'valor_desconto',
+        'valor_acrescimo',
+        'descricao',
+        'status',
+        'entidade_id',
+        'paroquia_id',
+    ];
 
     protected $table = 'notas_fiscais';
 

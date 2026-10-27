@@ -7,7 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Protocol extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Gestão de Protocolos';
+
+    public array $auditableAttributes = [
+        'code',
+        'user_id',
+        'description',
+        'paroquia_id',
+        'status',
+        'message',
+    ];
 
     protected $table = 'protocols_superadmin';
 

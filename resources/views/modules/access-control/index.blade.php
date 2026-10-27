@@ -104,7 +104,7 @@
 
                 <!-- Botões de Ação -->
                 <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
-                     <a href="{{ route('access-control.create') }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 w-100" style="height: 45px;">
+                     <a href="{{ route('access-control.create') }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 w-100" style="height: 45px;" data-audit-action="modal_aberto" data-audit-module="Acessos e Usuários" data-audit-desc="Início de cadastro de novo usuário">
                         <i class="bi bi-person-plus fs-5"></i> <span class="d-none d-lg-inline">Novo</span>
                     </a>
                 </div>
@@ -184,6 +184,9 @@
                                 </td>
                                 <td class="px-4 py-3 text-end">
                                     <div class="d-flex justify-content-end gap-2">
+                                        <a href="{{ route('activity-logs.index', ['user_id' => $user->id]) }}" class="btn btn-sm btn-outline-info rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Ver Logs de Atividades" data-audit-action="modal_aberto" data-audit-module="Acessos e Usuários" data-audit-desc="Consulta de logs de atividades do usuário {{ $user->user }}">
+                                            <i class="bi bi-clock-history"></i>
+                                        </a>
                                         @if($user->id === Auth::id() && $user->hasRole('1'))
                                             <span class="text-muted small" title="Você não pode editar seu próprio usuário com regra de Administrador Geral">
                                                 <i class="bi bi-lock fs-5"></i>
@@ -196,7 +199,7 @@
                                                 <form action="{{ route('access-control.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Excluir">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Excluir" data-audit-action="confirmacao_critica" data-audit-module="Acessos e Usuários" data-audit-desc="Exclusão de usuário solicitada para {{ $user->user }}">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </form>

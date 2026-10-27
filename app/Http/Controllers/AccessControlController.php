@@ -141,15 +141,17 @@ class AccessControlController extends Controller
             'status' => 'required|in:0,1',
         ]);
 
-        $user->name = $request->name;
-        $user->user = $request->user;
-        $user->email = $request->email;
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
-        $user->rule = $request->roles ? implode(',', $request->roles) : null;
-        $user->status = $request->status;
-        $user->save();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request) {
+            $user->name = $request->name;
+            $user->user = $request->user;
+            $user->email = $request->email;
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+            }
+            $user->rule = $request->roles ? implode(',', $request->roles) : null;
+            $user->status = $request->status;
+            $user->save();
+        });
 
         return redirect()->route('access-control.index')->with('success', 'Usuário atualizado com sucesso!');
     }
@@ -167,7 +169,9 @@ class AccessControlController extends Controller
         }
 
         try {
-            $user->delete();
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+                $user->delete();
+            });
             return redirect()->route('access-control.index')->with('success', 'Usuário excluído com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Não foi possível excluir o usuário. Ele pode ter registros associados.');

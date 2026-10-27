@@ -2,12 +2,28 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class InscricaoPreCatequese extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected string $auditModuleName = 'Catequese - Pré-Catequese';
+
+    public function getAuditableAttributes(): array
+    {
+        return [
+            'status',
+            'paroquia_id',
+            'nome',
+            'sexo',
+            'nacionalidade',
+            'telefone1',
+            'batismo',
+        ];
+    }
 
     protected $table = 'inscricoes_pre_catequese';
     public $timestamps = false;

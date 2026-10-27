@@ -211,6 +211,18 @@ class ProcessoController extends Controller
             $processo->delete();
         }
 
+        if (count($processos) > 0) {
+            app(\App\Services\ActivityLoggerService::class)->log([
+                'category'       => 'action',
+                'action'         => 'bulk_delete',
+                'module'         => 'Processos',
+                'description'    => "Exclusão em lote de " . count($processos) . " processo(s) paroquial(is)",
+                'auditable_type' => ProcessoParoquial::class,
+                'paroquia_id'    => Auth::user()->paroquia_id,
+                'status'         => 'success',
+            ], strictTransactional: true);
+        }
+
         return response()->json(['message' => count($processos) . ' processos excluídos com sucesso.']);
     }
 

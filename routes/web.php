@@ -69,6 +69,11 @@ Route::middleware(['auth', CheckOnboarding::class])->group(function () {
         'access-control' => 'userAccess',
     ]);
 
+    // Logs de Atividades (Auditoria Administrativa)
+    Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('/activity-logs/{id}', [App\Http\Controllers\ActivityLogController::class, 'show'])->name('activity-logs.show');
+    Route::post('/activity-logs/interaction', [App\Http\Controllers\ActivityLogController::class, 'recordInteraction'])->name('activity-logs.interaction');
+
     // Chat
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');

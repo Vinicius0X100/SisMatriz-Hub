@@ -200,6 +200,17 @@ class PascomMembroController extends Controller
         $deleted = PascomMembro::where('paroquia_id', Auth::user()->paroquia_id)
             ->whereIn('id', $ids)->delete();
 
+        if ($deleted > 0) {
+            app(\App\Services\ActivityLoggerService::class)->log([
+                'category'    => 'model',
+                'action'      => 'bulk_delete',
+                'module'      => 'Pascom - Membros',
+                'description' => "Exclusão em lote de {$deleted} membros da Pascom (IDs: " . implode(', ', $ids) . ").",
+                'paroquia_id' => Auth::user()->paroquia_id,
+                'status'      => 'success',
+            ], true);
+        }
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'deleted' => $deleted]);
         }
@@ -210,6 +221,12 @@ class PascomMembroController extends Controller
     {
         $this->ensureAccess();
         $user = Auth::user();
+
+        app(\App\Services\ActivityLoggerService::class)->logExport(
+            'Pascom - Membros',
+            'PDF',
+            "Gerou relatório em PDF de membros da Pascom."
+        );
 
         $query = PascomMembro::with(['entidade', 'register'])
             ->where('paroquia_id', $user->paroquia_id);

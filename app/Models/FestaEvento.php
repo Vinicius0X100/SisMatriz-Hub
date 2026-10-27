@@ -11,6 +11,20 @@ use App\Models\FestaEventoItemSaida;
 
 class FestaEvento extends Model
 {
+    use \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Festas e Eventos';
+
+    public array $auditableAttributes = [
+        'titulo',
+        'data_inicio',
+        'data_fim',
+        'comunidade_id',
+        'descricao',
+        'meta',
+        'paroquia_id',
+    ];
+
     protected $table = 'festas_eventos';
     public $timestamps = false;
 

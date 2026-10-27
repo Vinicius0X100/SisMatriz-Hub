@@ -20,12 +20,28 @@ class OnibusPdfController extends Controller
 
         $pdf = Pdf::loadView('modules.excursoes.onibus.pdf.manifest', compact('excursao', 'onibus'));
         
+        app(\App\Services\ActivityLoggerService::class)->logExport(
+            'Excursões - Ônibus',
+            'PDF',
+            "Baixou manifesto de passageiros do Ônibus #{$onibus->numero} (Excursão '{$excursao->destino}').",
+            $onibus->id,
+            Onibus::class
+        );
+
         return $pdf->download('manifesto_onibus_' . $onibus->numero . '.pdf');
     }
 
     public function downloadTickets(Excursao $excursao, Onibus $onibus)
     {
         $this->authorizeAccess($excursao);
+
+        app(\App\Services\ActivityLoggerService::class)->logExport(
+            'Excursões - Ônibus',
+            'PDF',
+            "Baixou lote de passagens do Ônibus #{$onibus->numero} (Excursão '{$excursao->destino}').",
+            $onibus->id,
+            Onibus::class
+        );
 
         $onibus->load(['assentosVendidos' => function ($query) {
             $query->orderBy('poltrona');

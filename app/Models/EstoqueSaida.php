@@ -2,12 +2,30 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EstoqueSaida extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected string $auditModuleName = 'Estoque - Saídas';
+
+    public function getAuditableAttributes(): array
+    {
+        return [
+            's_id',
+            'nome_item',
+            'qntd_distribuida',
+            'retirado_por',
+            'entregue_por',
+            'data_saida',
+            'ent_id',
+            'status',
+            'paroquia_id',
+        ];
+    }
 
     protected $table = 'estoque_saida';
 

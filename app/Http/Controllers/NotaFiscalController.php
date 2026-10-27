@@ -176,6 +176,18 @@ class NotaFiscalController extends Controller
             $count++;
         }
 
+        if ($count > 0) {
+            app(\App\Services\ActivityLoggerService::class)->log([
+                'category'       => 'action',
+                'action'         => 'bulk_delete',
+                'module'         => 'Notas Fiscais',
+                'description'    => "Exclusão em lote de {$count} nota(s) fiscal(is)",
+                'auditable_type' => NotaFiscal::class,
+                'paroquia_id'    => Auth::user()->paroquia_id,
+                'status'         => 'success',
+            ], strictTransactional: true);
+        }
+
         return redirect()->route('notas-fiscais.index')->with('success', "$count notas fiscais excluídas com sucesso!");
     }
 

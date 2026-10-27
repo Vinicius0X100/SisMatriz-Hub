@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProcessoParoquial extends Model
 {
+    use \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Processos Paroquiais';
+
+    public array $auditableAttributes = [
+        'protocolo',
+        'nome_solicitante',
+        'cargo_funcao',
+        'comunidade_id',
+        'assunto',
+        'data_limite',
+        'prioridade',
+        'status',
+        'responsavel_atual_user_id',
+        'paroquia_id',
+    ];
+
     protected $table = 'processos_paroquiais';
 
     protected $fillable = [

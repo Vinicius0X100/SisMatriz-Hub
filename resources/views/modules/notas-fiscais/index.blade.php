@@ -59,14 +59,14 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
                             <li>
-                                <button type="button" class="dropdown-item text-danger py-2" onclick="confirmBulkDelete()">
+                                <button type="button" class="dropdown-item text-danger py-2" onclick="confirmBulkDelete()" data-audit-action="exclusao_lote_iniciada" data-audit-module="Notas Fiscais" data-audit-desc="Disparo de exclusão em massa de notas fiscais">
                                     <i class="bi bi-trash me-2"></i> Excluir Selecionados
                                 </button>
                             </li>
                         </ul>
                     </div>
                     
-                    <a href="{{ route('notas-fiscais.create') }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 fw-bold" style="height: 45px;">
+                    <a href="{{ route('notas-fiscais.create') }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 fw-bold" style="height: 45px;" data-audit-action="modal_aberto" data-audit-module="Notas Fiscais" data-audit-desc="Abertura de formulário de nova nota fiscal">
                         <i class="bi bi-plus-lg fs-5"></i> <span class="d-none d-lg-inline">Nova</span>
                     </a>
                 </div>

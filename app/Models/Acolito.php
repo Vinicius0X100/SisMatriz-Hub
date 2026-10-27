@@ -7,7 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Acolito extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Acólitos e Coroinhas';
+
+    public array $auditableAttributes = [
+        'name',
+        'ent_id',
+        'type',
+        'register_id',
+        'age',
+        'graduation_year',
+        'status',
+        'paroquia_id',
+        'user_id',
+    ];
 
     protected $table = 'acolitos';
     public $timestamps = false; // Assumindo sem timestamps baseado na estrutura descrita, ajustar se necessário

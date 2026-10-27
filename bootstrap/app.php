@@ -14,6 +14,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('web', \App\Http\Middleware\CheckModuleAccess::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\LogActivityNavigation::class);
         
         $middleware->validateCsrfTokens(except: [
             'api/catequese/*',

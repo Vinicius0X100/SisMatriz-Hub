@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class AssentoVendido extends Model
 {
+    use \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Excursões - Assentos';
+
+    public array $auditableAttributes = [
+        'onibus_id',
+        'register_id',
+        'passageiro_nome',
+        'poltrona',
+        'posicao',
+        'embarque_ida',
+        'embarque_volta',
+        'validado_em',
+        'validado_por',
+        'paroquia_id',
+    ];
+
     protected $table = 'assentos_vendidos';
 
     protected $fillable = [

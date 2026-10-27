@@ -7,7 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class CampanhaSaida extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Campanhas - Saídas';
+    public string $auditTransactionalMode = 'atomic';
+
+    public array $auditableAttributes = [
+        'campanha_id',
+        'data',
+        'valor',
+        'categoria',
+        'descricao',
+    ];
 
     protected $table = 'campanha_saidas';
 

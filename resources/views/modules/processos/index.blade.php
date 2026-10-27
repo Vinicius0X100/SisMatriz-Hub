@@ -13,7 +13,8 @@
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
-                    data-bs-toggle="modal" data-bs-target="#novoProcessoModal">
+                    data-bs-toggle="modal" data-bs-target="#novoProcessoModal"
+                    data-audit-action="modal_aberto" data-audit-module="Processos" data-audit-desc="Abertura de modal para criação de processo">
                 <i class="bi bi-plus-lg me-2"></i> Novo Processo
             </button>
         </div>
@@ -121,7 +122,7 @@
                                 Ações em Massa
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="bulkActions">
-                                <li><a class="dropdown-item text-danger" href="#" onclick="confirmBulkDelete()"><i class="bi bi-trash me-2"></i> Excluir Selecionados</a></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="confirmBulkDelete()" data-audit-action="exclusao_lote_iniciada" data-audit-module="Processos" data-audit-desc="Disparo de exclusão em massa de processos"><i class="bi bi-trash me-2"></i> Excluir Selecionados</a></li>
                             </ul>
                         </div>
                     </div>

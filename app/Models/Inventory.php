@@ -7,7 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inventory extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\LogsActivity;
+
+    public string $auditModuleName = 'Estoque e Inventário';
+
+    public array $auditableAttributes = [
+        'item',
+        'category',
+        'ent_id',
+        'sala_id',
+        'description',
+        'qntd_destributed',
+        'paroquia_id',
+    ];
 
     protected $table = 'inventory';
     protected $primaryKey = 'i_id';

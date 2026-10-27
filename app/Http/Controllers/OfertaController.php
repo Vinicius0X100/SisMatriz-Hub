@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Oferta;
 use App\Models\Entidade;
+use App\Services\ActivityLoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -72,16 +73,18 @@ class OfertaController extends Controller
             'observacoes' => 'nullable|string',
         ]);
 
-        Oferta::create([
-            'data' => $request->data,
-            'horario' => $request->horario, // Optional
-            'valor_total' => $request->valor_total,
-            'tipo' => $request->tipo,
-            'kind' => $request->kind,
-            'observacoes' => $request->observacoes,
-            'ent_id' => $request->ent_id,
-            'paroquia_id' => Auth::user()->paroquia_id,
-        ]);
+        DB::transaction(function () use ($request) {
+            Oferta::create([
+                'data' => $request->data,
+                'horario' => $request->horario, // Optional
+                'valor_total' => $request->valor_total,
+                'tipo' => $request->tipo,
+                'kind' => $request->kind,
+                'observacoes' => $request->observacoes,
+                'ent_id' => $request->ent_id,
+                'paroquia_id' => Auth::user()->paroquia_id,
+            ]);
+        });
 
         return redirect()->route('ofertas.index')->with('success', 'Lançamento realizado com sucesso!');
     }
@@ -198,11 +201,29 @@ class OfertaController extends Controller
             return redirect()->route('ofertas.index')->with('error', 'Nenhum registro selecionado.');
         }
 
-        Oferta::whereIn('id', $ids)
+        $ofertas = Oferta::whereIn('id', $ids)
+            ->where('paroquia_id', Auth::user()->paroquia_id)
+            ->get();
+
+        $totalValor = $ofertas->sum('valor_total');
+        $deletedCount = $ofertas->count();
+
+        Oferta::whereIn('id', $ofertas->pluck('id'))
             ->where('paroquia_id', Auth::user()->paroquia_id)
             ->delete();
 
-        return redirect()->route('ofertas.index')->with('success', count($ids) . ' lançamentos excluídos com sucesso!');
+        app(ActivityLoggerService::class)->log([
+            'category'       => 'action',
+            'action'         => 'bulk_delete',
+            'module'         => 'Financeiro - Ofertas',
+            'description'    => "Exclusão em lote de {$deletedCount} lançamento(s) de ofertas (Valor total: R$ " . number_format($totalValor, 2, ',', '.') . ")",
+            'auditable_type' => Oferta::class,
+            'old_values'     => ['ids' => $ofertas->pluck('id')->toArray(), 'total_valor' => $totalValor],
+            'paroquia_id'    => Auth::user()->paroquia_id,
+            'status'         => 'success',
+        ], strictTransactional: true);
+
+        return redirect()->route('ofertas.index')->with('success', $deletedCount . ' lançamentos excluídos com sucesso!');
     }
 
     public function exportPdf(Request $request)
@@ -229,6 +250,13 @@ class OfertaController extends Controller
         }
 
         $ofertas = $query->orderBy('data', 'asc')->get();
+
+        app(ActivityLoggerService::class)->logExport(
+            module: 'Financeiro - Ofertas',
+            documentType: 'PDF - Relatório de Ofertas e Dízimos',
+            filters: $request->only(['ent_id', 'kind', 'data_inicio', 'data_fim']),
+            recordsCount: $ofertas->count()
+        );
 
         // Agrupamento por Comunidade
         $groupedData = $ofertas->groupBy(function($item) {
