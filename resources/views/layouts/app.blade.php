@@ -1059,6 +1059,7 @@
                 });
             }
         })();
+    </script>
     <script src="{{ asset('js/activity-logger.js') }}" defer></script>
     @stack('scripts')
     @yield('scripts')
